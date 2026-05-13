@@ -1,0 +1,49 @@
+import { createFileRoute } from "@tanstack/react-router";
+import { useQuery } from "@tanstack/react-query";
+import { supabase } from "@/integrations/supabase/client";
+import { Header } from "@/components/Header";
+import { fmtCredits } from "@/lib/format";
+import { Trophy } from "lucide-react";
+
+export const Route = createFileRoute("/leaderboard")({
+  head: () => ({ meta: [{ title: "Leaderboard — Predikt" }] }),
+  component: Leaderboard,
+});
+
+function Leaderboard() {
+  const { data: traders } = useQuery({
+    queryKey: ["leaderboard"],
+    queryFn: async () => {
+      const { data } = await supabase
+        .from("profiles")
+        .select("id, username, credits")
+        .order("credits", { ascending: false })
+        .limit(50);
+      return data ?? [];
+    },
+  });
+
+  return (
+    <div>
+      <Header />
+      <div className="max-w-3xl mx-auto px-6 py-10">
+        <div className="flex items-center gap-3 mb-2">
+          <Trophy className="text-primary" />
+          <h1 className="font-display text-4xl font-bold">Leaderboard</h1>
+        </div>
+        <p className="text-muted-foreground text-sm mb-8">Top traders by credit balance.</p>
+        <div className="rounded-lg border border-border bg-card divide-y divide-border">
+          {traders?.map((t, i) => (
+            <div key={t.id} className="px-5 py-4 flex items-center justify-between">
+              <div className="flex items-center gap-4">
+                <span className={`font-display font-bold w-6 text-right ${i < 3 ? "text-primary" : "text-muted-foreground"}`}>{i + 1}</span>
+                <span className="font-medium">@{t.username}</span>
+              </div>
+              <span className="font-mono tabular-nums">{fmtCredits(t.credits)}c</span>
+            </div>
+          ))}
+        </div>
+      </div>
+    </div>
+  );
+}
