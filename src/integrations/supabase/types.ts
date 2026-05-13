@@ -14,16 +14,295 @@ export type Database = {
   }
   public: {
     Tables: {
-      [_ in never]: never
+      categories: {
+        Row: {
+          created_at: string
+          icon: string | null
+          id: string
+          name: string
+          slug: string
+        }
+        Insert: {
+          created_at?: string
+          icon?: string | null
+          id?: string
+          name: string
+          slug: string
+        }
+        Update: {
+          created_at?: string
+          icon?: string | null
+          id?: string
+          name?: string
+          slug?: string
+        }
+        Relationships: []
+      }
+      markets: {
+        Row: {
+          category_id: string | null
+          closes_at: string
+          created_at: string
+          creator_id: string
+          description: string | null
+          id: string
+          no_pool: number
+          resolution: Database["public"]["Enums"]["market_resolution"] | null
+          resolved_at: string | null
+          status: Database["public"]["Enums"]["market_status"]
+          title: string
+          volume: number
+          yes_pool: number
+        }
+        Insert: {
+          category_id?: string | null
+          closes_at: string
+          created_at?: string
+          creator_id: string
+          description?: string | null
+          id?: string
+          no_pool?: number
+          resolution?: Database["public"]["Enums"]["market_resolution"] | null
+          resolved_at?: string | null
+          status?: Database["public"]["Enums"]["market_status"]
+          title: string
+          volume?: number
+          yes_pool?: number
+        }
+        Update: {
+          category_id?: string | null
+          closes_at?: string
+          created_at?: string
+          creator_id?: string
+          description?: string | null
+          id?: string
+          no_pool?: number
+          resolution?: Database["public"]["Enums"]["market_resolution"] | null
+          resolved_at?: string | null
+          status?: Database["public"]["Enums"]["market_status"]
+          title?: string
+          volume?: number
+          yes_pool?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "markets_category_id_fkey"
+            columns: ["category_id"]
+            isOneToOne: false
+            referencedRelation: "categories"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "markets_creator_id_fkey"
+            columns: ["creator_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      positions: {
+        Row: {
+          credits_spent: number
+          id: string
+          market_id: string
+          no_shares: number
+          user_id: string
+          yes_shares: number
+        }
+        Insert: {
+          credits_spent?: number
+          id?: string
+          market_id: string
+          no_shares?: number
+          user_id: string
+          yes_shares?: number
+        }
+        Update: {
+          credits_spent?: number
+          id?: string
+          market_id?: string
+          no_shares?: number
+          user_id?: string
+          yes_shares?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "positions_market_id_fkey"
+            columns: ["market_id"]
+            isOneToOne: false
+            referencedRelation: "markets"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "positions_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      price_history: {
+        Row: {
+          id: string
+          market_id: string
+          recorded_at: string
+          yes_price: number
+        }
+        Insert: {
+          id?: string
+          market_id: string
+          recorded_at?: string
+          yes_price: number
+        }
+        Update: {
+          id?: string
+          market_id?: string
+          recorded_at?: string
+          yes_price?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "price_history_market_id_fkey"
+            columns: ["market_id"]
+            isOneToOne: false
+            referencedRelation: "markets"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      profiles: {
+        Row: {
+          avatar_url: string | null
+          created_at: string
+          credits: number
+          id: string
+          last_daily_claim: string | null
+          username: string
+        }
+        Insert: {
+          avatar_url?: string | null
+          created_at?: string
+          credits?: number
+          id: string
+          last_daily_claim?: string | null
+          username: string
+        }
+        Update: {
+          avatar_url?: string | null
+          created_at?: string
+          credits?: number
+          id?: string
+          last_daily_claim?: string | null
+          username?: string
+        }
+        Relationships: []
+      }
+      trades: {
+        Row: {
+          action: Database["public"]["Enums"]["trade_action"]
+          created_at: string
+          credits: number
+          id: string
+          market_id: string
+          price: number
+          shares: number
+          side: Database["public"]["Enums"]["trade_side"]
+          user_id: string
+        }
+        Insert: {
+          action: Database["public"]["Enums"]["trade_action"]
+          created_at?: string
+          credits: number
+          id?: string
+          market_id: string
+          price: number
+          shares: number
+          side: Database["public"]["Enums"]["trade_side"]
+          user_id: string
+        }
+        Update: {
+          action?: Database["public"]["Enums"]["trade_action"]
+          created_at?: string
+          credits?: number
+          id?: string
+          market_id?: string
+          price?: number
+          shares?: number
+          side?: Database["public"]["Enums"]["trade_side"]
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "trades_market_id_fkey"
+            columns: ["market_id"]
+            isOneToOne: false
+            referencedRelation: "markets"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "trades_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      user_roles: {
+        Row: {
+          id: string
+          role: Database["public"]["Enums"]["app_role"]
+          user_id: string
+        }
+        Insert: {
+          id?: string
+          role: Database["public"]["Enums"]["app_role"]
+          user_id: string
+        }
+        Update: {
+          id?: string
+          role?: Database["public"]["Enums"]["app_role"]
+          user_id?: string
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never
     }
     Functions: {
-      [_ in never]: never
+      claim_daily_credits: { Args: never; Returns: Json }
+      has_role: {
+        Args: {
+          _role: Database["public"]["Enums"]["app_role"]
+          _user_id: string
+        }
+        Returns: boolean
+      }
+      place_trade: {
+        Args: {
+          _credits: number
+          _market_id: string
+          _side: Database["public"]["Enums"]["trade_side"]
+        }
+        Returns: Json
+      }
+      resolve_market: {
+        Args: {
+          _market_id: string
+          _resolution: Database["public"]["Enums"]["market_resolution"]
+        }
+        Returns: Json
+      }
     }
     Enums: {
-      [_ in never]: never
+      app_role: "admin" | "user"
+      market_resolution: "yes" | "no" | "invalid"
+      market_status: "open" | "closed" | "resolved"
+      trade_action: "buy" | "sell"
+      trade_side: "yes" | "no"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -150,6 +429,12 @@ export type CompositeTypes<
 
 export const Constants = {
   public: {
-    Enums: {},
+    Enums: {
+      app_role: ["admin", "user"],
+      market_resolution: ["yes", "no", "invalid"],
+      market_status: ["open", "closed", "resolved"],
+      trade_action: ["buy", "sell"],
+      trade_side: ["yes", "no"],
+    },
   },
 } as const
