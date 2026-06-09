@@ -1,11 +1,16 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { useServerFn } from "@tanstack/react-start";
 import { useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
+import { useAuth } from "@/lib/auth";
 import { Header } from "@/components/Header";
 import { MarketCard, type MarketCardData } from "@/components/MarketCard";
 import { Input } from "@/components/ui/input";
-import { Search } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { Search, Sparkles } from "lucide-react";
+import { toast } from "sonner";
+import { importPolymarketMarkets } from "@/lib/polymarket.functions";
 
 export const Route = createFileRoute("/markets")({
   head: () => ({
@@ -20,6 +25,24 @@ export const Route = createFileRoute("/markets")({
 function MarketsPage() {
   const [q, setQ] = useState("");
   const [cat, setCat] = useState<string | null>(null);
+  const [importing, setImporting] = useState(false);
+  const { user } = useAuth();
+  const qc = useQueryClient();
+  const runImport = useServerFn(importPolymarketMarkets);
+
+  const onImport = async () => {
+    setImporting(true);
+    try {
+      const res = await runImport();
+      toast.success(res.message ?? `Imported ${res.imported} markets`);
+      qc.invalidateQueries({ queryKey: ["markets"] });
+    } catch (e: unknown) {
+      const msg = e instanceof Error ? e.message : "Import failed";
+      toast.error(msg);
+    } finally {
+      setImporting(false);
+    }
+  };
 
   const { data: categories } = useQuery({
     queryKey: ["categories"],
@@ -47,8 +70,18 @@ function MarketsPage() {
     <div className="min-h-screen">
       <Header />
       <div className="max-w-7xl mx-auto px-6 py-10">
-        <h1 className="font-display text-4xl font-bold mb-2">All markets</h1>
-        <p className="text-muted-foreground mb-8">Pick a question, take a side.</p>
+        <div className="flex items-start justify-between gap-4 mb-8 flex-wrap">
+          <div>
+            <h1 className="font-display text-4xl font-bold mb-2">All markets</h1>
+            <p className="text-muted-foreground">Pick a question, take a side.</p>
+          </div>
+          {user && (
+            <Button onClick={onImport} disabled={importing} variant="outline" className="gap-2">
+              <Sparkles size={14} className="text-primary" />
+              {importing ? "Importing…" : "Import from Polymarket"}
+            </Button>
+          )}
+        </div>
 
         <div className="flex flex-col md:flex-row gap-3 mb-6">
           <div className="relative flex-1">
