@@ -17,6 +17,7 @@ import { Route as AuthenticatedRouteImport } from './routes/_authenticated'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as MarketsIdRouteImport } from './routes/markets.$id'
 import { Route as AuthenticatedPortfolioRouteImport } from './routes/_authenticated/portfolio'
+import { Route as AuthenticatedLearnRouteImport } from './routes/_authenticated/learn'
 import { Route as AuthenticatedCreateRouteImport } from './routes/_authenticated/create'
 
 const SignupRoute = SignupRouteImport.update({
@@ -58,6 +59,11 @@ const AuthenticatedPortfolioRoute = AuthenticatedPortfolioRouteImport.update({
   path: '/portfolio',
   getParentRoute: () => AuthenticatedRoute,
 } as any)
+const AuthenticatedLearnRoute = AuthenticatedLearnRouteImport.update({
+  id: '/learn',
+  path: '/learn',
+  getParentRoute: () => AuthenticatedRoute,
+} as any)
 const AuthenticatedCreateRoute = AuthenticatedCreateRouteImport.update({
   id: '/create',
   path: '/create',
@@ -71,6 +77,7 @@ export interface FileRoutesByFullPath {
   '/markets': typeof MarketsRouteWithChildren
   '/signup': typeof SignupRoute
   '/create': typeof AuthenticatedCreateRoute
+  '/learn': typeof AuthenticatedLearnRoute
   '/portfolio': typeof AuthenticatedPortfolioRoute
   '/markets/$id': typeof MarketsIdRoute
 }
@@ -81,6 +88,7 @@ export interface FileRoutesByTo {
   '/markets': typeof MarketsRouteWithChildren
   '/signup': typeof SignupRoute
   '/create': typeof AuthenticatedCreateRoute
+  '/learn': typeof AuthenticatedLearnRoute
   '/portfolio': typeof AuthenticatedPortfolioRoute
   '/markets/$id': typeof MarketsIdRoute
 }
@@ -93,6 +101,7 @@ export interface FileRoutesById {
   '/markets': typeof MarketsRouteWithChildren
   '/signup': typeof SignupRoute
   '/_authenticated/create': typeof AuthenticatedCreateRoute
+  '/_authenticated/learn': typeof AuthenticatedLearnRoute
   '/_authenticated/portfolio': typeof AuthenticatedPortfolioRoute
   '/markets/$id': typeof MarketsIdRoute
 }
@@ -105,6 +114,7 @@ export interface FileRouteTypes {
     | '/markets'
     | '/signup'
     | '/create'
+    | '/learn'
     | '/portfolio'
     | '/markets/$id'
   fileRoutesByTo: FileRoutesByTo
@@ -115,6 +125,7 @@ export interface FileRouteTypes {
     | '/markets'
     | '/signup'
     | '/create'
+    | '/learn'
     | '/portfolio'
     | '/markets/$id'
   id:
@@ -126,6 +137,7 @@ export interface FileRouteTypes {
     | '/markets'
     | '/signup'
     | '/_authenticated/create'
+    | '/_authenticated/learn'
     | '/_authenticated/portfolio'
     | '/markets/$id'
   fileRoutesById: FileRoutesById
@@ -197,6 +209,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedPortfolioRouteImport
       parentRoute: typeof AuthenticatedRoute
     }
+    '/_authenticated/learn': {
+      id: '/_authenticated/learn'
+      path: '/learn'
+      fullPath: '/learn'
+      preLoaderRoute: typeof AuthenticatedLearnRouteImport
+      parentRoute: typeof AuthenticatedRoute
+    }
     '/_authenticated/create': {
       id: '/_authenticated/create'
       path: '/create'
@@ -209,11 +228,13 @@ declare module '@tanstack/react-router' {
 
 interface AuthenticatedRouteChildren {
   AuthenticatedCreateRoute: typeof AuthenticatedCreateRoute
+  AuthenticatedLearnRoute: typeof AuthenticatedLearnRoute
   AuthenticatedPortfolioRoute: typeof AuthenticatedPortfolioRoute
 }
 
 const AuthenticatedRouteChildren: AuthenticatedRouteChildren = {
   AuthenticatedCreateRoute: AuthenticatedCreateRoute,
+  AuthenticatedLearnRoute: AuthenticatedLearnRoute,
   AuthenticatedPortfolioRoute: AuthenticatedPortfolioRoute,
 }
 
