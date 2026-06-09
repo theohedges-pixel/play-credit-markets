@@ -31,6 +31,9 @@ export function Header() {
                 <Link to="/create" className="hover:text-foreground" activeProps={{ className: "text-foreground" }}>
                   Create
                 </Link>
+                <Link to="/learn" className="hover:text-foreground" activeProps={{ className: "text-foreground" }}>
+                  Learn
+                </Link>
               </>
             )}
           </nav>
