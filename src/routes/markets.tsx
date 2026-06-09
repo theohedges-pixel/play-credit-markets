@@ -25,6 +25,24 @@ export const Route = createFileRoute("/markets")({
 function MarketsPage() {
   const [q, setQ] = useState("");
   const [cat, setCat] = useState<string | null>(null);
+  const [importing, setImporting] = useState(false);
+  const { user } = useAuth();
+  const qc = useQueryClient();
+  const runImport = useServerFn(importPolymarketMarkets);
+
+  const onImport = async () => {
+    setImporting(true);
+    try {
+      const res = await runImport();
+      toast.success(res.message ?? `Imported ${res.imported} markets`);
+      qc.invalidateQueries({ queryKey: ["markets"] });
+    } catch (e: unknown) {
+      const msg = e instanceof Error ? e.message : "Import failed";
+      toast.error(msg);
+    } finally {
+      setImporting(false);
+    }
+  };
 
   const { data: categories } = useQuery({
     queryKey: ["categories"],
