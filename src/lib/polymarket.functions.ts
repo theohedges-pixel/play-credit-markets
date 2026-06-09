@@ -64,9 +64,15 @@ ${list}`;
   return items.map(() => "Pop Culture");
 }
 
+export interface ImportResult {
+  imported: number;
+  skipped: number;
+  message: string;
+}
+
 export const importPolymarketMarkets = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
-  .handler(async ({ context }) => {
+  .handler(async ({ context }): Promise<ImportResult> => {
     const apiKey = process.env.LOVABLE_API_KEY;
     if (!apiKey) throw new Error("Lovable AI not configured");
 
