@@ -70,8 +70,18 @@ function MarketsPage() {
     <div className="min-h-screen">
       <Header />
       <div className="max-w-7xl mx-auto px-6 py-10">
-        <h1 className="font-display text-4xl font-bold mb-2">All markets</h1>
-        <p className="text-muted-foreground mb-8">Pick a question, take a side.</p>
+        <div className="flex items-start justify-between gap-4 mb-8 flex-wrap">
+          <div>
+            <h1 className="font-display text-4xl font-bold mb-2">All markets</h1>
+            <p className="text-muted-foreground">Pick a question, take a side.</p>
+          </div>
+          {user && (
+            <Button onClick={onImport} disabled={importing} variant="outline" className="gap-2">
+              <Sparkles size={14} className="text-primary" />
+              {importing ? "Importing…" : "Import from Polymarket"}
+            </Button>
+          )}
+        </div>
 
         <div className="flex flex-col md:flex-row gap-3 mb-6">
           <div className="relative flex-1">
