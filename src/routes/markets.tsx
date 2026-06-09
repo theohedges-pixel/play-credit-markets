@@ -1,11 +1,16 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { useServerFn } from "@tanstack/react-start";
 import { useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
+import { useAuth } from "@/lib/auth";
 import { Header } from "@/components/Header";
 import { MarketCard, type MarketCardData } from "@/components/MarketCard";
 import { Input } from "@/components/ui/input";
-import { Search } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { Search, Sparkles } from "lucide-react";
+import { toast } from "sonner";
+import { importPolymarketMarkets } from "@/lib/polymarket.functions";
 
 export const Route = createFileRoute("/markets")({
   head: () => ({
