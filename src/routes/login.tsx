@@ -28,6 +28,15 @@ function LoginPage() {
     navigate({ to: "/markets" });
   };
 
+  const onGuest = async () => {
+    setLoading(true);
+    const { error } = await supabase.auth.signInAnonymously();
+    setLoading(false);
+    if (error) { toast.error(error.message); return; }
+    toast.success("Playing as guest — 1,000 credits to start.");
+    navigate({ to: "/markets" });
+  };
+
   return (
     <div>
       <Header />
@@ -47,6 +56,13 @@ function LoginPage() {
             {loading ? "Signing in…" : "Sign in"}
           </Button>
         </form>
+        <div className="relative my-6">
+          <div className="absolute inset-0 flex items-center"><div className="w-full border-t border-border" /></div>
+          <div className="relative flex justify-center text-xs"><span className="bg-background px-2 text-muted-foreground">or</span></div>
+        </div>
+        <Button variant="outline" className="w-full" onClick={onGuest} disabled={loading}>
+          Continue as guest
+        </Button>
         <p className="text-sm text-muted-foreground mt-6 text-center">
           New here? <Link to="/signup" className="text-primary hover:underline">Create an account</Link>
         </p>
