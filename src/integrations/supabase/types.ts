@@ -350,6 +350,7 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      auto_close_markets: { Args: never; Returns: undefined }
       claim_daily_credits: { Args: never; Returns: Json }
       claim_learning_reward: {
         Args: { _module_id: string; _score: number }
