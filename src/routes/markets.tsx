@@ -183,7 +183,20 @@ function MarketsPage() {
         </div>
 
         {isLoading ? (
-          <div className="text-muted-foreground">Loading…</div>
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+            {Array.from({ length: 6 }).map((_, i) => (
+              <div key={i} className="rounded-lg border border-border bg-card p-5 animate-pulse">
+                <div className="h-3 w-20 bg-secondary rounded mb-3" />
+                <div className="h-5 w-full bg-secondary rounded mb-2" />
+                <div className="h-5 w-3/4 bg-secondary rounded mb-6" />
+                <div className="flex items-baseline justify-between mb-3">
+                  <div className="h-8 w-16 bg-secondary rounded" />
+                  <div className="h-3 w-20 bg-secondary rounded" />
+                </div>
+                <div className="h-2 w-full bg-secondary rounded" />
+              </div>
+            ))}
+          </div>
         ) : markets && markets.length > 0 ? (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
             {markets.map((m) => <MarketCard key={m.id} m={m} />)}
