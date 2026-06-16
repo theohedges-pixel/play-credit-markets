@@ -167,7 +167,7 @@ function MarketDetail() {
               </div>
               <div className="text-right text-sm text-muted-foreground">
                 <div>Volume <span className="font-mono text-foreground">{fmtCredits(market.volume)}</span></div>
-                <div className="mt-1">{isResolved ? `Resolved ${market.resolution?.toUpperCase()}` : timeUntil(market.closes_at)}</div>
+                <div className="mt-1">{isResolved ? `Resolved ${market!.resolution?.toUpperCase()}` : timeUntil(market.closes_at)}</div>
               </div>
             </div>
             <div className="h-48">
@@ -262,7 +262,7 @@ function MarketDetail() {
         ) : (
           <div className="rounded-md border border-border bg-card px-4 py-3 text-sm text-center">
             {isResolved
-              ? <>Resolved <span className={market.resolution === "yes" ? "text-yes" : "text-no"}>{market.resolution?.toUpperCase()}</span></>
+              ? <>Resolved <span className={market!.resolution === "yes" ? "text-yes" : "text-no"}>{market!.resolution?.toUpperCase()}</span></>
               : <span className="text-no">Market closed</span>}
           </div>
         )}
@@ -277,7 +277,7 @@ function MarketDetail() {
           {isResolved ? (
             <>
               <div className="font-display font-semibold mb-1">Market resolved</div>
-              <div className="text-muted-foreground">Outcome: <span className={market.resolution === "yes" ? "text-yes" : "text-no"}>{market.resolution?.toUpperCase()}</span></div>
+              <div className="text-muted-foreground">Outcome: <span className={market!.resolution === "yes" ? "text-yes" : "text-no"}>{market!.resolution?.toUpperCase()}</span></div>
             </>
           ) : (
             <>
