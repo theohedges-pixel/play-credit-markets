@@ -16,15 +16,22 @@ function NotFoundComponent() {
   return (
     <div className="flex min-h-screen items-center justify-center bg-background px-4">
       <div className="max-w-md text-center">
-        <h1 className="text-7xl font-bold text-foreground font-display">404</h1>
-        <h2 className="mt-4 text-xl font-semibold text-foreground">Page not found</h2>
+        <div className="font-mono text-xs uppercase tracking-[0.3em] text-primary mb-3">Error 404</div>
+        <h1 className="text-7xl font-bold text-foreground font-display tabular-nums">404</h1>
+        <h2 className="mt-4 text-xl font-semibold text-foreground font-display">Market not found</h2>
         <p className="mt-2 text-sm text-muted-foreground">
-          The market you're looking for doesn't exist.
+          This page doesn't exist — or the market may have closed and been removed.
         </p>
-        <div className="mt-6">
+        <div className="mt-6 flex flex-wrap justify-center gap-2">
+          <Link
+            to="/markets"
+            className="inline-flex items-center justify-center rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground transition-colors hover:bg-primary/90"
+          >
+            Browse markets
+          </Link>
           <Link
             to="/"
-            className="inline-flex items-center justify-center rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground transition-colors hover:bg-primary/90"
+            className="inline-flex items-center justify-center rounded-md border border-border bg-card px-4 py-2 text-sm font-medium text-foreground transition-colors hover:bg-secondary"
           >
             Go home
           </Link>
