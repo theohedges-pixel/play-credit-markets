@@ -17,7 +17,7 @@ export const Route = createFileRoute("/_authenticated/portfolio")({
 function Portfolio() {
   const { user, profile, refreshProfile } = useAuth();
 
-  const { data: positions, refetch } = useQuery({
+  const { data: positions, refetch, isLoading } = useQuery({
     queryKey: ["positions", user?.id],
     enabled: !!user,
     queryFn: async () => {
