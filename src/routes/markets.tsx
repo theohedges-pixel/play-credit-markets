@@ -77,7 +77,11 @@ function MarketsPage() {
           </div>
           {user && (
             <Button onClick={onImport} disabled={importing} variant="outline" className="gap-2">
-              <Sparkles size={14} className="text-primary" />
+              {importing ? (
+                <Loader2 size={14} className="animate-spin text-primary" />
+              ) : (
+                <Sparkles size={14} className="text-primary" />
+              )}
               {importing ? "Importing…" : "Import from Polymarket"}
             </Button>
           )}
