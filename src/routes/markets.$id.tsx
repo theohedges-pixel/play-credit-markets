@@ -83,7 +83,23 @@ function MarketDetail() {
     return (
       <div>
         <Header />
-        <div className="max-w-7xl mx-auto px-6 py-20 text-muted-foreground">Loading…</div>
+        <div className="max-w-7xl mx-auto px-6 py-10 grid grid-cols-1 lg:grid-cols-3 gap-8 animate-pulse">
+          <div className="lg:col-span-2 space-y-6">
+            <div>
+              <div className="h-3 w-24 bg-secondary rounded mb-3" />
+              <div className="h-8 w-3/4 bg-secondary rounded mb-2" />
+              <div className="h-8 w-1/2 bg-secondary rounded" />
+            </div>
+            <div className="rounded-lg border border-border bg-card p-6">
+              <div className="h-12 w-24 bg-secondary rounded mb-6" />
+              <div className="h-48 bg-secondary/60 rounded" />
+            </div>
+            <div className="rounded-lg border border-border bg-card h-40" />
+          </div>
+          <aside className="space-y-4">
+            <div className="rounded-lg border border-border bg-card h-64" />
+          </aside>
+        </div>
       </div>
     );
   }
