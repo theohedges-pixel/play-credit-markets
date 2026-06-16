@@ -2,13 +2,14 @@ import { createFileRoute } from "@tanstack/react-router";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
 import { useState } from "react";
+import { formatDistanceToNow } from "date-fns";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/lib/auth";
 import { Header } from "@/components/Header";
-import { MarketCard, type MarketCardData } from "@/components/MarketCard";
+import { MarketCard } from "@/components/MarketCard";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
-import { Search, Sparkles, Loader2 } from "lucide-react";
+import { Search, Sparkles, Loader2, RefreshCw } from "lucide-react";
 import { toast } from "sonner";
 import { importPolymarketMarkets } from "@/lib/polymarket.functions";
 
@@ -26,9 +27,38 @@ function MarketsPage() {
   const [q, setQ] = useState("");
   const [cat, setCat] = useState<string | null>(null);
   const [importing, setImporting] = useState(false);
+  const [syncing, setSyncing] = useState(false);
   const { user } = useAuth();
   const qc = useQueryClient();
   const runImport = useServerFn(importPolymarketMarkets);
+
+  const { data: isAdmin } = useQuery({
+    queryKey: ["is-admin", user?.id],
+    enabled: !!user?.id,
+    queryFn: async () => {
+      const { data } = await supabase
+        .from("user_roles")
+        .select("role")
+        .eq("user_id", user!.id)
+        .eq("role", "admin")
+        .maybeSingle();
+      return !!data;
+    },
+  });
+
+  const { data: lastSync, refetch: refetchSync } = useQuery({
+    queryKey: ["last-polymarket-sync"],
+    queryFn: async () => {
+      const { data } = await supabase
+        .from("app_settings")
+        .select("value, updated_at")
+        .eq("key", "last_polymarket_sync")
+        .maybeSingle();
+      const v = data?.value as { at?: string } | null;
+      return v?.at ?? data?.updated_at ?? null;
+    },
+    refetchInterval: 60_000,
+  });
 
   const onImport = async () => {
     setImporting(true);
@@ -41,6 +71,22 @@ function MarketsPage() {
       toast.error(msg);
     } finally {
       setImporting(false);
+    }
+  };
+
+  const onSyncNow = async () => {
+    setSyncing(true);
+    try {
+      const res = await fetch("/api/public/hooks/sync-polymarket", { method: "POST" });
+      const body = await res.json();
+      if (!res.ok || !body.ok) throw new Error(body.error ?? "Sync failed");
+      toast.success(`Synced: ${body.inserted} added, ${body.closed} closed`);
+      qc.invalidateQueries({ queryKey: ["markets"] });
+      refetchSync();
+    } catch (e: unknown) {
+      toast.error(e instanceof Error ? e.message : "Sync failed");
+    } finally {
+      setSyncing(false);
     }
   };
 
@@ -57,12 +103,14 @@ function MarketsPage() {
     queryFn: async () => {
       let query = supabase
         .from("markets")
-        .select("id, title, closes_at, yes_pool, no_pool, volume, status, resolution, category:categories(name)")
+        .select(
+          "id, title, closes_at, yes_pool, no_pool, volume, status, resolution, source, category:categories(name)",
+        )
         .order("created_at", { ascending: false });
       if (cat) query = query.eq("category_id", cat);
       if (q) query = query.ilike("title", `%${q}%`);
       const { data } = await query.limit(60);
-      return (data ?? []) as unknown as MarketCardData[];
+      return data ?? [];
     },
   });
 
@@ -75,16 +123,33 @@ function MarketsPage() {
             <h1 className="font-display text-4xl font-bold mb-2">All markets</h1>
             <p className="text-muted-foreground">Pick a question, take a side.</p>
           </div>
-          {user && (
-            <Button onClick={onImport} disabled={importing} variant="outline" className="gap-2">
-              {importing ? (
-                <Loader2 size={14} className="animate-spin text-primary" />
-              ) : (
-                <Sparkles size={14} className="text-primary" />
-              )}
-              {importing ? "Importing…" : "Import from Polymarket"}
-            </Button>
-          )}
+          <div className="flex items-center gap-3 flex-wrap justify-end">
+            {lastSync && (
+              <span className="text-xs text-muted-foreground">
+                Last synced {formatDistanceToNow(new Date(lastSync), { addSuffix: true })}
+              </span>
+            )}
+            {isAdmin && (
+              <Button onClick={onSyncNow} disabled={syncing} variant="outline" size="sm" className="gap-2">
+                {syncing ? (
+                  <Loader2 size={14} className="animate-spin" />
+                ) : (
+                  <RefreshCw size={14} />
+                )}
+                {syncing ? "Syncing…" : "Sync now"}
+              </Button>
+            )}
+            {user && (
+              <Button onClick={onImport} disabled={importing} variant="outline" className="gap-2">
+                {importing ? (
+                  <Loader2 size={14} className="animate-spin text-primary" />
+                ) : (
+                  <Sparkles size={14} className="text-primary" />
+                )}
+                {importing ? "Importing…" : "Import from Polymarket"}
+              </Button>
+            )}
+          </div>
         </div>
 
         <div className="flex flex-col md:flex-row gap-3 mb-6">
