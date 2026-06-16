@@ -83,9 +83,23 @@ export const importPolymarketMarkets = createServerFn({ method: "POST" })
     // Fetch top active markets from Polymarket's public gamma API
     const url =
       "https://gamma-api.polymarket.com/markets?active=true&closed=false&archived=false&limit=25&order=volume24hr&ascending=false";
-    const r = await fetch(url, { headers: { accept: "application/json" } });
-    if (!r.ok) throw new Error(`Polymarket fetch failed: ${r.status}`);
-    const remote = (await r.json()) as PolyMarket[];
+    let r: Response;
+    try {
+      r = await fetch(url, { headers: { accept: "application/json" } });
+    } catch (e) {
+      const msg = e instanceof Error ? e.message : String(e);
+      throw new Error(`Couldn't reach Polymarket: ${msg}`);
+    }
+    if (!r.ok) {
+      const body = await r.text().catch(() => "");
+      throw new Error(`Polymarket fetch failed (${r.status}): ${body.slice(0, 200)}`);
+    }
+    let remote: PolyMarket[];
+    try {
+      remote = (await r.json()) as PolyMarket[];
+    } catch {
+      throw new Error("Polymarket returned an invalid response");
+    }
 
     // Filter to ones that close in the future and have a question
     const now = Date.now();
