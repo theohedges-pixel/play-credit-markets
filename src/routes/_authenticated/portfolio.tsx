@@ -72,11 +72,22 @@ function Portfolio() {
         <div className="rounded-lg border border-border bg-card p-5 mb-8 flex items-center justify-between">
           <div>
             <div className="font-display font-semibold flex items-center gap-2"><Gift size={16} className="text-primary" /> Daily reward</div>
-            <p className="text-sm text-muted-foreground mt-1">Claim 100 free credits every day.</p>
+            <p className="text-sm text-muted-foreground mt-1">
+              Claim 100 free credits every day. Resets at 00:00 UTC.
+            </p>
           </div>
-          <Button onClick={claimDaily} disabled={claimed}>
-            {claimed ? "Claimed today" : "Claim +100"}
-          </Button>
+          <TooltipProvider>
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <span tabIndex={0}>
+                  <Button onClick={claimDaily} disabled={claimed}>
+                    {claimed ? "Claimed today" : "Claim +100"}
+                  </Button>
+                </span>
+              </TooltipTrigger>
+              {claimed && <TooltipContent>Come back tomorrow</TooltipContent>}
+            </Tooltip>
+          </TooltipProvider>
         </div>
 
         <h2 className="font-display text-xl font-semibold mb-4">Positions</h2>
