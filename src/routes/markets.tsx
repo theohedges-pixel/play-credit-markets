@@ -8,7 +8,7 @@ import { Header } from "@/components/Header";
 import { MarketCard, type MarketCardData } from "@/components/MarketCard";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
-import { Search, Sparkles } from "lucide-react";
+import { Search, Sparkles, Loader2 } from "lucide-react";
 import { toast } from "sonner";
 import { importPolymarketMarkets } from "@/lib/polymarket.functions";
 
