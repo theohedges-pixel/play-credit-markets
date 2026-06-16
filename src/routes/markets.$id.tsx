@@ -247,14 +247,18 @@ function MarketDetail() {
               )}
             </div>
           ) : (
-            <div className="rounded-lg border border-border bg-card p-5 text-sm">
+            <div className="rounded-lg border border-border bg-card p-5 text-sm sticky top-20">
               {isResolved ? (
                 <>
                   <div className="font-display font-semibold mb-1">Market resolved</div>
                   <div className="text-muted-foreground">Outcome: <span className={market.resolution === "yes" ? "text-yes" : "text-no"}>{market.resolution?.toUpperCase()}</span></div>
                 </>
               ) : (
-                <div className="text-muted-foreground">Market closed — awaiting resolution.</div>
+                <>
+                  <div className="font-display font-semibold mb-1 text-no">Market closed</div>
+                  <div className="text-muted-foreground">Trading has ended. Awaiting resolution by the creator.</div>
+                  <Button disabled className="w-full mt-4" size="lg">Trading closed</Button>
+                </>
               )}
             </div>
           )}
