@@ -7,6 +7,7 @@ import { Button } from "@/components/ui/button";
 import { fmtCredits, fmtPct, yesPrice } from "@/lib/format";
 import { toast } from "sonner";
 import { Coins, Gift } from "lucide-react";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 
 export const Route = createFileRoute("/_authenticated/portfolio")({
   head: () => ({ meta: [{ title: "Portfolio — Predikt" }] }),
