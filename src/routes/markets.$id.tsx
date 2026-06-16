@@ -215,95 +215,155 @@ function MarketDetail() {
           </div>
         </div>
 
-        {/* Trade panel */}
-        <aside className="space-y-4">
-          {!isClosed ? (
-            <div className="rounded-lg border border-border bg-card p-5 sticky top-20">
-              <div className="grid grid-cols-2 gap-2 mb-4">
-                <button
-                  onClick={() => setSide("yes")}
-                  className={`py-3 rounded-md font-display font-semibold border transition ${side === "yes" ? "bg-yes text-yes-foreground border-yes" : "border-border text-muted-foreground hover:text-foreground"}`}
-                >
-                  YES {fmtPct(price)}
-                </button>
-                <button
-                  onClick={() => setSide("no")}
-                  className={`py-3 rounded-md font-display font-semibold border transition ${side === "no" ? "bg-no text-no-foreground border-no" : "border-border text-muted-foreground hover:text-foreground"}`}
-                >
-                  NO {fmtPct(1 - price)}
-                </button>
-              </div>
-              <label className="text-xs uppercase tracking-wider text-muted-foreground">Amount (credits)</label>
-              <Input
-                type="number"
-                min="1"
-                value={amount}
-                onChange={(e) => setAmount(e.target.value)}
-                className="mt-1 font-mono"
-              />
-              <div className="flex gap-2 mt-2">
-                {[10, 50, 100, 500].map((v) => (
-                  <button key={v} onClick={() => setAmount(String(v))} className="text-xs px-2 py-1 rounded bg-secondary text-muted-foreground hover:text-foreground">
-                    {v}
-                  </button>
-                ))}
-              </div>
-              {user ? (
-                <Button onClick={placeTrade} disabled={submitting} className="w-full mt-4" size="lg">
-                  {submitting ? "Placing…" : `Buy ${side.toUpperCase()}`}
-                </Button>
-              ) : (
-                <Link to="/login" className="block mt-4">
-                  <Button className="w-full" size="lg">Sign in to trade</Button>
-                </Link>
-              )}
-              {profile && (
-                <div className="text-xs text-muted-foreground text-center mt-3 font-mono">
-                  Balance: {fmtCredits(profile.credits)} credits
-                </div>
-              )}
-            </div>
-          ) : (
-            <div className="rounded-lg border border-border bg-card p-5 text-sm sticky top-20">
-              {isResolved ? (
-                <>
-                  <div className="font-display font-semibold mb-1">Market resolved</div>
-                  <div className="text-muted-foreground">Outcome: <span className={market.resolution === "yes" ? "text-yes" : "text-no"}>{market.resolution?.toUpperCase()}</span></div>
-                </>
-              ) : (
-                <>
-                  <div className="font-display font-semibold mb-1 text-no">Market closed</div>
-                  <div className="text-muted-foreground">Trading has ended. Awaiting resolution by the creator.</div>
-                  <Button disabled className="w-full mt-4" size="lg">Trading closed</Button>
-                </>
-              )}
-            </div>
-          )}
-
-          {position && (Number(position.yes_shares) > 0 || Number(position.no_shares) > 0) && (
-            <div className="rounded-lg border border-border bg-card p-5 text-sm">
-              <div className="font-display font-semibold mb-3">Your position</div>
-              <div className="space-y-1 font-mono">
-                <div className="flex justify-between"><span className="text-yes">YES shares</span><span>{Number(position.yes_shares).toFixed(2)}</span></div>
-                <div className="flex justify-between"><span className="text-no">NO shares</span><span>{Number(position.no_shares).toFixed(2)}</span></div>
-                <div className="flex justify-between text-muted-foreground border-t border-border pt-2 mt-2"><span>Spent</span><span>{fmtCredits(position.credits_spent)}c</span></div>
-              </div>
-            </div>
-          )}
-
-          {canResolve && !isResolved && (
-            <div className="rounded-lg border border-border bg-card p-5">
-              <div className="font-display font-semibold mb-2 text-sm">Resolve market</div>
-              <p className="text-xs text-muted-foreground mb-3">As the creator, you can resolve and pay out winners.</p>
-              <div className="grid grid-cols-3 gap-2">
-                <Button size="sm" variant="outline" onClick={() => resolveMarket("yes")} className="border-yes/50 text-yes hover:bg-yes/10">YES</Button>
-                <Button size="sm" variant="outline" onClick={() => resolveMarket("no")} className="border-no/50 text-no hover:bg-no/10">NO</Button>
-                <Button size="sm" variant="ghost" onClick={() => resolveMarket("invalid")}>Void</Button>
-              </div>
-            </div>
-          )}
+        {/* Trade panel — desktop sidebar, hidden on mobile */}
+        <aside className="hidden lg:block space-y-4">
+          {renderTradeBox()}
+          {renderPositionBox()}
+          {renderResolveBox()}
         </aside>
+      </div>
+
+      {/* Mobile sticky bottom bar with sheet trigger */}
+      <div className="lg:hidden h-24" aria-hidden />
+      <div className="lg:hidden fixed bottom-0 inset-x-0 z-40 border-t border-border bg-background/95 backdrop-blur px-4 py-3 safe-bottom">
+        {!isClosed ? (
+          <Sheet>
+            <div className="flex gap-2 items-center">
+              <div className="flex-1 grid grid-cols-2 gap-2">
+                <SheetTrigger asChild>
+                  <button
+                    onClick={() => setSide("yes")}
+                    className="py-3 rounded-md font-display font-semibold border bg-yes text-yes-foreground border-yes"
+                  >
+                    YES {fmtPct(price)}
+                  </button>
+                </SheetTrigger>
+                <SheetTrigger asChild>
+                  <button
+                    onClick={() => setSide("no")}
+                    className="py-3 rounded-md font-display font-semibold border bg-no text-no-foreground border-no"
+                  >
+                    NO {fmtPct(1 - price)}
+                  </button>
+                </SheetTrigger>
+              </div>
+            </div>
+            <SheetContent side="bottom" className="rounded-t-2xl max-h-[90vh] overflow-y-auto">
+              <SheetHeader>
+                <SheetTitle className="font-display">Place a trade</SheetTitle>
+              </SheetHeader>
+              <div className="mt-4 space-y-4">
+                {renderTradeBox(true)}
+                {renderPositionBox()}
+                {renderResolveBox()}
+              </div>
+            </SheetContent>
+          </Sheet>
+        ) : (
+          <div className="rounded-md border border-border bg-card px-4 py-3 text-sm text-center">
+            {isResolved
+              ? <>Resolved <span className={market.resolution === "yes" ? "text-yes" : "text-no"}>{market.resolution?.toUpperCase()}</span></>
+              : <span className="text-no">Market closed</span>}
+          </div>
+        )}
       </div>
     </div>
   );
+
+  function renderTradeBox(insideSheet = false) {
+    if (isClosed) {
+      return (
+        <div className={`rounded-lg border border-border bg-card p-5 text-sm ${insideSheet ? "" : "sticky top-20"}`}>
+          {isResolved ? (
+            <>
+              <div className="font-display font-semibold mb-1">Market resolved</div>
+              <div className="text-muted-foreground">Outcome: <span className={market.resolution === "yes" ? "text-yes" : "text-no"}>{market.resolution?.toUpperCase()}</span></div>
+            </>
+          ) : (
+            <>
+              <div className="font-display font-semibold mb-1 text-no">Market closed</div>
+              <div className="text-muted-foreground">Trading has ended. Awaiting resolution by the creator.</div>
+              <Button disabled className="w-full mt-4" size="lg">Trading closed</Button>
+            </>
+          )}
+        </div>
+      );
+    }
+    return (
+      <div className={`rounded-lg border border-border bg-card p-5 ${insideSheet ? "" : "sticky top-20"}`}>
+        <div className="grid grid-cols-2 gap-2 mb-4">
+          <button
+            onClick={() => setSide("yes")}
+            className={`py-3 rounded-md font-display font-semibold border transition ${side === "yes" ? "bg-yes text-yes-foreground border-yes" : "border-border text-muted-foreground hover:text-foreground"}`}
+          >
+            YES {fmtPct(price)}
+          </button>
+          <button
+            onClick={() => setSide("no")}
+            className={`py-3 rounded-md font-display font-semibold border transition ${side === "no" ? "bg-no text-no-foreground border-no" : "border-border text-muted-foreground hover:text-foreground"}`}
+          >
+            NO {fmtPct(1 - price)}
+          </button>
+        </div>
+        <label className="text-xs uppercase tracking-wider text-muted-foreground">Amount (credits)</label>
+        <Input
+          type="number"
+          min="1"
+          value={amount}
+          onChange={(e) => setAmount(e.target.value)}
+          className="mt-1 font-mono"
+        />
+        <div className="flex gap-2 mt-2">
+          {[10, 50, 100, 500].map((v) => (
+            <button key={v} onClick={() => setAmount(String(v))} className="text-xs px-2 py-1 rounded bg-secondary text-muted-foreground hover:text-foreground">
+              {v}
+            </button>
+          ))}
+        </div>
+        {user ? (
+          <Button onClick={placeTrade} disabled={submitting} className="w-full mt-4" size="lg">
+            {submitting ? "Placing…" : `Buy ${side.toUpperCase()}`}
+          </Button>
+        ) : (
+          <Link to="/login" className="block mt-4">
+            <Button className="w-full" size="lg">Sign in to trade</Button>
+          </Link>
+        )}
+        {profile && (
+          <div className="text-xs text-muted-foreground text-center mt-3 font-mono">
+            Balance: {fmtCredits(profile.credits)} credits
+          </div>
+        )}
+      </div>
+    );
+  }
+
+  function renderPositionBox() {
+    if (!position || (Number(position.yes_shares) <= 0 && Number(position.no_shares) <= 0)) return null;
+    return (
+      <div className="rounded-lg border border-border bg-card p-5 text-sm">
+        <div className="font-display font-semibold mb-3">Your position</div>
+        <div className="space-y-1 font-mono">
+          <div className="flex justify-between"><span className="text-yes">YES shares</span><span>{Number(position.yes_shares).toFixed(2)}</span></div>
+          <div className="flex justify-between"><span className="text-no">NO shares</span><span>{Number(position.no_shares).toFixed(2)}</span></div>
+          <div className="flex justify-between text-muted-foreground border-t border-border pt-2 mt-2"><span>Spent</span><span>{fmtCredits(position.credits_spent)}c</span></div>
+        </div>
+      </div>
+    );
+  }
+
+  function renderResolveBox() {
+    if (!canResolve || isResolved) return null;
+    return (
+      <div className="rounded-lg border border-border bg-card p-5">
+        <div className="font-display font-semibold mb-2 text-sm">Resolve market</div>
+        <p className="text-xs text-muted-foreground mb-3">As the creator, you can resolve and pay out winners.</p>
+        <div className="grid grid-cols-3 gap-2">
+          <Button size="sm" variant="outline" onClick={() => resolveMarket("yes")} className="border-yes/50 text-yes hover:bg-yes/10">YES</Button>
+          <Button size="sm" variant="outline" onClick={() => resolveMarket("no")} className="border-no/50 text-no hover:bg-no/10">NO</Button>
+          <Button size="sm" variant="ghost" onClick={() => resolveMarket("invalid")}>Void</Button>
+        </div>
+      </div>
+    );
+  }
 }
