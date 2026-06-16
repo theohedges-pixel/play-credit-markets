@@ -19,6 +19,7 @@ async function classifyWithAI(
   apiKey: string,
   items: { title: string; description: string }[],
 ): Promise<string[]> {
+  const fallback = () => items.map(() => "Pop Culture");
   const list = items.map((it, i) => `${i + 1}. ${it.title}`).join("\n");
   const prompt = `Classify each prediction market into EXACTLY ONE of: ${CATEGORY_NAMES.join(", ")}.
 Reply with a JSON array of strings only, length ${items.length}, in the same order. No prose.
@@ -26,29 +27,32 @@ Reply with a JSON array of strings only, length ${items.length}, in the same ord
 Markets:
 ${list}`;
 
-  const res = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-      "Lovable-API-Key": apiKey,
-    },
-    body: JSON.stringify({
-      model: "google/gemini-3-flash-preview",
-      messages: [
-        { role: "system", content: "You output only valid JSON arrays of category strings." },
-        { role: "user", content: prompt },
-      ],
-      response_format: { type: "json_object" },
-    }),
-  });
+  let res: Response;
+  try {
+    res = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
+      method: "POST",
+      headers: { "Content-Type": "application/json", "Lovable-API-Key": apiKey },
+      body: JSON.stringify({
+        model: "google/gemini-3-flash-preview",
+        messages: [
+          { role: "system", content: "You output only valid JSON arrays of category strings." },
+          { role: "user", content: prompt },
+        ],
+        response_format: { type: "json_object" },
+      }),
+    });
+  } catch (e) {
+    console.error("[AI classify] network error", e);
+    return fallback();
+  }
 
   if (!res.ok) {
-    console.error("[AI classify] non-ok", res.status, await res.text());
-    return items.map(() => "Pop Culture");
+    console.error("[AI classify] non-ok", res.status, await res.text().catch(() => ""));
+    return fallback();
   }
-  const json = await res.json();
-  const text: string = json?.choices?.[0]?.message?.content ?? "[]";
   try {
+    const json = await res.json();
+    const text: string = json?.choices?.[0]?.message?.content ?? "[]";
     const parsed = JSON.parse(text);
     const arr: unknown = Array.isArray(parsed) ? parsed : (parsed as Record<string, unknown>).categories;
     if (Array.isArray(arr)) {
@@ -59,9 +63,9 @@ ${list}`;
       });
     }
   } catch (e) {
-    console.error("[AI classify] parse error", e, text);
+    console.error("[AI classify] parse error", e);
   }
-  return items.map(() => "Pop Culture");
+  return fallback();
 }
 
 export interface ImportResult {
@@ -79,9 +83,23 @@ export const importPolymarketMarkets = createServerFn({ method: "POST" })
     // Fetch top active markets from Polymarket's public gamma API
     const url =
       "https://gamma-api.polymarket.com/markets?active=true&closed=false&archived=false&limit=25&order=volume24hr&ascending=false";
-    const r = await fetch(url, { headers: { accept: "application/json" } });
-    if (!r.ok) throw new Error(`Polymarket fetch failed: ${r.status}`);
-    const remote = (await r.json()) as PolyMarket[];
+    let r: Response;
+    try {
+      r = await fetch(url, { headers: { accept: "application/json" } });
+    } catch (e) {
+      const msg = e instanceof Error ? e.message : String(e);
+      throw new Error(`Couldn't reach Polymarket: ${msg}`);
+    }
+    if (!r.ok) {
+      const body = await r.text().catch(() => "");
+      throw new Error(`Polymarket fetch failed (${r.status}): ${body.slice(0, 200)}`);
+    }
+    let remote: PolyMarket[];
+    try {
+      remote = (await r.json()) as PolyMarket[];
+    } catch {
+      throw new Error("Polymarket returned an invalid response");
+    }
 
     // Filter to ones that close in the future and have a question
     const now = Date.now();

@@ -8,7 +8,7 @@ import { Header } from "@/components/Header";
 import { MarketCard, type MarketCardData } from "@/components/MarketCard";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
-import { Search, Sparkles } from "lucide-react";
+import { Search, Sparkles, Loader2 } from "lucide-react";
 import { toast } from "sonner";
 import { importPolymarketMarkets } from "@/lib/polymarket.functions";
 
@@ -77,7 +77,11 @@ function MarketsPage() {
           </div>
           {user && (
             <Button onClick={onImport} disabled={importing} variant="outline" className="gap-2">
-              <Sparkles size={14} className="text-primary" />
+              {importing ? (
+                <Loader2 size={14} className="animate-spin text-primary" />
+              ) : (
+                <Sparkles size={14} className="text-primary" />
+              )}
               {importing ? "Importing…" : "Import from Polymarket"}
             </Button>
           )}
