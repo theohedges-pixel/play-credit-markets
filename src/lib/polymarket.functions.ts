@@ -159,6 +159,8 @@ export const importPolymarketMarkets = createServerFn({ method: "POST" })
       yes_pool: 1000,
       no_pool: 1000,
       volume: 0,
+      source: "polymarket",
+      polymarket_id: c.m.id ?? null,
     }));
 
     const { error: insErr, data: inserted } = await context.supabase
