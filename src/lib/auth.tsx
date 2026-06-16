@@ -58,7 +58,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }, []);
 
   const refreshProfile = async () => {
-    if (user) await loadProfile(user.id);
+    // Read the current session directly so the call is reliable even if React
+    // state hasn't flushed yet (e.g. right after sign-in or a fast trade).
+    const { data: { session: s } } = await supabase.auth.getSession();
+    const uid = s?.user?.id ?? user?.id;
+    if (uid) await loadProfile(uid);
   };
 
   const signOut = async () => {
