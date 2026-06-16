@@ -17,7 +17,7 @@ export const Route = createFileRoute("/_authenticated/portfolio")({
 function Portfolio() {
   const { user, profile, refreshProfile } = useAuth();
 
-  const { data: positions, refetch } = useQuery({
+  const { data: positions, refetch, isLoading } = useQuery({
     queryKey: ["positions", user?.id],
     enabled: !!user,
     queryFn: async () => {
@@ -92,7 +92,20 @@ function Portfolio() {
 
         <h2 className="font-display text-xl font-semibold mb-4">Positions</h2>
         <div className="rounded-lg border border-border bg-card divide-y divide-border">
-          {positions && positions.length > 0 ? positions.map((p: any) => {
+          {isLoading ? (
+            Array.from({ length: 4 }).map((_, i) => (
+              <div key={i} className="px-5 py-4 flex items-center justify-between animate-pulse">
+                <div className="flex-1 min-w-0">
+                  <div className="h-4 w-2/3 bg-secondary rounded mb-2" />
+                  <div className="h-3 w-24 bg-secondary rounded" />
+                </div>
+                <div className="text-right shrink-0">
+                  <div className="h-4 w-16 bg-secondary rounded mb-1 ml-auto" />
+                  <div className="h-3 w-12 bg-secondary rounded ml-auto" />
+                </div>
+              </div>
+            ))
+          ) : positions && positions.length > 0 ? positions.map((p: any) => {
             if (!p.market) return null;
             const price = yesPrice(Number(p.market.yes_pool), Number(p.market.no_pool));
             const value = Number(p.yes_shares) * price + Number(p.no_shares) * (1 - price);

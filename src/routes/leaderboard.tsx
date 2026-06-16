@@ -11,7 +11,7 @@ export const Route = createFileRoute("/leaderboard")({
 });
 
 function Leaderboard() {
-  const { data: traders } = useQuery({
+  const { data: traders, isLoading } = useQuery({
     queryKey: ["leaderboard"],
     queryFn: async () => {
       const { data } = await supabase
@@ -33,15 +33,25 @@ function Leaderboard() {
         </div>
         <p className="text-muted-foreground text-sm mb-8">Top traders by credit balance.</p>
         <div className="rounded-lg border border-border bg-card divide-y divide-border">
-          {traders?.map((t, i) => (
-            <div key={t.id} className="px-5 py-4 flex items-center justify-between">
-              <div className="flex items-center gap-4">
-                <span className={`font-display font-bold w-6 text-right ${i < 3 ? "text-primary" : "text-muted-foreground"}`}>{i + 1}</span>
-                <span className="font-medium">@{t.username}</span>
-              </div>
-              <span className="font-mono tabular-nums">{fmtCredits(t.credits)}c</span>
-            </div>
-          ))}
+          {isLoading
+            ? Array.from({ length: 10 }).map((_, i) => (
+                <div key={i} className="px-5 py-4 flex items-center justify-between animate-pulse">
+                  <div className="flex items-center gap-4">
+                    <div className="h-4 w-4 bg-secondary rounded" />
+                    <div className="h-4 w-32 bg-secondary rounded" />
+                  </div>
+                  <div className="h-4 w-16 bg-secondary rounded" />
+                </div>
+              ))
+            : traders?.map((t, i) => (
+                <div key={t.id} className="px-5 py-4 flex items-center justify-between">
+                  <div className="flex items-center gap-4">
+                    <span className={`font-display font-bold w-6 text-right ${i < 3 ? "text-primary" : "text-muted-foreground"}`}>{i + 1}</span>
+                    <span className="font-medium">@{t.username}</span>
+                  </div>
+                  <span className="font-mono tabular-nums">{fmtCredits(t.credits)}c</span>
+                </div>
+              ))}
         </div>
       </div>
     </div>
