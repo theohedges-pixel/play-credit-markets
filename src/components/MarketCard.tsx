@@ -10,12 +10,14 @@ export interface MarketCardData {
   volume: number;
   status: string;
   resolution: string | null;
+  source?: string | null;
   category?: { name: string } | null;
 }
 
 export function MarketCard({ m }: { m: MarketCardData }) {
   const price = yesPrice(Number(m.yes_pool), Number(m.no_pool));
   const isResolved = m.status === "resolved";
+  const fromPoly = m.source === "polymarket";
   return (
     <Link
       to="/markets/$id"
@@ -34,13 +36,18 @@ export function MarketCard({ m }: { m: MarketCardData }) {
         </div>
       </div>
       <div className="flex items-center justify-between text-xs text-muted-foreground">
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-2 flex-wrap">
           {m.category?.name && (
             <span className="px-2 py-0.5 rounded bg-secondary text-foreground/70">
               {m.category.name}
             </span>
           )}
           <span className="font-mono">{fmtCredits(m.volume)} vol</span>
+          {fromPoly && (
+            <span className="text-[10px] uppercase tracking-wider text-muted-foreground/70">
+              via Polymarket
+            </span>
+          )}
         </div>
         <span className={isResolved ? "text-no" : ""}>
           {isResolved ? `Resolved ${m.resolution?.toUpperCase()}` : timeUntil(m.closes_at)}
