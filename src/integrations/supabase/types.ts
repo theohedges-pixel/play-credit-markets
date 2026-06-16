@@ -14,6 +14,24 @@ export type Database = {
   }
   public: {
     Tables: {
+      app_settings: {
+        Row: {
+          key: string
+          updated_at: string
+          value: Json
+        }
+        Insert: {
+          key: string
+          updated_at?: string
+          value: Json
+        }
+        Update: {
+          key?: string
+          updated_at?: string
+          value?: Json
+        }
+        Relationships: []
+      }
       categories: {
         Row: {
           created_at: string
@@ -120,12 +138,14 @@ export type Database = {
           category_id: string | null
           closes_at: string
           created_at: string
-          creator_id: string
+          creator_id: string | null
           description: string | null
           id: string
           no_pool: number
+          polymarket_id: string | null
           resolution: Database["public"]["Enums"]["market_resolution"] | null
           resolved_at: string | null
+          source: string | null
           status: Database["public"]["Enums"]["market_status"]
           title: string
           volume: number
@@ -135,12 +155,14 @@ export type Database = {
           category_id?: string | null
           closes_at: string
           created_at?: string
-          creator_id: string
+          creator_id?: string | null
           description?: string | null
           id?: string
           no_pool?: number
+          polymarket_id?: string | null
           resolution?: Database["public"]["Enums"]["market_resolution"] | null
           resolved_at?: string | null
+          source?: string | null
           status?: Database["public"]["Enums"]["market_status"]
           title: string
           volume?: number
@@ -150,12 +172,14 @@ export type Database = {
           category_id?: string | null
           closes_at?: string
           created_at?: string
-          creator_id?: string
+          creator_id?: string | null
           description?: string | null
           id?: string
           no_pool?: number
+          polymarket_id?: string | null
           resolution?: Database["public"]["Enums"]["market_resolution"] | null
           resolved_at?: string | null
+          source?: string | null
           status?: Database["public"]["Enums"]["market_status"]
           title?: string
           volume?: number
