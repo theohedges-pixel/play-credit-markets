@@ -19,9 +19,14 @@ import { Route as AuthenticatedRouteImport } from './routes/_authenticated'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as UsersUsernameRouteImport } from './routes/users.$username'
 import { Route as MarketsIdRouteImport } from './routes/markets.$id'
+import { Route as AuthenticatedSettingsRouteImport } from './routes/_authenticated/settings'
 import { Route as AuthenticatedPortfolioRouteImport } from './routes/_authenticated/portfolio'
 import { Route as AuthenticatedLearnRouteImport } from './routes/_authenticated/learn'
+import { Route as AuthenticatedGroupBetsRouteImport } from './routes/_authenticated/group-bets'
+import { Route as AuthenticatedFriendsRouteImport } from './routes/_authenticated/friends'
 import { Route as AuthenticatedCreateRouteImport } from './routes/_authenticated/create'
+import { Route as AuthenticatedGroupBetsCreateRouteImport } from './routes/_authenticated/group-bets.create'
+import { Route as AuthenticatedGroupBetsIdRouteImport } from './routes/_authenticated/group-bets.$id'
 import { Route as AuthenticatedAdminSuggestionsRouteImport } from './routes/_authenticated/admin.suggestions'
 import { Route as ApiPublicHooksSyncPolymarketRouteImport } from './routes/api/public/hooks/sync-polymarket'
 import { Route as ApiPublicHooksDiscoverTrendingMarketsRouteImport } from './routes/api/public/hooks/discover-trending-markets'
@@ -75,6 +80,11 @@ const MarketsIdRoute = MarketsIdRouteImport.update({
   path: '/$id',
   getParentRoute: () => MarketsRoute,
 } as any)
+const AuthenticatedSettingsRoute = AuthenticatedSettingsRouteImport.update({
+  id: '/settings',
+  path: '/settings',
+  getParentRoute: () => AuthenticatedRoute,
+} as any)
 const AuthenticatedPortfolioRoute = AuthenticatedPortfolioRouteImport.update({
   id: '/portfolio',
   path: '/portfolio',
@@ -85,11 +95,33 @@ const AuthenticatedLearnRoute = AuthenticatedLearnRouteImport.update({
   path: '/learn',
   getParentRoute: () => AuthenticatedRoute,
 } as any)
+const AuthenticatedGroupBetsRoute = AuthenticatedGroupBetsRouteImport.update({
+  id: '/group-bets',
+  path: '/group-bets',
+  getParentRoute: () => AuthenticatedRoute,
+} as any)
+const AuthenticatedFriendsRoute = AuthenticatedFriendsRouteImport.update({
+  id: '/friends',
+  path: '/friends',
+  getParentRoute: () => AuthenticatedRoute,
+} as any)
 const AuthenticatedCreateRoute = AuthenticatedCreateRouteImport.update({
   id: '/create',
   path: '/create',
   getParentRoute: () => AuthenticatedRoute,
 } as any)
+const AuthenticatedGroupBetsCreateRoute =
+  AuthenticatedGroupBetsCreateRouteImport.update({
+    id: '/create',
+    path: '/create',
+    getParentRoute: () => AuthenticatedGroupBetsRoute,
+  } as any)
+const AuthenticatedGroupBetsIdRoute =
+  AuthenticatedGroupBetsIdRouteImport.update({
+    id: '/$id',
+    path: '/$id',
+    getParentRoute: () => AuthenticatedGroupBetsRoute,
+  } as any)
 const AuthenticatedAdminSuggestionsRoute =
   AuthenticatedAdminSuggestionsRouteImport.update({
     id: '/admin/suggestions',
@@ -118,11 +150,16 @@ export interface FileRoutesByFullPath {
   '/reset-password': typeof ResetPasswordRoute
   '/signup': typeof SignupRoute
   '/create': typeof AuthenticatedCreateRoute
+  '/friends': typeof AuthenticatedFriendsRoute
+  '/group-bets': typeof AuthenticatedGroupBetsRouteWithChildren
   '/learn': typeof AuthenticatedLearnRoute
   '/portfolio': typeof AuthenticatedPortfolioRoute
+  '/settings': typeof AuthenticatedSettingsRoute
   '/markets/$id': typeof MarketsIdRoute
   '/users/$username': typeof UsersUsernameRoute
   '/admin/suggestions': typeof AuthenticatedAdminSuggestionsRoute
+  '/group-bets/$id': typeof AuthenticatedGroupBetsIdRoute
+  '/group-bets/create': typeof AuthenticatedGroupBetsCreateRoute
   '/api/public/hooks/discover-trending-markets': typeof ApiPublicHooksDiscoverTrendingMarketsRoute
   '/api/public/hooks/sync-polymarket': typeof ApiPublicHooksSyncPolymarketRoute
 }
@@ -135,11 +172,16 @@ export interface FileRoutesByTo {
   '/reset-password': typeof ResetPasswordRoute
   '/signup': typeof SignupRoute
   '/create': typeof AuthenticatedCreateRoute
+  '/friends': typeof AuthenticatedFriendsRoute
+  '/group-bets': typeof AuthenticatedGroupBetsRouteWithChildren
   '/learn': typeof AuthenticatedLearnRoute
   '/portfolio': typeof AuthenticatedPortfolioRoute
+  '/settings': typeof AuthenticatedSettingsRoute
   '/markets/$id': typeof MarketsIdRoute
   '/users/$username': typeof UsersUsernameRoute
   '/admin/suggestions': typeof AuthenticatedAdminSuggestionsRoute
+  '/group-bets/$id': typeof AuthenticatedGroupBetsIdRoute
+  '/group-bets/create': typeof AuthenticatedGroupBetsCreateRoute
   '/api/public/hooks/discover-trending-markets': typeof ApiPublicHooksDiscoverTrendingMarketsRoute
   '/api/public/hooks/sync-polymarket': typeof ApiPublicHooksSyncPolymarketRoute
 }
@@ -154,11 +196,16 @@ export interface FileRoutesById {
   '/reset-password': typeof ResetPasswordRoute
   '/signup': typeof SignupRoute
   '/_authenticated/create': typeof AuthenticatedCreateRoute
+  '/_authenticated/friends': typeof AuthenticatedFriendsRoute
+  '/_authenticated/group-bets': typeof AuthenticatedGroupBetsRouteWithChildren
   '/_authenticated/learn': typeof AuthenticatedLearnRoute
   '/_authenticated/portfolio': typeof AuthenticatedPortfolioRoute
+  '/_authenticated/settings': typeof AuthenticatedSettingsRoute
   '/markets/$id': typeof MarketsIdRoute
   '/users/$username': typeof UsersUsernameRoute
   '/_authenticated/admin/suggestions': typeof AuthenticatedAdminSuggestionsRoute
+  '/_authenticated/group-bets/$id': typeof AuthenticatedGroupBetsIdRoute
+  '/_authenticated/group-bets/create': typeof AuthenticatedGroupBetsCreateRoute
   '/api/public/hooks/discover-trending-markets': typeof ApiPublicHooksDiscoverTrendingMarketsRoute
   '/api/public/hooks/sync-polymarket': typeof ApiPublicHooksSyncPolymarketRoute
 }
@@ -173,11 +220,16 @@ export interface FileRouteTypes {
     | '/reset-password'
     | '/signup'
     | '/create'
+    | '/friends'
+    | '/group-bets'
     | '/learn'
     | '/portfolio'
+    | '/settings'
     | '/markets/$id'
     | '/users/$username'
     | '/admin/suggestions'
+    | '/group-bets/$id'
+    | '/group-bets/create'
     | '/api/public/hooks/discover-trending-markets'
     | '/api/public/hooks/sync-polymarket'
   fileRoutesByTo: FileRoutesByTo
@@ -190,11 +242,16 @@ export interface FileRouteTypes {
     | '/reset-password'
     | '/signup'
     | '/create'
+    | '/friends'
+    | '/group-bets'
     | '/learn'
     | '/portfolio'
+    | '/settings'
     | '/markets/$id'
     | '/users/$username'
     | '/admin/suggestions'
+    | '/group-bets/$id'
+    | '/group-bets/create'
     | '/api/public/hooks/discover-trending-markets'
     | '/api/public/hooks/sync-polymarket'
   id:
@@ -208,11 +265,16 @@ export interface FileRouteTypes {
     | '/reset-password'
     | '/signup'
     | '/_authenticated/create'
+    | '/_authenticated/friends'
+    | '/_authenticated/group-bets'
     | '/_authenticated/learn'
     | '/_authenticated/portfolio'
+    | '/_authenticated/settings'
     | '/markets/$id'
     | '/users/$username'
     | '/_authenticated/admin/suggestions'
+    | '/_authenticated/group-bets/$id'
+    | '/_authenticated/group-bets/create'
     | '/api/public/hooks/discover-trending-markets'
     | '/api/public/hooks/sync-polymarket'
   fileRoutesById: FileRoutesById
@@ -303,6 +365,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof MarketsIdRouteImport
       parentRoute: typeof MarketsRoute
     }
+    '/_authenticated/settings': {
+      id: '/_authenticated/settings'
+      path: '/settings'
+      fullPath: '/settings'
+      preLoaderRoute: typeof AuthenticatedSettingsRouteImport
+      parentRoute: typeof AuthenticatedRoute
+    }
     '/_authenticated/portfolio': {
       id: '/_authenticated/portfolio'
       path: '/portfolio'
@@ -317,12 +386,40 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedLearnRouteImport
       parentRoute: typeof AuthenticatedRoute
     }
+    '/_authenticated/group-bets': {
+      id: '/_authenticated/group-bets'
+      path: '/group-bets'
+      fullPath: '/group-bets'
+      preLoaderRoute: typeof AuthenticatedGroupBetsRouteImport
+      parentRoute: typeof AuthenticatedRoute
+    }
+    '/_authenticated/friends': {
+      id: '/_authenticated/friends'
+      path: '/friends'
+      fullPath: '/friends'
+      preLoaderRoute: typeof AuthenticatedFriendsRouteImport
+      parentRoute: typeof AuthenticatedRoute
+    }
     '/_authenticated/create': {
       id: '/_authenticated/create'
       path: '/create'
       fullPath: '/create'
       preLoaderRoute: typeof AuthenticatedCreateRouteImport
       parentRoute: typeof AuthenticatedRoute
+    }
+    '/_authenticated/group-bets/create': {
+      id: '/_authenticated/group-bets/create'
+      path: '/create'
+      fullPath: '/group-bets/create'
+      preLoaderRoute: typeof AuthenticatedGroupBetsCreateRouteImport
+      parentRoute: typeof AuthenticatedGroupBetsRoute
+    }
+    '/_authenticated/group-bets/$id': {
+      id: '/_authenticated/group-bets/$id'
+      path: '/$id'
+      fullPath: '/group-bets/$id'
+      preLoaderRoute: typeof AuthenticatedGroupBetsIdRouteImport
+      parentRoute: typeof AuthenticatedGroupBetsRoute
     }
     '/_authenticated/admin/suggestions': {
       id: '/_authenticated/admin/suggestions'
@@ -348,17 +445,39 @@ declare module '@tanstack/react-router' {
   }
 }
 
+interface AuthenticatedGroupBetsRouteChildren {
+  AuthenticatedGroupBetsIdRoute: typeof AuthenticatedGroupBetsIdRoute
+  AuthenticatedGroupBetsCreateRoute: typeof AuthenticatedGroupBetsCreateRoute
+}
+
+const AuthenticatedGroupBetsRouteChildren: AuthenticatedGroupBetsRouteChildren =
+  {
+    AuthenticatedGroupBetsIdRoute: AuthenticatedGroupBetsIdRoute,
+    AuthenticatedGroupBetsCreateRoute: AuthenticatedGroupBetsCreateRoute,
+  }
+
+const AuthenticatedGroupBetsRouteWithChildren =
+  AuthenticatedGroupBetsRoute._addFileChildren(
+    AuthenticatedGroupBetsRouteChildren,
+  )
+
 interface AuthenticatedRouteChildren {
   AuthenticatedCreateRoute: typeof AuthenticatedCreateRoute
+  AuthenticatedFriendsRoute: typeof AuthenticatedFriendsRoute
+  AuthenticatedGroupBetsRoute: typeof AuthenticatedGroupBetsRouteWithChildren
   AuthenticatedLearnRoute: typeof AuthenticatedLearnRoute
   AuthenticatedPortfolioRoute: typeof AuthenticatedPortfolioRoute
+  AuthenticatedSettingsRoute: typeof AuthenticatedSettingsRoute
   AuthenticatedAdminSuggestionsRoute: typeof AuthenticatedAdminSuggestionsRoute
 }
 
 const AuthenticatedRouteChildren: AuthenticatedRouteChildren = {
   AuthenticatedCreateRoute: AuthenticatedCreateRoute,
+  AuthenticatedFriendsRoute: AuthenticatedFriendsRoute,
+  AuthenticatedGroupBetsRoute: AuthenticatedGroupBetsRouteWithChildren,
   AuthenticatedLearnRoute: AuthenticatedLearnRoute,
   AuthenticatedPortfolioRoute: AuthenticatedPortfolioRoute,
+  AuthenticatedSettingsRoute: AuthenticatedSettingsRoute,
   AuthenticatedAdminSuggestionsRoute: AuthenticatedAdminSuggestionsRoute,
 }
 

@@ -42,8 +42,8 @@ function GroupBetsList() {
     queryKey: ["gb-invited-ids", user?.id],
     enabled: !!user,
     queryFn: async () => {
-      const { data } = await supabase
-        .from("group_bet_invites" as any)
+      const { data } = await (supabase as any)
+        .from("group_bet_invites")
         .select("group_bet_id")
         .eq("invited_user_id", user!.id);
       return ((data ?? []) as Array<{ group_bet_id: string }>).map((r) => r.group_bet_id);
@@ -54,8 +54,8 @@ function GroupBetsList() {
     queryKey: ["gb-part-ids", user?.id],
     enabled: !!user,
     queryFn: async () => {
-      const { data } = await supabase
-        .from("group_bet_participants" as any)
+      const { data } = await (supabase as any)
+        .from("group_bet_participants")
         .select("group_bet_id")
         .eq("user_id", user!.id);
       return ((data ?? []) as Array<{ group_bet_id: string }>).map((r) => r.group_bet_id);
