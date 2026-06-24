@@ -7,6 +7,7 @@ interface Profile {
   username: string;
   credits: number;
   avatar_url: string | null;
+  bio: string | null;
   last_daily_claim: string | null;
 }
 
@@ -28,9 +29,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [loading, setLoading] = useState(true);
 
   const loadProfile = async (uid: string) => {
-    const { data } = await supabase
+    const { data } = await (supabase as any)
       .from("profiles")
-      .select("id, username, credits, avatar_url, last_daily_claim")
+      .select("id, username, credits, avatar_url, bio, last_daily_claim")
       .eq("id", uid)
       .maybeSingle();
     setProfile(data ? { ...data, credits: Number(data.credits) } : null);
