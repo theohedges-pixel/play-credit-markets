@@ -674,6 +674,10 @@ export type Database = {
         }
         Returns: boolean
       }
+      is_group_bet_member: {
+        Args: { _bet_id: string; _user_id: string }
+        Returns: boolean
+      }
       join_group_bet: {
         Args: {
           _credits: number
