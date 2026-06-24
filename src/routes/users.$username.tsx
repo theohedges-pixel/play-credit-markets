@@ -201,8 +201,26 @@ function PublicProfile() {
       <div className="max-w-4xl mx-auto px-6 py-10">
         <div className="flex items-start gap-5 mb-8 flex-wrap">
           <UserAvatar username={profile.username} avatarUrl={profile.avatar_url} userId={profile.id} size="xl" />
-          <div className="min-w-0">
-            <h1 className="font-display text-3xl font-bold">@{profile.username}</h1>
+          <div className="min-w-0 flex-1">
+            <div className="flex items-center gap-3 flex-wrap">
+              <h1 className="font-display text-3xl font-bold">@{profile.username}</h1>
+              {me && me.id !== profile.id && (
+                <>
+                  {!friendship && (
+                    <Button size="sm" onClick={sendRequest}>Add friend</Button>
+                  )}
+                  {friendship?.status === "pending" && friendship.requester_id === me.id && (
+                    <Button size="sm" variant="secondary" disabled>Request sent</Button>
+                  )}
+                  {friendship?.status === "pending" && friendship.addressee_id === me.id && (
+                    <Button size="sm" onClick={acceptRequest}>Accept request</Button>
+                  )}
+                  {friendship?.status === "accepted" && (
+                    <Button size="sm" variant="secondary" onClick={removeFriend}>Friends ✓</Button>
+                  )}
+                </>
+              )}
+            </div>
             <p className="text-xs text-muted-foreground mt-1">
               Member since {format(new Date(profile.created_at), "MMMM yyyy")}
             </p>
@@ -218,7 +236,7 @@ function PublicProfile() {
             hint={resolvedTotal > 0 ? `${resolvedWins}/${resolvedTotal}` : "No resolved"}
           />
           <Stat label="Markets created" value={String(marketsCreated ?? 0)} />
-          <Stat label="Open positions" value={String(positions?.length ?? 0)} />
+          <Stat label="Friends" value={String(friendCount ?? 0)} />
         </div>
 
         <h2 className="font-display text-xl font-semibold mb-4">Recent activity</h2>
