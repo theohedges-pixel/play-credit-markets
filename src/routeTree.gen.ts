@@ -21,7 +21,9 @@ import { Route as MarketsIdRouteImport } from './routes/markets.$id'
 import { Route as AuthenticatedPortfolioRouteImport } from './routes/_authenticated/portfolio'
 import { Route as AuthenticatedLearnRouteImport } from './routes/_authenticated/learn'
 import { Route as AuthenticatedCreateRouteImport } from './routes/_authenticated/create'
+import { Route as AuthenticatedAdminSuggestionsRouteImport } from './routes/_authenticated/admin.suggestions'
 import { Route as ApiPublicHooksSyncPolymarketRouteImport } from './routes/api/public/hooks/sync-polymarket'
+import { Route as ApiPublicHooksDiscoverTrendingMarketsRouteImport } from './routes/api/public/hooks/discover-trending-markets'
 
 const SignupRoute = SignupRouteImport.update({
   id: '/signup',
@@ -82,10 +84,22 @@ const AuthenticatedCreateRoute = AuthenticatedCreateRouteImport.update({
   path: '/create',
   getParentRoute: () => AuthenticatedRoute,
 } as any)
+const AuthenticatedAdminSuggestionsRoute =
+  AuthenticatedAdminSuggestionsRouteImport.update({
+    id: '/admin/suggestions',
+    path: '/admin/suggestions',
+    getParentRoute: () => AuthenticatedRoute,
+  } as any)
 const ApiPublicHooksSyncPolymarketRoute =
   ApiPublicHooksSyncPolymarketRouteImport.update({
     id: '/api/public/hooks/sync-polymarket',
     path: '/api/public/hooks/sync-polymarket',
+    getParentRoute: () => rootRouteImport,
+  } as any)
+const ApiPublicHooksDiscoverTrendingMarketsRoute =
+  ApiPublicHooksDiscoverTrendingMarketsRouteImport.update({
+    id: '/api/public/hooks/discover-trending-markets',
+    path: '/api/public/hooks/discover-trending-markets',
     getParentRoute: () => rootRouteImport,
   } as any)
 
@@ -101,6 +115,8 @@ export interface FileRoutesByFullPath {
   '/learn': typeof AuthenticatedLearnRoute
   '/portfolio': typeof AuthenticatedPortfolioRoute
   '/markets/$id': typeof MarketsIdRoute
+  '/admin/suggestions': typeof AuthenticatedAdminSuggestionsRoute
+  '/api/public/hooks/discover-trending-markets': typeof ApiPublicHooksDiscoverTrendingMarketsRoute
   '/api/public/hooks/sync-polymarket': typeof ApiPublicHooksSyncPolymarketRoute
 }
 export interface FileRoutesByTo {
@@ -115,6 +131,8 @@ export interface FileRoutesByTo {
   '/learn': typeof AuthenticatedLearnRoute
   '/portfolio': typeof AuthenticatedPortfolioRoute
   '/markets/$id': typeof MarketsIdRoute
+  '/admin/suggestions': typeof AuthenticatedAdminSuggestionsRoute
+  '/api/public/hooks/discover-trending-markets': typeof ApiPublicHooksDiscoverTrendingMarketsRoute
   '/api/public/hooks/sync-polymarket': typeof ApiPublicHooksSyncPolymarketRoute
 }
 export interface FileRoutesById {
@@ -131,6 +149,8 @@ export interface FileRoutesById {
   '/_authenticated/learn': typeof AuthenticatedLearnRoute
   '/_authenticated/portfolio': typeof AuthenticatedPortfolioRoute
   '/markets/$id': typeof MarketsIdRoute
+  '/_authenticated/admin/suggestions': typeof AuthenticatedAdminSuggestionsRoute
+  '/api/public/hooks/discover-trending-markets': typeof ApiPublicHooksDiscoverTrendingMarketsRoute
   '/api/public/hooks/sync-polymarket': typeof ApiPublicHooksSyncPolymarketRoute
 }
 export interface FileRouteTypes {
@@ -147,6 +167,8 @@ export interface FileRouteTypes {
     | '/learn'
     | '/portfolio'
     | '/markets/$id'
+    | '/admin/suggestions'
+    | '/api/public/hooks/discover-trending-markets'
     | '/api/public/hooks/sync-polymarket'
   fileRoutesByTo: FileRoutesByTo
   to:
@@ -161,6 +183,8 @@ export interface FileRouteTypes {
     | '/learn'
     | '/portfolio'
     | '/markets/$id'
+    | '/admin/suggestions'
+    | '/api/public/hooks/discover-trending-markets'
     | '/api/public/hooks/sync-polymarket'
   id:
     | '__root__'
@@ -176,6 +200,8 @@ export interface FileRouteTypes {
     | '/_authenticated/learn'
     | '/_authenticated/portfolio'
     | '/markets/$id'
+    | '/_authenticated/admin/suggestions'
+    | '/api/public/hooks/discover-trending-markets'
     | '/api/public/hooks/sync-polymarket'
   fileRoutesById: FileRoutesById
 }
@@ -188,6 +214,7 @@ export interface RootRouteChildren {
   MarketsRoute: typeof MarketsRouteWithChildren
   ResetPasswordRoute: typeof ResetPasswordRoute
   SignupRoute: typeof SignupRoute
+  ApiPublicHooksDiscoverTrendingMarketsRoute: typeof ApiPublicHooksDiscoverTrendingMarketsRoute
   ApiPublicHooksSyncPolymarketRoute: typeof ApiPublicHooksSyncPolymarketRoute
 }
 
@@ -277,11 +304,25 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedCreateRouteImport
       parentRoute: typeof AuthenticatedRoute
     }
+    '/_authenticated/admin/suggestions': {
+      id: '/_authenticated/admin/suggestions'
+      path: '/admin/suggestions'
+      fullPath: '/admin/suggestions'
+      preLoaderRoute: typeof AuthenticatedAdminSuggestionsRouteImport
+      parentRoute: typeof AuthenticatedRoute
+    }
     '/api/public/hooks/sync-polymarket': {
       id: '/api/public/hooks/sync-polymarket'
       path: '/api/public/hooks/sync-polymarket'
       fullPath: '/api/public/hooks/sync-polymarket'
       preLoaderRoute: typeof ApiPublicHooksSyncPolymarketRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/public/hooks/discover-trending-markets': {
+      id: '/api/public/hooks/discover-trending-markets'
+      path: '/api/public/hooks/discover-trending-markets'
+      fullPath: '/api/public/hooks/discover-trending-markets'
+      preLoaderRoute: typeof ApiPublicHooksDiscoverTrendingMarketsRouteImport
       parentRoute: typeof rootRouteImport
     }
   }
@@ -291,12 +332,14 @@ interface AuthenticatedRouteChildren {
   AuthenticatedCreateRoute: typeof AuthenticatedCreateRoute
   AuthenticatedLearnRoute: typeof AuthenticatedLearnRoute
   AuthenticatedPortfolioRoute: typeof AuthenticatedPortfolioRoute
+  AuthenticatedAdminSuggestionsRoute: typeof AuthenticatedAdminSuggestionsRoute
 }
 
 const AuthenticatedRouteChildren: AuthenticatedRouteChildren = {
   AuthenticatedCreateRoute: AuthenticatedCreateRoute,
   AuthenticatedLearnRoute: AuthenticatedLearnRoute,
   AuthenticatedPortfolioRoute: AuthenticatedPortfolioRoute,
+  AuthenticatedAdminSuggestionsRoute: AuthenticatedAdminSuggestionsRoute,
 }
 
 const AuthenticatedRouteWithChildren = AuthenticatedRoute._addFileChildren(
@@ -323,6 +366,8 @@ const rootRouteChildren: RootRouteChildren = {
   MarketsRoute: MarketsRouteWithChildren,
   ResetPasswordRoute: ResetPasswordRoute,
   SignupRoute: SignupRoute,
+  ApiPublicHooksDiscoverTrendingMarketsRoute:
+    ApiPublicHooksDiscoverTrendingMarketsRoute,
   ApiPublicHooksSyncPolymarketRoute: ApiPublicHooksSyncPolymarketRoute,
 }
 export const routeTree = rootRouteImport

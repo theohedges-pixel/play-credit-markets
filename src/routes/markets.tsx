@@ -1,4 +1,4 @@
-import { createFileRoute } from "@tanstack/react-router";
+import { createFileRoute, Link } from "@tanstack/react-router";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
 import { useState } from "react";
@@ -130,14 +130,22 @@ function MarketsPage() {
               </span>
             )}
             {isAdmin && (
-              <Button onClick={onSyncNow} disabled={syncing} variant="outline" size="sm" className="gap-2">
-                {syncing ? (
-                  <Loader2 size={14} className="animate-spin" />
-                ) : (
-                  <RefreshCw size={14} />
-                )}
-                {syncing ? "Syncing…" : "Sync now"}
-              </Button>
+              <>
+                <Link to="/admin/suggestions">
+                  <Button variant="outline" size="sm" className="gap-2">
+                    <Sparkles size={14} className="text-primary" />
+                    Suggestions
+                  </Button>
+                </Link>
+                <Button onClick={onSyncNow} disabled={syncing} variant="outline" size="sm" className="gap-2">
+                  {syncing ? (
+                    <Loader2 size={14} className="animate-spin" />
+                  ) : (
+                    <RefreshCw size={14} />
+                  )}
+                  {syncing ? "Syncing…" : "Sync now"}
+                </Button>
+              </>
             )}
             {user && (
               <Button onClick={onImport} disabled={importing} variant="outline" className="gap-2">
