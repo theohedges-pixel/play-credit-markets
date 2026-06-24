@@ -1,4 +1,4 @@
-import { createFileRoute, Link, notFound } from "@tanstack/react-router";
+import { createFileRoute, Link } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
 import { format, formatDistanceToNow } from "date-fns";
 import { supabase } from "@/integrations/supabase/client";
@@ -14,20 +14,6 @@ export const Route = createFileRoute("/users/$username")({
     ],
   }),
   component: PublicProfile,
-  notFoundComponent: () => (
-    <div>
-      <Header />
-      <div className="max-w-3xl mx-auto px-6 py-20 text-center">
-        <h1 className="font-display text-3xl font-bold mb-2">User not found</h1>
-        <p className="text-muted-foreground">
-          No one trades under that handle.{" "}
-          <Link to="/leaderboard" className="text-primary hover:underline">
-            See the leaderboard
-          </Link>
-        </p>
-      </div>
-    </div>
-  ),
 });
 
 function PublicProfile() {
@@ -41,7 +27,6 @@ function PublicProfile() {
         .select("id, username, credits, avatar_url, bio, created_at")
         .eq("username", username)
         .maybeSingle();
-      if (!data) throw notFound();
       return data as {
         id: string;
         username: string;
@@ -49,7 +34,7 @@ function PublicProfile() {
         avatar_url: string | null;
         bio: string | null;
         created_at: string;
-      };
+      } | null;
     },
   });
 
