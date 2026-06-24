@@ -78,7 +78,7 @@ function PublicProfile() {
     },
   });
 
-  if (isLoading || !profile) {
+  if (isLoading) {
     return (
       <div>
         <Header />
@@ -90,6 +90,22 @@ function PublicProfile() {
               <div className="h-3 w-32 bg-secondary rounded" />
             </div>
           </div>
+        </div>
+      </div>
+    );
+  }
+  if (!profile) {
+    return (
+      <div>
+        <Header />
+        <div className="max-w-3xl mx-auto px-6 py-20 text-center">
+          <h1 className="font-display text-3xl font-bold mb-2">User not found</h1>
+          <p className="text-muted-foreground">
+            No one trades under @{username}.{" "}
+            <Link to="/leaderboard" className="text-primary hover:underline">
+              See the leaderboard
+            </Link>
+          </p>
         </div>
       </div>
     );
