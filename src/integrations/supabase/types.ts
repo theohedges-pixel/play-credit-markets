@@ -56,6 +56,180 @@ export type Database = {
         }
         Relationships: []
       }
+      friendships: {
+        Row: {
+          addressee_id: string
+          created_at: string
+          id: string
+          requester_id: string
+          status: Database["public"]["Enums"]["friendship_status"]
+          updated_at: string
+        }
+        Insert: {
+          addressee_id: string
+          created_at?: string
+          id?: string
+          requester_id: string
+          status?: Database["public"]["Enums"]["friendship_status"]
+          updated_at?: string
+        }
+        Update: {
+          addressee_id?: string
+          created_at?: string
+          id?: string
+          requester_id?: string
+          status?: Database["public"]["Enums"]["friendship_status"]
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "friendships_addressee_id_fkey"
+            columns: ["addressee_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "friendships_requester_id_fkey"
+            columns: ["requester_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      group_bet_invites: {
+        Row: {
+          created_at: string
+          group_bet_id: string
+          id: string
+          invited_user_id: string
+          status: Database["public"]["Enums"]["invite_status"]
+        }
+        Insert: {
+          created_at?: string
+          group_bet_id: string
+          id?: string
+          invited_user_id: string
+          status?: Database["public"]["Enums"]["invite_status"]
+        }
+        Update: {
+          created_at?: string
+          group_bet_id?: string
+          id?: string
+          invited_user_id?: string
+          status?: Database["public"]["Enums"]["invite_status"]
+        }
+        Relationships: [
+          {
+            foreignKeyName: "group_bet_invites_group_bet_id_fkey"
+            columns: ["group_bet_id"]
+            isOneToOne: false
+            referencedRelation: "group_bets"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "group_bet_invites_invited_user_id_fkey"
+            columns: ["invited_user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      group_bet_participants: {
+        Row: {
+          created_at: string
+          credits_wagered: number
+          group_bet_id: string
+          id: string
+          payout: number | null
+          side: Database["public"]["Enums"]["trade_side"]
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          credits_wagered: number
+          group_bet_id: string
+          id?: string
+          payout?: number | null
+          side: Database["public"]["Enums"]["trade_side"]
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          credits_wagered?: number
+          group_bet_id?: string
+          id?: string
+          payout?: number | null
+          side?: Database["public"]["Enums"]["trade_side"]
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "group_bet_participants_group_bet_id_fkey"
+            columns: ["group_bet_id"]
+            isOneToOne: false
+            referencedRelation: "group_bets"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "group_bet_participants_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      group_bets: {
+        Row: {
+          closes_at: string
+          created_at: string
+          creator_id: string
+          description: string | null
+          id: string
+          resolution: Database["public"]["Enums"]["group_bet_resolution"] | null
+          resolved_at: string | null
+          status: Database["public"]["Enums"]["group_bet_status"]
+          title: string
+        }
+        Insert: {
+          closes_at: string
+          created_at?: string
+          creator_id: string
+          description?: string | null
+          id?: string
+          resolution?:
+            | Database["public"]["Enums"]["group_bet_resolution"]
+            | null
+          resolved_at?: string | null
+          status?: Database["public"]["Enums"]["group_bet_status"]
+          title: string
+        }
+        Update: {
+          closes_at?: string
+          created_at?: string
+          creator_id?: string
+          description?: string | null
+          id?: string
+          resolution?:
+            | Database["public"]["Enums"]["group_bet_resolution"]
+            | null
+          resolved_at?: string | null
+          status?: Database["public"]["Enums"]["group_bet_status"]
+          title?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "group_bets_creator_id_fkey"
+            columns: ["creator_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       learning_completions: {
         Row: {
           completed_at: string
@@ -249,6 +423,41 @@ export type Database = {
           {
             foreignKeyName: "markets_creator_id_fkey"
             columns: ["creator_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      notifications: {
+        Row: {
+          created_at: string
+          id: string
+          kind: string
+          payload: Json
+          read_at: string | null
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          kind: string
+          payload?: Json
+          read_at?: string | null
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          kind?: string
+          payload?: Json
+          read_at?: string | null
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "notifications_user_id_fkey"
+            columns: ["user_id"]
             isOneToOne: false
             referencedRelation: "profiles"
             referencedColumns: ["id"]
@@ -449,6 +658,15 @@ export type Database = {
           new_balance: number
         }[]
       }
+      create_group_bet: {
+        Args: {
+          _closes_at: string
+          _description: string
+          _friend_ids: string[]
+          _title: string
+        }
+        Returns: string
+      }
       has_role: {
         Args: {
           _role: Database["public"]["Enums"]["app_role"]
@@ -456,6 +674,16 @@ export type Database = {
         }
         Returns: boolean
       }
+      join_group_bet: {
+        Args: {
+          _credits: number
+          _group_bet_id: string
+          _side: Database["public"]["Enums"]["trade_side"]
+        }
+        Returns: undefined
+      }
+      mark_all_notifications_read: { Args: never; Returns: undefined }
+      mark_notification_read: { Args: { _id: string }; Returns: undefined }
       place_trade: {
         Args: {
           _credits: number
@@ -468,6 +696,14 @@ export type Database = {
         Args: { _suggestion_id: string }
         Returns: undefined
       }
+      remove_friend: { Args: { _friendship_id: string }; Returns: undefined }
+      resolve_group_bet: {
+        Args: {
+          _group_bet_id: string
+          _resolution: Database["public"]["Enums"]["group_bet_resolution"]
+        }
+        Returns: undefined
+      }
       resolve_market: {
         Args: {
           _market_id: string
@@ -475,9 +711,18 @@ export type Database = {
         }
         Returns: Json
       }
+      respond_to_friend_request: {
+        Args: { _accept: boolean; _friendship_id: string }
+        Returns: undefined
+      }
+      send_friend_request: { Args: { _addressee_id: string }; Returns: string }
     }
     Enums: {
       app_role: "admin" | "user"
+      friendship_status: "pending" | "accepted" | "declined"
+      group_bet_resolution: "yes" | "no" | "invalid"
+      group_bet_status: "open" | "closed" | "resolved"
+      invite_status: "pending" | "accepted" | "declined"
       market_origin: "user" | "polymarket_import" | "ai_suggested"
       market_resolution: "yes" | "no" | "invalid"
       market_status: "open" | "closed" | "resolved"
@@ -612,6 +857,10 @@ export const Constants = {
   public: {
     Enums: {
       app_role: ["admin", "user"],
+      friendship_status: ["pending", "accepted", "declined"],
+      group_bet_resolution: ["yes", "no", "invalid"],
+      group_bet_status: ["open", "closed", "resolved"],
+      invite_status: ["pending", "accepted", "declined"],
       market_origin: ["user", "polymarket_import", "ai_suggested"],
       market_resolution: ["yes", "no", "invalid"],
       market_status: ["open", "closed", "resolved"],

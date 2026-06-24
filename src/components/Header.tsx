@@ -4,6 +4,7 @@ import { Button } from "@/components/ui/button";
 import { fmtCredits } from "@/lib/format";
 import { Coins, TrendingUp } from "lucide-react";
 import { UserAvatar } from "@/components/UserAvatar";
+import { NotificationsBell } from "@/components/NotificationsBell";
 
 export function Header() {
   const { user, profile, signOut } = useAuth();
@@ -35,6 +36,12 @@ export function Header() {
                 <Link to="/learn" className="hover:text-foreground" activeProps={{ className: "text-foreground" }}>
                   Learn
                 </Link>
+                <Link to="/friends" className="hover:text-foreground" activeProps={{ className: "text-foreground" }}>
+                  Friends
+                </Link>
+                <Link to="/group-bets" className="hover:text-foreground" activeProps={{ className: "text-foreground" }}>
+                  Group bets
+                </Link>
               </>
             )}
           </nav>
@@ -42,13 +49,13 @@ export function Header() {
         <div className="flex items-center gap-3">
           {user && profile ? (
             <>
+              <NotificationsBell />
               <div className="hidden sm:flex items-center gap-1.5 px-3 py-1.5 rounded-md bg-secondary text-sm font-mono">
                 <Coins size={14} className="text-primary" />
                 <span>{fmtCredits(profile.credits)}</span>
               </div>
               <Link
-                to="/users/$username"
-                params={{ username: profile.username }}
+                to="/settings"
                 className="text-sm text-muted-foreground hover:text-foreground flex items-center gap-2"
               >
                 <UserAvatar
