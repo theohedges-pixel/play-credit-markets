@@ -104,7 +104,7 @@ function MarketsPage() {
       let query = supabase
         .from("markets")
         .select(
-          "id, title, closes_at, yes_pool, no_pool, volume, status, resolution, source, category:categories(name)",
+          "id, title, closes_at, yes_pool, no_pool, volume, status, resolution, source, created_via, category:categories(name)",
         )
         .order("created_at", { ascending: false });
       if (cat) query = query.eq("category_id", cat);
