@@ -1,10 +1,12 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
+import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/lib/auth";
 import { Header } from "@/components/Header";
 import { Button } from "@/components/ui/button";
-import { fmtCredits, fmtPct, yesPrice } from "@/lib/format";
+import { Textarea } from "@/components/ui/textarea";
+import { fmtCredits, yesPrice } from "@/lib/format";
 import { toast } from "sonner";
 import { Coins, Gift } from "lucide-react";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
@@ -16,6 +18,24 @@ export const Route = createFileRoute("/_authenticated/portfolio")({
 
 function Portfolio() {
   const { user, profile, refreshProfile } = useAuth();
+  const [bio, setBio] = useState(profile?.bio ?? "");
+  const [savingBio, setSavingBio] = useState(false);
+
+  useEffect(() => { setBio(profile?.bio ?? ""); }, [profile?.bio]);
+
+  const saveBio = async () => {
+    if (!user) return;
+    setSavingBio(true);
+    const { error } = await supabase
+      .from("profiles")
+      .update({ bio: bio.trim() || null })
+      .eq("id", user.id);
+    setSavingBio(false);
+    if (error) return toast.error(error.message);
+    toast.success("Bio updated");
+    refreshProfile();
+  };
+
 
   const { data: positions, refetch, isLoading } = useQuery({
     queryKey: ["positions", user?.id],
@@ -52,7 +72,33 @@ function Portfolio() {
       <Header />
       <div className="max-w-5xl mx-auto px-6 py-10">
         <h1 className="font-display text-4xl font-bold mb-1">Portfolio</h1>
-        <p className="text-muted-foreground text-sm mb-8">@{profile?.username}</p>
+        <p className="text-muted-foreground text-sm mb-6">
+          <Link
+            to="/users/$username"
+            params={{ username: profile?.username ?? "" }}
+            className="hover:text-foreground"
+          >
+            @{profile?.username}
+          </Link>
+        </p>
+
+        <div className="rounded-lg border border-border bg-card p-5 mb-8">
+          <div className="flex items-center justify-between mb-2">
+            <label className="text-xs uppercase tracking-wider text-muted-foreground">Bio</label>
+            <span className="text-[10px] text-muted-foreground tabular-nums">{bio.length}/280</span>
+          </div>
+          <Textarea
+            value={bio}
+            onChange={(e) => setBio(e.target.value.slice(0, 280))}
+            placeholder="A short bio shown on your public profile…"
+            rows={2}
+            className="mb-3"
+          />
+          <Button size="sm" onClick={saveBio} disabled={savingBio || bio === (profile?.bio ?? "")}>
+            {savingBio ? "Saving…" : "Save bio"}
+          </Button>
+        </div>
+
 
         <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-8">
           <div className="rounded-lg border border-border bg-card p-5">

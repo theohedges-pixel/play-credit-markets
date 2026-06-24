@@ -11,6 +11,7 @@ export interface MarketCardData {
   status: string;
   resolution: string | null;
   source?: string | null;
+  created_via?: string | null;
   category?: { name: string } | null;
 }
 
@@ -18,6 +19,7 @@ export function MarketCard({ m }: { m: MarketCardData }) {
   const price = yesPrice(Number(m.yes_pool), Number(m.no_pool));
   const isResolved = m.status === "resolved";
   const fromPoly = m.source === "polymarket";
+  const aiSuggested = m.created_via === "ai_suggested";
   return (
     <Link
       to="/markets/$id"
@@ -46,6 +48,11 @@ export function MarketCard({ m }: { m: MarketCardData }) {
           {fromPoly && (
             <span className="text-[10px] uppercase tracking-wider text-muted-foreground/70">
               via Polymarket
+            </span>
+          )}
+          {aiSuggested && (
+            <span className="text-[10px] uppercase tracking-wider text-primary/80 inline-flex items-center gap-1">
+              ✨ AI suggested
             </span>
           )}
         </div>

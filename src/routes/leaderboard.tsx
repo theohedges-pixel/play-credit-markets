@@ -1,7 +1,8 @@
-import { createFileRoute } from "@tanstack/react-router";
+import { createFileRoute, Link } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Header } from "@/components/Header";
+import { UserAvatar } from "@/components/UserAvatar";
 import { fmtCredits } from "@/lib/format";
 import { Trophy } from "lucide-react";
 
@@ -16,7 +17,7 @@ function Leaderboard() {
     queryFn: async () => {
       const { data } = await supabase
         .from("profiles")
-        .select("id, username, credits")
+        .select("id, username, credits, avatar_url")
         .order("credits", { ascending: false })
         .limit(50);
       return data ?? [];
@@ -43,14 +44,20 @@ function Leaderboard() {
                   <div className="h-4 w-16 bg-secondary rounded" />
                 </div>
               ))
-            : traders?.map((t, i) => (
-                <div key={t.id} className="px-5 py-4 flex items-center justify-between">
+            : traders?.map((t: any, i) => (
+                <Link
+                  key={t.id}
+                  to="/users/$username"
+                  params={{ username: t.username }}
+                  className="px-5 py-4 flex items-center justify-between hover:bg-secondary/30 transition"
+                >
                   <div className="flex items-center gap-4">
                     <span className={`font-display font-bold w-6 text-right ${i < 3 ? "text-primary" : "text-muted-foreground"}`}>{i + 1}</span>
+                    <UserAvatar username={t.username} avatarUrl={t.avatar_url} userId={t.id} size="md" />
                     <span className="font-medium">@{t.username}</span>
                   </div>
                   <span className="font-mono tabular-nums">{fmtCredits(t.credits)}c</span>
-                </div>
+                </Link>
               ))}
         </div>
       </div>
