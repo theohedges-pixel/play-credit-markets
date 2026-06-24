@@ -17,6 +17,7 @@ import { Route as LeaderboardRouteImport } from './routes/leaderboard'
 import { Route as ForgotPasswordRouteImport } from './routes/forgot-password'
 import { Route as AuthenticatedRouteImport } from './routes/_authenticated'
 import { Route as IndexRouteImport } from './routes/index'
+import { Route as UsersUsernameRouteImport } from './routes/users.$username'
 import { Route as MarketsIdRouteImport } from './routes/markets.$id'
 import { Route as AuthenticatedPortfolioRouteImport } from './routes/_authenticated/portfolio'
 import { Route as AuthenticatedLearnRouteImport } from './routes/_authenticated/learn'
@@ -62,6 +63,11 @@ const AuthenticatedRoute = AuthenticatedRouteImport.update({
 const IndexRoute = IndexRouteImport.update({
   id: '/',
   path: '/',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const UsersUsernameRoute = UsersUsernameRouteImport.update({
+  id: '/users/$username',
+  path: '/users/$username',
   getParentRoute: () => rootRouteImport,
 } as any)
 const MarketsIdRoute = MarketsIdRouteImport.update({
@@ -115,6 +121,7 @@ export interface FileRoutesByFullPath {
   '/learn': typeof AuthenticatedLearnRoute
   '/portfolio': typeof AuthenticatedPortfolioRoute
   '/markets/$id': typeof MarketsIdRoute
+  '/users/$username': typeof UsersUsernameRoute
   '/admin/suggestions': typeof AuthenticatedAdminSuggestionsRoute
   '/api/public/hooks/discover-trending-markets': typeof ApiPublicHooksDiscoverTrendingMarketsRoute
   '/api/public/hooks/sync-polymarket': typeof ApiPublicHooksSyncPolymarketRoute
@@ -131,6 +138,7 @@ export interface FileRoutesByTo {
   '/learn': typeof AuthenticatedLearnRoute
   '/portfolio': typeof AuthenticatedPortfolioRoute
   '/markets/$id': typeof MarketsIdRoute
+  '/users/$username': typeof UsersUsernameRoute
   '/admin/suggestions': typeof AuthenticatedAdminSuggestionsRoute
   '/api/public/hooks/discover-trending-markets': typeof ApiPublicHooksDiscoverTrendingMarketsRoute
   '/api/public/hooks/sync-polymarket': typeof ApiPublicHooksSyncPolymarketRoute
@@ -149,6 +157,7 @@ export interface FileRoutesById {
   '/_authenticated/learn': typeof AuthenticatedLearnRoute
   '/_authenticated/portfolio': typeof AuthenticatedPortfolioRoute
   '/markets/$id': typeof MarketsIdRoute
+  '/users/$username': typeof UsersUsernameRoute
   '/_authenticated/admin/suggestions': typeof AuthenticatedAdminSuggestionsRoute
   '/api/public/hooks/discover-trending-markets': typeof ApiPublicHooksDiscoverTrendingMarketsRoute
   '/api/public/hooks/sync-polymarket': typeof ApiPublicHooksSyncPolymarketRoute
@@ -167,6 +176,7 @@ export interface FileRouteTypes {
     | '/learn'
     | '/portfolio'
     | '/markets/$id'
+    | '/users/$username'
     | '/admin/suggestions'
     | '/api/public/hooks/discover-trending-markets'
     | '/api/public/hooks/sync-polymarket'
@@ -183,6 +193,7 @@ export interface FileRouteTypes {
     | '/learn'
     | '/portfolio'
     | '/markets/$id'
+    | '/users/$username'
     | '/admin/suggestions'
     | '/api/public/hooks/discover-trending-markets'
     | '/api/public/hooks/sync-polymarket'
@@ -200,6 +211,7 @@ export interface FileRouteTypes {
     | '/_authenticated/learn'
     | '/_authenticated/portfolio'
     | '/markets/$id'
+    | '/users/$username'
     | '/_authenticated/admin/suggestions'
     | '/api/public/hooks/discover-trending-markets'
     | '/api/public/hooks/sync-polymarket'
@@ -214,6 +226,7 @@ export interface RootRouteChildren {
   MarketsRoute: typeof MarketsRouteWithChildren
   ResetPasswordRoute: typeof ResetPasswordRoute
   SignupRoute: typeof SignupRoute
+  UsersUsernameRoute: typeof UsersUsernameRoute
   ApiPublicHooksDiscoverTrendingMarketsRoute: typeof ApiPublicHooksDiscoverTrendingMarketsRoute
   ApiPublicHooksSyncPolymarketRoute: typeof ApiPublicHooksSyncPolymarketRoute
 }
@@ -274,6 +287,13 @@ declare module '@tanstack/react-router' {
       path: '/'
       fullPath: '/'
       preLoaderRoute: typeof IndexRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/users/$username': {
+      id: '/users/$username'
+      path: '/users/$username'
+      fullPath: '/users/$username'
+      preLoaderRoute: typeof UsersUsernameRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/markets/$id': {
@@ -366,6 +386,7 @@ const rootRouteChildren: RootRouteChildren = {
   MarketsRoute: MarketsRouteWithChildren,
   ResetPasswordRoute: ResetPasswordRoute,
   SignupRoute: SignupRoute,
+  UsersUsernameRoute: UsersUsernameRoute,
   ApiPublicHooksDiscoverTrendingMarketsRoute:
     ApiPublicHooksDiscoverTrendingMarketsRoute,
   ApiPublicHooksSyncPolymarketRoute: ApiPublicHooksSyncPolymarketRoute,

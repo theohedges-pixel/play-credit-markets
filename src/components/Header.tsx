@@ -3,6 +3,7 @@ import { useAuth } from "@/lib/auth";
 import { Button } from "@/components/ui/button";
 import { fmtCredits } from "@/lib/format";
 import { Coins, TrendingUp } from "lucide-react";
+import { UserAvatar } from "@/components/UserAvatar";
 
 export function Header() {
   const { user, profile, signOut } = useAuth();
@@ -45,7 +46,17 @@ export function Header() {
                 <Coins size={14} className="text-primary" />
                 <span>{fmtCredits(profile.credits)}</span>
               </div>
-              <Link to="/portfolio" className="text-sm text-muted-foreground hover:text-foreground">
+              <Link
+                to="/users/$username"
+                params={{ username: profile.username }}
+                className="text-sm text-muted-foreground hover:text-foreground flex items-center gap-2"
+              >
+                <UserAvatar
+                  username={profile.username}
+                  avatarUrl={profile.avatar_url}
+                  userId={user.id}
+                  size="sm"
+                />
                 @{profile.username}
               </Link>
               <Button size="sm" variant="ghost" onClick={() => signOut().then(() => navigate({ to: "/" }))}>
