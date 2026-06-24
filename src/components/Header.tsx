@@ -4,6 +4,7 @@ import { Button } from "@/components/ui/button";
 import { fmtCredits } from "@/lib/format";
 import { Coins, TrendingUp } from "lucide-react";
 import { UserAvatar } from "@/components/UserAvatar";
+import { NotificationsBell } from "@/components/NotificationsBell";
 
 export function Header() {
   const { user, profile, signOut } = useAuth();
