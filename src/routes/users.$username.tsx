@@ -83,6 +83,66 @@ function PublicProfile() {
     },
   });
 
+  const { data: friendCount } = useQuery({
+    queryKey: ["public-friend-count", uid],
+    enabled: !!uid,
+    queryFn: async () => {
+      const { count } = await (supabase as any)
+        .from("friendships")
+        .select("id", { count: "exact", head: true })
+        .eq("status", "accepted")
+        .or(`requester_id.eq.${uid},addressee_id.eq.${uid}`);
+      return count ?? 0;
+    },
+  });
+
+  const { data: friendship, refetch: refetchFriendship } = useQuery({
+    queryKey: ["friendship-with", me?.id, uid],
+    enabled: !!me && !!uid && me.id !== uid,
+    queryFn: async () => {
+      const { data } = await (supabase as any)
+        .from("friendships")
+        .select("id, status, requester_id, addressee_id")
+        .or(
+          `and(requester_id.eq.${me!.id},addressee_id.eq.${uid}),and(requester_id.eq.${uid},addressee_id.eq.${me!.id})`,
+        )
+        .maybeSingle();
+      return data as
+        | { id: string; status: "pending" | "accepted" | "declined"; requester_id: string; addressee_id: string }
+        | null;
+    },
+  });
+
+  const sendRequest = async () => {
+    if (!uid) return;
+    const { error } = await supabase.rpc("send_friend_request" as any, { _addressee_id: uid });
+    if (error) return toast.error(error.message);
+    toast.success("Friend request sent");
+    refetchFriendship();
+  };
+
+  const acceptRequest = async () => {
+    if (!friendship) return;
+    const { error } = await supabase.rpc("respond_to_friend_request" as any, {
+      _friendship_id: friendship.id,
+      _accept: true,
+    });
+    if (error) return toast.error(error.message);
+    toast.success("Friends!");
+    refetchFriendship();
+    qc.invalidateQueries({ queryKey: ["public-friend-count", uid] });
+  };
+
+  const removeFriend = async () => {
+    if (!friendship) return;
+    const { error } = await supabase.rpc("remove_friend" as any, { _friendship_id: friendship.id });
+    if (error) return toast.error(error.message);
+    toast.success("Removed");
+    refetchFriendship();
+    qc.invalidateQueries({ queryKey: ["public-friend-count", uid] });
+  };
+
+
   if (isLoading) {
     return (
       <div>
