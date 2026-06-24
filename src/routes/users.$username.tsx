@@ -21,6 +21,8 @@ export const Route = createFileRoute("/users/$username")({
 
 function PublicProfile() {
   const { username } = Route.useParams();
+  const { user: me } = useAuth();
+  const qc = useQueryClient();
 
   const { data: profile, isLoading } = useQuery({
     queryKey: ["public-profile", username],
