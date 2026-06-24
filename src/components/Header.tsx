@@ -49,13 +49,13 @@ export function Header() {
         <div className="flex items-center gap-3">
           {user && profile ? (
             <>
+              <NotificationsBell />
               <div className="hidden sm:flex items-center gap-1.5 px-3 py-1.5 rounded-md bg-secondary text-sm font-mono">
                 <Coins size={14} className="text-primary" />
                 <span>{fmtCredits(profile.credits)}</span>
               </div>
               <Link
-                to="/users/$username"
-                params={{ username: profile.username }}
+                to="/settings"
                 className="text-sm text-muted-foreground hover:text-foreground flex items-center gap-2"
               >
                 <UserAvatar
