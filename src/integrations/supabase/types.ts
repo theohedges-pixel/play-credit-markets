@@ -133,11 +133,62 @@ export type Database = {
         }
         Relationships: []
       }
+      market_suggestions: {
+        Row: {
+          category_id: string | null
+          created_at: string
+          description: string | null
+          id: string
+          reviewed_at: string | null
+          reviewed_by: string | null
+          source_summary: string | null
+          status: Database["public"]["Enums"]["suggestion_status"]
+          suggested_closes_at: string
+          title: string
+          updated_at: string
+        }
+        Insert: {
+          category_id?: string | null
+          created_at?: string
+          description?: string | null
+          id?: string
+          reviewed_at?: string | null
+          reviewed_by?: string | null
+          source_summary?: string | null
+          status?: Database["public"]["Enums"]["suggestion_status"]
+          suggested_closes_at: string
+          title: string
+          updated_at?: string
+        }
+        Update: {
+          category_id?: string | null
+          created_at?: string
+          description?: string | null
+          id?: string
+          reviewed_at?: string | null
+          reviewed_by?: string | null
+          source_summary?: string | null
+          status?: Database["public"]["Enums"]["suggestion_status"]
+          suggested_closes_at?: string
+          title?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "market_suggestions_category_id_fkey"
+            columns: ["category_id"]
+            isOneToOne: false
+            referencedRelation: "categories"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       markets: {
         Row: {
           category_id: string | null
           closes_at: string
           created_at: string
+          created_via: Database["public"]["Enums"]["market_origin"]
           creator_id: string | null
           description: string | null
           id: string
@@ -155,6 +206,7 @@ export type Database = {
           category_id?: string | null
           closes_at: string
           created_at?: string
+          created_via?: Database["public"]["Enums"]["market_origin"]
           creator_id?: string | null
           description?: string | null
           id?: string
@@ -172,6 +224,7 @@ export type Database = {
           category_id?: string | null
           closes_at?: string
           created_at?: string
+          created_via?: Database["public"]["Enums"]["market_origin"]
           creator_id?: string | null
           description?: string | null
           id?: string
@@ -374,6 +427,16 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      approve_market_suggestion: {
+        Args: {
+          _category_id?: string
+          _closes_at?: string
+          _description?: string
+          _suggestion_id: string
+          _title?: string
+        }
+        Returns: string
+      }
       auto_close_markets: { Args: never; Returns: undefined }
       claim_daily_credits: { Args: never; Returns: Json }
       claim_learning_reward: {
@@ -398,6 +461,10 @@ export type Database = {
         }
         Returns: Json
       }
+      reject_market_suggestion: {
+        Args: { _suggestion_id: string }
+        Returns: undefined
+      }
       resolve_market: {
         Args: {
           _market_id: string
@@ -408,8 +475,10 @@ export type Database = {
     }
     Enums: {
       app_role: "admin" | "user"
+      market_origin: "user" | "polymarket_import" | "ai_suggested"
       market_resolution: "yes" | "no" | "invalid"
       market_status: "open" | "closed" | "resolved"
+      suggestion_status: "pending" | "approved" | "rejected"
       trade_action: "buy" | "sell"
       trade_side: "yes" | "no"
     }
@@ -540,8 +609,10 @@ export const Constants = {
   public: {
     Enums: {
       app_role: ["admin", "user"],
+      market_origin: ["user", "polymarket_import", "ai_suggested"],
       market_resolution: ["yes", "no", "invalid"],
       market_status: ["open", "closed", "resolved"],
+      suggestion_status: ["pending", "approved", "rejected"],
       trade_action: ["buy", "sell"],
       trade_side: ["yes", "no"],
     },
