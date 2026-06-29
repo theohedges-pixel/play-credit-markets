@@ -20,6 +20,7 @@ export function MarketCard({ m }: { m: MarketCardData }) {
   const isResolved = m.status === "resolved";
   const fromPoly = m.source === "polymarket";
   const aiSuggested = m.created_via === "ai_suggested";
+  const aiGenerated = m.created_via === "ai_generated";
   return (
     <Link
       to="/markets/$id"
@@ -53,6 +54,11 @@ export function MarketCard({ m }: { m: MarketCardData }) {
           {aiSuggested && (
             <span className="text-[10px] uppercase tracking-wider text-primary/80 inline-flex items-center gap-1">
               ✨ AI suggested
+            </span>
+          )}
+          {aiGenerated && (
+            <span className="text-[10px] uppercase tracking-wider px-1.5 py-0.5 rounded border border-border text-muted-foreground/80">
+              AI
             </span>
           )}
         </div>
