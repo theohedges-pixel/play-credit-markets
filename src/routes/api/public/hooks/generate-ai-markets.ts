@@ -190,7 +190,7 @@ async function runGenerate() {
       no_pool,
       volume: 0,
       source: "ai_generated",
-      created_via: "ai_generated",
+      created_via: "ai_generated" as const,
     };
   });
 
