@@ -9,7 +9,7 @@ import { Header } from "@/components/Header";
 import { MarketCard } from "@/components/MarketCard";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
-import { Search, Sparkles, Loader2, RefreshCw } from "lucide-react";
+import { Search, Sparkles, Loader2, RefreshCw, Brain } from "lucide-react";
 import { toast } from "sonner";
 import { importPolymarketMarkets } from "@/lib/polymarket.functions";
 
@@ -28,6 +28,7 @@ function MarketsPage() {
   const [cat, setCat] = useState<string | null>(null);
   const [importing, setImporting] = useState(false);
   const [syncing, setSyncing] = useState(false);
+  const [genAi, setGenAi] = useState(false);
   const { user } = useAuth();
   const qc = useQueryClient();
   const runImport = useServerFn(importPolymarketMarkets);
@@ -87,6 +88,21 @@ function MarketsPage() {
       toast.error(e instanceof Error ? e.message : "Sync failed");
     } finally {
       setSyncing(false);
+    }
+  };
+
+  const onGenerateAi = async () => {
+    setGenAi(true);
+    try {
+      const res = await fetch("/api/public/hooks/generate-ai-markets", { method: "POST" });
+      const body = await res.json();
+      if (!res.ok || !body.ok) throw new Error(body.error ?? "AI generation failed");
+      toast.success(`Created ${body.inserted} new AI market${body.inserted === 1 ? "" : "s"}`);
+      qc.invalidateQueries({ queryKey: ["markets"] });
+    } catch (e: unknown) {
+      toast.error(e instanceof Error ? e.message : "AI generation failed");
+    } finally {
+      setGenAi(false);
     }
   };
 
