@@ -114,26 +114,6 @@ function SignupPage() {
             {loading ? "Creating…" : "Create account"}
           </Button>
         </form>
-        <div className="relative my-6">
-          <div className="absolute inset-0 flex items-center"><div className="w-full border-t border-border" /></div>
-          <div className="relative flex justify-center text-xs"><span className="bg-background px-2 text-muted-foreground">or</span></div>
-        </div>
-        <Button
-          type="button"
-          variant="outline"
-          className="w-full"
-          disabled={loading}
-          onClick={async () => {
-            setLoading(true);
-            const { error } = await supabase.auth.signInAnonymously();
-            setLoading(false);
-            if (error) { toast.error(error.message); return; }
-            toast.success("Playing as guest — 1,000 credits to start.");
-            navigate({ to: "/markets" });
-          }}
-        >
-          Continue as guest
-        </Button>
         <p className="text-sm text-muted-foreground mt-6 text-center">
           Already have an account? <Link to="/login" className="text-primary hover:underline">Sign in</Link>
         </p>
