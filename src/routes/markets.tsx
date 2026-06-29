@@ -161,6 +161,14 @@ function MarketsPage() {
                   )}
                   {syncing ? "Syncing…" : "Sync now"}
                 </Button>
+                <Button onClick={onGenerateAi} disabled={genAi} variant="outline" size="sm" className="gap-2">
+                  {genAi ? (
+                    <Loader2 size={14} className="animate-spin" />
+                  ) : (
+                    <Brain size={14} />
+                  )}
+                  {genAi ? "Generating…" : "Generate AI markets"}
+                </Button>
               </>
             )}
             {user && (
