@@ -1,0 +1,1 @@
+ALTER TYPE public.market_origin ADD VALUE IF NOT EXISTS 'ai_generated';
