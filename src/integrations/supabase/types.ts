@@ -727,7 +727,11 @@ export type Database = {
       group_bet_resolution: "yes" | "no" | "invalid"
       group_bet_status: "open" | "closed" | "resolved"
       invite_status: "pending" | "accepted" | "declined"
-      market_origin: "user" | "polymarket_import" | "ai_suggested"
+      market_origin:
+        | "user"
+        | "polymarket_import"
+        | "ai_suggested"
+        | "ai_generated"
       market_resolution: "yes" | "no" | "invalid"
       market_status: "open" | "closed" | "resolved"
       suggestion_status: "pending" | "approved" | "rejected"
@@ -865,7 +869,12 @@ export const Constants = {
       group_bet_resolution: ["yes", "no", "invalid"],
       group_bet_status: ["open", "closed", "resolved"],
       invite_status: ["pending", "accepted", "declined"],
-      market_origin: ["user", "polymarket_import", "ai_suggested"],
+      market_origin: [
+        "user",
+        "polymarket_import",
+        "ai_suggested",
+        "ai_generated",
+      ],
       market_resolution: ["yes", "no", "invalid"],
       market_status: ["open", "closed", "resolved"],
       suggestion_status: ["pending", "approved", "rejected"],

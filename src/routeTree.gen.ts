@@ -29,6 +29,7 @@ import { Route as AuthenticatedGroupBetsCreateRouteImport } from './routes/_auth
 import { Route as AuthenticatedGroupBetsIdRouteImport } from './routes/_authenticated/group-bets.$id'
 import { Route as AuthenticatedAdminSuggestionsRouteImport } from './routes/_authenticated/admin.suggestions'
 import { Route as ApiPublicHooksSyncPolymarketRouteImport } from './routes/api/public/hooks/sync-polymarket'
+import { Route as ApiPublicHooksGenerateAiMarketsRouteImport } from './routes/api/public/hooks/generate-ai-markets'
 import { Route as ApiPublicHooksDiscoverTrendingMarketsRouteImport } from './routes/api/public/hooks/discover-trending-markets'
 
 const SignupRoute = SignupRouteImport.update({
@@ -134,6 +135,12 @@ const ApiPublicHooksSyncPolymarketRoute =
     path: '/api/public/hooks/sync-polymarket',
     getParentRoute: () => rootRouteImport,
   } as any)
+const ApiPublicHooksGenerateAiMarketsRoute =
+  ApiPublicHooksGenerateAiMarketsRouteImport.update({
+    id: '/api/public/hooks/generate-ai-markets',
+    path: '/api/public/hooks/generate-ai-markets',
+    getParentRoute: () => rootRouteImport,
+  } as any)
 const ApiPublicHooksDiscoverTrendingMarketsRoute =
   ApiPublicHooksDiscoverTrendingMarketsRouteImport.update({
     id: '/api/public/hooks/discover-trending-markets',
@@ -161,6 +168,7 @@ export interface FileRoutesByFullPath {
   '/group-bets/$id': typeof AuthenticatedGroupBetsIdRoute
   '/group-bets/create': typeof AuthenticatedGroupBetsCreateRoute
   '/api/public/hooks/discover-trending-markets': typeof ApiPublicHooksDiscoverTrendingMarketsRoute
+  '/api/public/hooks/generate-ai-markets': typeof ApiPublicHooksGenerateAiMarketsRoute
   '/api/public/hooks/sync-polymarket': typeof ApiPublicHooksSyncPolymarketRoute
 }
 export interface FileRoutesByTo {
@@ -183,6 +191,7 @@ export interface FileRoutesByTo {
   '/group-bets/$id': typeof AuthenticatedGroupBetsIdRoute
   '/group-bets/create': typeof AuthenticatedGroupBetsCreateRoute
   '/api/public/hooks/discover-trending-markets': typeof ApiPublicHooksDiscoverTrendingMarketsRoute
+  '/api/public/hooks/generate-ai-markets': typeof ApiPublicHooksGenerateAiMarketsRoute
   '/api/public/hooks/sync-polymarket': typeof ApiPublicHooksSyncPolymarketRoute
 }
 export interface FileRoutesById {
@@ -207,6 +216,7 @@ export interface FileRoutesById {
   '/_authenticated/group-bets/$id': typeof AuthenticatedGroupBetsIdRoute
   '/_authenticated/group-bets/create': typeof AuthenticatedGroupBetsCreateRoute
   '/api/public/hooks/discover-trending-markets': typeof ApiPublicHooksDiscoverTrendingMarketsRoute
+  '/api/public/hooks/generate-ai-markets': typeof ApiPublicHooksGenerateAiMarketsRoute
   '/api/public/hooks/sync-polymarket': typeof ApiPublicHooksSyncPolymarketRoute
 }
 export interface FileRouteTypes {
@@ -231,6 +241,7 @@ export interface FileRouteTypes {
     | '/group-bets/$id'
     | '/group-bets/create'
     | '/api/public/hooks/discover-trending-markets'
+    | '/api/public/hooks/generate-ai-markets'
     | '/api/public/hooks/sync-polymarket'
   fileRoutesByTo: FileRoutesByTo
   to:
@@ -253,6 +264,7 @@ export interface FileRouteTypes {
     | '/group-bets/$id'
     | '/group-bets/create'
     | '/api/public/hooks/discover-trending-markets'
+    | '/api/public/hooks/generate-ai-markets'
     | '/api/public/hooks/sync-polymarket'
   id:
     | '__root__'
@@ -276,6 +288,7 @@ export interface FileRouteTypes {
     | '/_authenticated/group-bets/$id'
     | '/_authenticated/group-bets/create'
     | '/api/public/hooks/discover-trending-markets'
+    | '/api/public/hooks/generate-ai-markets'
     | '/api/public/hooks/sync-polymarket'
   fileRoutesById: FileRoutesById
 }
@@ -290,6 +303,7 @@ export interface RootRouteChildren {
   SignupRoute: typeof SignupRoute
   UsersUsernameRoute: typeof UsersUsernameRoute
   ApiPublicHooksDiscoverTrendingMarketsRoute: typeof ApiPublicHooksDiscoverTrendingMarketsRoute
+  ApiPublicHooksGenerateAiMarketsRoute: typeof ApiPublicHooksGenerateAiMarketsRoute
   ApiPublicHooksSyncPolymarketRoute: typeof ApiPublicHooksSyncPolymarketRoute
 }
 
@@ -435,6 +449,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ApiPublicHooksSyncPolymarketRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/api/public/hooks/generate-ai-markets': {
+      id: '/api/public/hooks/generate-ai-markets'
+      path: '/api/public/hooks/generate-ai-markets'
+      fullPath: '/api/public/hooks/generate-ai-markets'
+      preLoaderRoute: typeof ApiPublicHooksGenerateAiMarketsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/api/public/hooks/discover-trending-markets': {
       id: '/api/public/hooks/discover-trending-markets'
       path: '/api/public/hooks/discover-trending-markets'
@@ -508,6 +529,7 @@ const rootRouteChildren: RootRouteChildren = {
   UsersUsernameRoute: UsersUsernameRoute,
   ApiPublicHooksDiscoverTrendingMarketsRoute:
     ApiPublicHooksDiscoverTrendingMarketsRoute,
+  ApiPublicHooksGenerateAiMarketsRoute: ApiPublicHooksGenerateAiMarketsRoute,
   ApiPublicHooksSyncPolymarketRoute: ApiPublicHooksSyncPolymarketRoute,
 }
 export const routeTree = rootRouteImport
