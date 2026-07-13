@@ -24,7 +24,6 @@ import { Route as AuthenticatedPortfolioRouteImport } from './routes/_authentica
 import { Route as AuthenticatedLearnRouteImport } from './routes/_authenticated/learn'
 import { Route as AuthenticatedGroupBetsRouteImport } from './routes/_authenticated/group-bets'
 import { Route as AuthenticatedFriendsRouteImport } from './routes/_authenticated/friends'
-import { Route as AuthenticatedCreateRouteImport } from './routes/_authenticated/create'
 import { Route as AuthenticatedGroupBetsCreateRouteImport } from './routes/_authenticated/group-bets.create'
 import { Route as AuthenticatedGroupBetsIdRouteImport } from './routes/_authenticated/group-bets.$id'
 import { Route as AuthenticatedAdminSuggestionsRouteImport } from './routes/_authenticated/admin.suggestions'
@@ -106,11 +105,6 @@ const AuthenticatedFriendsRoute = AuthenticatedFriendsRouteImport.update({
   path: '/friends',
   getParentRoute: () => AuthenticatedRoute,
 } as any)
-const AuthenticatedCreateRoute = AuthenticatedCreateRouteImport.update({
-  id: '/create',
-  path: '/create',
-  getParentRoute: () => AuthenticatedRoute,
-} as any)
 const AuthenticatedGroupBetsCreateRoute =
   AuthenticatedGroupBetsCreateRouteImport.update({
     id: '/create',
@@ -156,7 +150,6 @@ export interface FileRoutesByFullPath {
   '/markets': typeof MarketsRouteWithChildren
   '/reset-password': typeof ResetPasswordRoute
   '/signup': typeof SignupRoute
-  '/create': typeof AuthenticatedCreateRoute
   '/friends': typeof AuthenticatedFriendsRoute
   '/group-bets': typeof AuthenticatedGroupBetsRouteWithChildren
   '/learn': typeof AuthenticatedLearnRoute
@@ -179,7 +172,6 @@ export interface FileRoutesByTo {
   '/markets': typeof MarketsRouteWithChildren
   '/reset-password': typeof ResetPasswordRoute
   '/signup': typeof SignupRoute
-  '/create': typeof AuthenticatedCreateRoute
   '/friends': typeof AuthenticatedFriendsRoute
   '/group-bets': typeof AuthenticatedGroupBetsRouteWithChildren
   '/learn': typeof AuthenticatedLearnRoute
@@ -204,7 +196,6 @@ export interface FileRoutesById {
   '/markets': typeof MarketsRouteWithChildren
   '/reset-password': typeof ResetPasswordRoute
   '/signup': typeof SignupRoute
-  '/_authenticated/create': typeof AuthenticatedCreateRoute
   '/_authenticated/friends': typeof AuthenticatedFriendsRoute
   '/_authenticated/group-bets': typeof AuthenticatedGroupBetsRouteWithChildren
   '/_authenticated/learn': typeof AuthenticatedLearnRoute
@@ -229,7 +220,6 @@ export interface FileRouteTypes {
     | '/markets'
     | '/reset-password'
     | '/signup'
-    | '/create'
     | '/friends'
     | '/group-bets'
     | '/learn'
@@ -252,7 +242,6 @@ export interface FileRouteTypes {
     | '/markets'
     | '/reset-password'
     | '/signup'
-    | '/create'
     | '/friends'
     | '/group-bets'
     | '/learn'
@@ -276,7 +265,6 @@ export interface FileRouteTypes {
     | '/markets'
     | '/reset-password'
     | '/signup'
-    | '/_authenticated/create'
     | '/_authenticated/friends'
     | '/_authenticated/group-bets'
     | '/_authenticated/learn'
@@ -414,13 +402,6 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedFriendsRouteImport
       parentRoute: typeof AuthenticatedRoute
     }
-    '/_authenticated/create': {
-      id: '/_authenticated/create'
-      path: '/create'
-      fullPath: '/create'
-      preLoaderRoute: typeof AuthenticatedCreateRouteImport
-      parentRoute: typeof AuthenticatedRoute
-    }
     '/_authenticated/group-bets/create': {
       id: '/_authenticated/group-bets/create'
       path: '/create'
@@ -483,7 +464,6 @@ const AuthenticatedGroupBetsRouteWithChildren =
   )
 
 interface AuthenticatedRouteChildren {
-  AuthenticatedCreateRoute: typeof AuthenticatedCreateRoute
   AuthenticatedFriendsRoute: typeof AuthenticatedFriendsRoute
   AuthenticatedGroupBetsRoute: typeof AuthenticatedGroupBetsRouteWithChildren
   AuthenticatedLearnRoute: typeof AuthenticatedLearnRoute
@@ -493,7 +473,6 @@ interface AuthenticatedRouteChildren {
 }
 
 const AuthenticatedRouteChildren: AuthenticatedRouteChildren = {
-  AuthenticatedCreateRoute: AuthenticatedCreateRoute,
   AuthenticatedFriendsRoute: AuthenticatedFriendsRoute,
   AuthenticatedGroupBetsRoute: AuthenticatedGroupBetsRouteWithChildren,
   AuthenticatedLearnRoute: AuthenticatedLearnRoute,
@@ -535,13 +514,3 @@ const rootRouteChildren: RootRouteChildren = {
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
   ._addFileTypes<FileRouteTypes>()
-
-import type { getRouter } from './router.tsx'
-import type { startInstance } from './start.ts'
-declare module '@tanstack/react-start' {
-  interface Register {
-    ssr: true
-    router: Awaited<ReturnType<typeof getRouter>>
-    config: Awaited<ReturnType<typeof startInstance.getOptions>>
-  }
-}
