@@ -84,8 +84,7 @@ function Index() {
           </div>
         ) : (
           <div className="rounded-lg border border-dashed border-border p-12 text-center">
-            <p className="text-muted-foreground mb-4">No markets yet. Be the first to create one.</p>
-            <Link to="/create"><Button>Create a market</Button></Link>
+            <p className="text-muted-foreground">No markets yet. Check back soon.</p>
           </div>
         )}
       </section>
