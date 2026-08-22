@@ -331,25 +331,26 @@ function MarketDetail() {
           </button>
         </div>
 
-        <label htmlFor="trade-amount" className="text-xs uppercase tracking-wider text-muted-foreground">Amount (credits)</label>
+        <label htmlFor="trade-amount" className="text-xs uppercase tracking-wider text-muted-foreground">Shares</label>
         <Input
           id="trade-amount"
           type="number"
           min="1"
-          max={profile ? Math.floor(balance) : undefined}
+          step="1"
+          max={maxShares || undefined}
           placeholder="0"
           value={amount}
           onChange={(e) => setAmount(e.target.value)}
           className="mt-1 font-mono"
         />
         <div className="flex gap-2 mt-2">
-          {[10, 50, 100, 500].map((v) => (
+          {[1, 5, 10, 50].map((v) => (
             <button key={v} onClick={() => setAmount(String(v))} className="text-xs px-2 py-1 rounded bg-secondary text-muted-foreground hover:text-foreground">
               {v}
             </button>
           ))}
           <button
-            onClick={() => setAmount(String(Math.floor(balance)))}
+            onClick={() => setAmount(String(maxShares))}
             disabled={!profile}
             className="text-xs px-2 py-1 rounded bg-secondary text-muted-foreground hover:text-foreground disabled:opacity-50"
           >
@@ -361,15 +362,16 @@ function MarketDetail() {
         </div>
 
         <div className="mt-4 rounded-md border border-border bg-secondary/40 p-4">
-          <div className="text-xs uppercase tracking-wider text-muted-foreground">You will receive</div>
+          <div className="text-xs uppercase tracking-wider text-muted-foreground">Total cost</div>
           <div className={`font-display text-3xl font-bold tabular-nums mt-1 ${side === "yes" ? "text-yes" : "text-no"}`}>
-            ~{estShares > 0 ? estShares.toFixed(2) : "0.00"} shares
+            {cost.toFixed(2)} credits
           </div>
           <div className="mt-2 space-y-1 text-xs font-mono text-muted-foreground">
-            <div className="flex justify-between"><span>Avg price</span><span>{avgPrice > 0 ? avgPrice.toFixed(1) : "0.0"}¢ / share</span></div>
-            <div className="flex justify-between"><span>Current YES price</span><span>{(price * 100).toFixed(1)}%</span></div>
+            <div className="flex justify-between"><span>Price per share</span><span>{(sidePrice * 100).toFixed(0)}¢</span></div>
+            <div className="flex justify-between"><span>Shares</span><span>{validAmount ? sharesNum : 0}</span></div>
           </div>
         </div>
+
 
         {user ? (
           <Button
