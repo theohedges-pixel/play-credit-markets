@@ -13,7 +13,7 @@ import { Search, Sparkles, Loader2, RefreshCw, Brain } from "lucide-react";
 import { toast } from "sonner";
 import { importPolymarketMarkets } from "@/lib/polymarket.functions";
 
-export const Route = createFileRoute("/markets")({
+export const Route = createFileRoute("/markets/")({
   head: () => ({
     meta: [
       { title: "Markets — Predikt" },
