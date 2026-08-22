@@ -76,9 +76,9 @@ const UsersUsernameRoute = UsersUsernameRouteImport.update({
   getParentRoute: () => rootRouteImport,
 } as any)
 const MarketsIdRoute = MarketsIdRouteImport.update({
-  id: '/markets/$id',
-  path: '/markets/$id',
-  getParentRoute: () => rootRouteImport,
+  id: '/$id',
+  path: '/$id',
+  getParentRoute: () => MarketsRoute,
 } as any)
 const AuthenticatedSettingsRoute = AuthenticatedSettingsRouteImport.update({
   id: '/settings',
@@ -288,7 +288,6 @@ export interface RootRouteChildren {
   LoginRoute: typeof LoginRoute
   ResetPasswordRoute: typeof ResetPasswordRoute
   SignupRoute: typeof SignupRoute
-  MarketsIdRoute: typeof MarketsIdRoute
   UsersUsernameRoute: typeof UsersUsernameRoute
   MarketsIndexRoute: typeof MarketsIndexRoute
   ApiPublicHooksDiscoverTrendingMarketsRoute: typeof ApiPublicHooksDiscoverTrendingMarketsRoute
@@ -363,10 +362,10 @@ declare module '@tanstack/react-router' {
     }
     '/markets/$id': {
       id: '/markets/$id'
-      path: '/markets/$id'
+      path: '/$id'
       fullPath: '/markets/$id'
       preLoaderRoute: typeof MarketsIdRouteImport
-      parentRoute: typeof rootRouteImport
+      parentRoute: typeof MarketsRoute
     }
     '/_authenticated/settings': {
       id: '/_authenticated/settings'
@@ -494,7 +493,6 @@ const rootRouteChildren: RootRouteChildren = {
   LoginRoute: LoginRoute,
   ResetPasswordRoute: ResetPasswordRoute,
   SignupRoute: SignupRoute,
-  MarketsIdRoute: MarketsIdRoute,
   UsersUsernameRoute: UsersUsernameRoute,
   MarketsIndexRoute: MarketsIndexRoute,
   ApiPublicHooksDiscoverTrendingMarketsRoute:
