@@ -104,26 +104,47 @@ function MarketDetail() {
     );
   }
 
-  const price = yesPrice(Number(market.yes_pool), Number(market.no_pool));
+  const yesPool = Number(market.yes_pool);
+  const noPool = Number(market.no_pool);
+  const price = yesPrice(yesPool, noPool);
   const isResolved = market.status === "resolved";
-  const isClosed = isResolved || new Date(market.closes_at) <= new Date();
+  const isClosed = isResolved || market.status !== "open" || new Date(market.closes_at) <= new Date();
   const canResolve = user && (user.id === market.creator_id);
+
+  const amountNum = Number(amount);
+  const validAmount = Number.isFinite(amountNum) && amountNum > 0;
+  const balance = profile ? Number(profile.credits) : 0;
+  const insufficient = validAmount && !!profile && amountNum > balance;
+
+  // Live CPMM estimate: credits go into both pools, shares are withdrawn from
+  // the purchased side so that yes_pool * no_pool stays constant.
+  const k = yesPool * noPool;
+  const estShares = validAmount
+    ? side === "yes"
+      ? yesPool + amountNum - k / (noPool + amountNum)
+      : noPool + amountNum - k / (yesPool + amountNum)
+    : 0;
+  const avgPrice = estShares > 0 ? (amountNum / estShares) * 100 : 0;
 
   const placeTrade = async () => {
     if (!user) { toast.error("Sign in to trade"); return; }
-    const credits = parseFloat(amount);
-    if (!credits || credits <= 0) { toast.error("Enter an amount"); return; }
-    if (profile && credits > profile.credits) { toast.error("Not enough credits"); return; }
+    console.log("[trade] profile.credits =", profile?.credits, "amount =", amount, "side =", side);
+    if (!validAmount) { toast.error("Enter an amount"); return; }
+    if (insufficient) { toast.error("Not enough credits"); return; }
     setSubmitting(true);
-    const { data, error } = await supabase.rpc("place_trade", {
-      _market_id: id,
-      _side: side,
-      _credits: credits,
+    const res = await supabase.rpc("place_trade", {
+      p_market_id: id,
+      p_side: side,
+      p_action: "buy",
+      p_credits: amountNum,
     });
+    console.log("[trade] place_trade response", res);
     setSubmitting(false);
-    if (error) { toast.error(error.message); return; }
-    const result = data as { shares: number; price: number };
-    toast.success(`Bought ${result.shares.toFixed(2)} ${side.toUpperCase()} shares @ ${fmtPct(result.price)}`);
+    if (res.error) { toast.error(res.error.message); return; }
+    const result = res.data as { success?: boolean; error?: string; shares?: number; price?: number };
+    if (result?.error) { toast.error(result.error); return; }
+    toast.success(`Position added! You received ${Number(result.shares).toFixed(2)} ${side.toUpperCase()} shares.`);
+    setAmount("");
     refreshProfile();
     qc.invalidateQueries({ queryKey: ["market", id] });
     qc.invalidateQueries({ queryKey: ["price-history", id] });
@@ -142,6 +163,7 @@ function MarketDetail() {
     qc.invalidateQueries({ queryKey: ["market", id] });
     refreshProfile();
   };
+
 
   return (
     <div className="min-h-screen">
