@@ -113,39 +113,31 @@ function MarketDetail() {
   const isClosed = isResolved || market.status !== "open" || new Date(market.closes_at) <= new Date();
   const canResolve = user && (user.id === market.creator_id);
 
-  const amountNum = Number(amount);
-  const validAmount = Number.isFinite(amountNum) && amountNum > 0;
+  const sharesNum = Number(amount);
+  const validAmount = Number.isFinite(sharesNum) && sharesNum > 0;
   const balance = profile ? Number(profile.credits) : 0;
-  const insufficient = validAmount && !!profile && amountNum > balance;
 
-  // Live CPMM estimate: credits go into both pools, shares are withdrawn from
-  // the purchased side so that yes_pool * no_pool stays constant.
-  const k = yesPool * noPool;
-  const estShares = validAmount
-    ? side === "yes"
-      ? yesPool + amountNum - k / (noPool + amountNum)
-      : noPool + amountNum - k / (yesPool + amountNum)
-    : 0;
-  const avgPrice = estShares > 0 ? (amountNum / estShares) * 100 : 0;
+  // Fixed price per share, rounded to whole cents — matches the server.
+  const sidePrice = side === "yes" ? Math.round(price * 100) / 100 : Math.round((1 - price) * 100) / 100;
+  const cost = validAmount ? Math.round(sharesNum * sidePrice * 100) / 100 : 0;
+  const insufficient = validAmount && !!profile && cost > balance;
+  const maxShares = sidePrice > 0 ? Math.floor(balance / sidePrice) : 0;
 
   const placeTrade = async () => {
     if (!user) { toast.error("Sign in to trade"); return; }
-    console.log("[trade] profile.credits =", profile?.credits, "amount =", amount, "side =", side);
-    if (!validAmount) { toast.error("Enter an amount"); return; }
+    if (!validAmount) { toast.error("Enter a number of shares"); return; }
     if (insufficient) { toast.error("Not enough credits"); return; }
     setSubmitting(true);
-    const res = await supabase.rpc("place_trade", {
+    const res = await (supabase as any).rpc("buy_shares", {
       p_market_id: id,
       p_side: side,
-      p_action: "buy",
-      p_credits: amountNum,
+      p_shares: sharesNum,
     });
-    console.log("[trade] place_trade response", res);
     setSubmitting(false);
     if (res.error) { toast.error(res.error.message); return; }
-    const result = res.data as { success?: boolean; error?: string; shares?: number; price?: number };
+    const result = res.data as { success?: boolean; error?: string; shares?: number; cost?: number };
     if (result?.error) { toast.error(result.error); return; }
-    toast.success(`Position added! You received ${Number(result.shares).toFixed(2)} ${side.toUpperCase()} shares.`);
+    toast.success(`Bought ${Number(result.shares)} ${side.toUpperCase()} shares for ${fmtCredits(result.cost ?? 0)} credits.`);
     setAmount("");
     refreshProfile();
     qc.invalidateQueries({ queryKey: ["market", id] });
@@ -153,6 +145,7 @@ function MarketDetail() {
     qc.invalidateQueries({ queryKey: ["trades", id] });
     qc.invalidateQueries({ queryKey: ["position", id, user.id] });
   };
+
 
   const resolveMarket = async (resolution: "yes" | "no" | "invalid") => {
     if (!confirm(`Resolve this market as ${resolution.toUpperCase()}? This pays out winners and cannot be undone.`)) return;
@@ -338,25 +331,26 @@ function MarketDetail() {
           </button>
         </div>
 
-        <label htmlFor="trade-amount" className="text-xs uppercase tracking-wider text-muted-foreground">Amount (credits)</label>
+        <label htmlFor="trade-amount" className="text-xs uppercase tracking-wider text-muted-foreground">Shares</label>
         <Input
           id="trade-amount"
           type="number"
           min="1"
-          max={profile ? Math.floor(balance) : undefined}
+          step="1"
+          max={maxShares || undefined}
           placeholder="0"
           value={amount}
           onChange={(e) => setAmount(e.target.value)}
           className="mt-1 font-mono"
         />
         <div className="flex gap-2 mt-2">
-          {[10, 50, 100, 500].map((v) => (
+          {[1, 5, 10, 50].map((v) => (
             <button key={v} onClick={() => setAmount(String(v))} className="text-xs px-2 py-1 rounded bg-secondary text-muted-foreground hover:text-foreground">
               {v}
             </button>
           ))}
           <button
-            onClick={() => setAmount(String(Math.floor(balance)))}
+            onClick={() => setAmount(String(maxShares))}
             disabled={!profile}
             className="text-xs px-2 py-1 rounded bg-secondary text-muted-foreground hover:text-foreground disabled:opacity-50"
           >
@@ -368,15 +362,16 @@ function MarketDetail() {
         </div>
 
         <div className="mt-4 rounded-md border border-border bg-secondary/40 p-4">
-          <div className="text-xs uppercase tracking-wider text-muted-foreground">You will receive</div>
+          <div className="text-xs uppercase tracking-wider text-muted-foreground">Total cost</div>
           <div className={`font-display text-3xl font-bold tabular-nums mt-1 ${side === "yes" ? "text-yes" : "text-no"}`}>
-            ~{estShares > 0 ? estShares.toFixed(2) : "0.00"} shares
+            {cost.toFixed(2)} credits
           </div>
           <div className="mt-2 space-y-1 text-xs font-mono text-muted-foreground">
-            <div className="flex justify-between"><span>Avg price</span><span>{avgPrice > 0 ? avgPrice.toFixed(1) : "0.0"}¢ / share</span></div>
-            <div className="flex justify-between"><span>Current YES price</span><span>{(price * 100).toFixed(1)}%</span></div>
+            <div className="flex justify-between"><span>Price per share</span><span>{(sidePrice * 100).toFixed(0)}¢</span></div>
+            <div className="flex justify-between"><span>Shares</span><span>{validAmount ? sharesNum : 0}</span></div>
           </div>
         </div>
+
 
         {user ? (
           <Button
