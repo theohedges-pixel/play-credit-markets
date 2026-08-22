@@ -11,6 +11,8 @@ import { fmtCredits, fmtPct, timeUntil, yesPrice } from "@/lib/format";
 import { LineChart, Line, ResponsiveContainer, YAxis, Tooltip, XAxis } from "recharts";
 import { toast } from "sonner";
 import { format } from "date-fns";
+import { Loader2 } from "lucide-react";
+
 
 export const Route = createFileRoute("/markets/$id")({
   component: MarketDetail,
@@ -104,26 +106,47 @@ function MarketDetail() {
     );
   }
 
-  const price = yesPrice(Number(market.yes_pool), Number(market.no_pool));
+  const yesPool = Number(market.yes_pool);
+  const noPool = Number(market.no_pool);
+  const price = yesPrice(yesPool, noPool);
   const isResolved = market.status === "resolved";
-  const isClosed = isResolved || new Date(market.closes_at) <= new Date();
+  const isClosed = isResolved || market.status !== "open" || new Date(market.closes_at) <= new Date();
   const canResolve = user && (user.id === market.creator_id);
+
+  const amountNum = Number(amount);
+  const validAmount = Number.isFinite(amountNum) && amountNum > 0;
+  const balance = profile ? Number(profile.credits) : 0;
+  const insufficient = validAmount && !!profile && amountNum > balance;
+
+  // Live CPMM estimate: credits go into both pools, shares are withdrawn from
+  // the purchased side so that yes_pool * no_pool stays constant.
+  const k = yesPool * noPool;
+  const estShares = validAmount
+    ? side === "yes"
+      ? yesPool + amountNum - k / (noPool + amountNum)
+      : noPool + amountNum - k / (yesPool + amountNum)
+    : 0;
+  const avgPrice = estShares > 0 ? (amountNum / estShares) * 100 : 0;
 
   const placeTrade = async () => {
     if (!user) { toast.error("Sign in to trade"); return; }
-    const credits = parseFloat(amount);
-    if (!credits || credits <= 0) { toast.error("Enter an amount"); return; }
-    if (profile && credits > profile.credits) { toast.error("Not enough credits"); return; }
+    console.log("[trade] profile.credits =", profile?.credits, "amount =", amount, "side =", side);
+    if (!validAmount) { toast.error("Enter an amount"); return; }
+    if (insufficient) { toast.error("Not enough credits"); return; }
     setSubmitting(true);
-    const { data, error } = await supabase.rpc("place_trade", {
-      _market_id: id,
-      _side: side,
-      _credits: credits,
+    const res = await supabase.rpc("place_trade", {
+      p_market_id: id,
+      p_side: side,
+      p_action: "buy",
+      p_credits: amountNum,
     });
+    console.log("[trade] place_trade response", res);
     setSubmitting(false);
-    if (error) { toast.error(error.message); return; }
-    const result = data as { shares: number; price: number };
-    toast.success(`Bought ${result.shares.toFixed(2)} ${side.toUpperCase()} shares @ ${fmtPct(result.price)}`);
+    if (res.error) { toast.error(res.error.message); return; }
+    const result = res.data as { success?: boolean; error?: string; shares?: number; price?: number };
+    if (result?.error) { toast.error(result.error); return; }
+    toast.success(`Position added! You received ${Number(result.shares).toFixed(2)} ${side.toUpperCase()} shares.`);
+    setAmount("");
     refreshProfile();
     qc.invalidateQueries({ queryKey: ["market", id] });
     qc.invalidateQueries({ queryKey: ["price-history", id] });
@@ -142,6 +165,7 @@ function MarketDetail() {
     qc.invalidateQueries({ queryKey: ["market", id] });
     refreshProfile();
   };
+
 
   return (
     <div className="min-h-screen">
@@ -289,26 +313,38 @@ function MarketDetail() {
         </div>
       );
     }
+    const buyLabel = !user
+      ? "Sign in to trade"
+      : !validAmount
+        ? "Enter an amount"
+        : insufficient
+          ? "Insufficient credits"
+          : `Buy ${side.toUpperCase()}`;
+
     return (
       <div className={`rounded-lg border border-border bg-card p-5 ${insideSheet ? "" : "sticky top-20"}`}>
         <div className="grid grid-cols-2 gap-2 mb-4">
           <button
             onClick={() => setSide("yes")}
-            className={`py-3 rounded-md font-display font-semibold border transition ${side === "yes" ? "bg-yes text-yes-foreground border-yes" : "border-border text-muted-foreground hover:text-foreground"}`}
+            className={`py-4 rounded-md font-display text-base font-semibold border transition ${side === "yes" ? "bg-yes text-yes-foreground border-yes" : "border-border text-muted-foreground hover:text-foreground"}`}
           >
             YES {fmtPct(price)}
           </button>
           <button
             onClick={() => setSide("no")}
-            className={`py-3 rounded-md font-display font-semibold border transition ${side === "no" ? "bg-no text-no-foreground border-no" : "border-border text-muted-foreground hover:text-foreground"}`}
+            className={`py-4 rounded-md font-display text-base font-semibold border transition ${side === "no" ? "bg-no text-no-foreground border-no" : "border-border text-muted-foreground hover:text-foreground"}`}
           >
             NO {fmtPct(1 - price)}
           </button>
         </div>
-        <label className="text-xs uppercase tracking-wider text-muted-foreground">Amount (credits)</label>
+
+        <label htmlFor="trade-amount" className="text-xs uppercase tracking-wider text-muted-foreground">Amount (credits)</label>
         <Input
+          id="trade-amount"
           type="number"
           min="1"
+          max={profile ? Math.floor(balance) : undefined}
+          placeholder="0"
           value={amount}
           onChange={(e) => setAmount(e.target.value)}
           className="mt-1 font-mono"
@@ -319,38 +355,81 @@ function MarketDetail() {
               {v}
             </button>
           ))}
+          <button
+            onClick={() => setAmount(String(Math.floor(balance)))}
+            disabled={!profile}
+            className="text-xs px-2 py-1 rounded bg-secondary text-muted-foreground hover:text-foreground disabled:opacity-50"
+          >
+            Max
+          </button>
         </div>
+        <div className="text-xs text-muted-foreground mt-2 font-mono">
+          Balance: {profile ? fmtCredits(profile.credits) : "—"} credits
+        </div>
+
+        <div className="mt-4 rounded-md border border-border bg-secondary/40 p-4">
+          <div className="text-xs uppercase tracking-wider text-muted-foreground">You will receive</div>
+          <div className={`font-display text-3xl font-bold tabular-nums mt-1 ${side === "yes" ? "text-yes" : "text-no"}`}>
+            ~{estShares > 0 ? estShares.toFixed(2) : "0.00"} shares
+          </div>
+          <div className="mt-2 space-y-1 text-xs font-mono text-muted-foreground">
+            <div className="flex justify-between"><span>Avg price</span><span>{avgPrice > 0 ? avgPrice.toFixed(1) : "0.0"}¢ / share</span></div>
+            <div className="flex justify-between"><span>Current YES price</span><span>{(price * 100).toFixed(1)}%</span></div>
+          </div>
+        </div>
+
         {user ? (
-          <Button onClick={placeTrade} disabled={submitting} className="w-full mt-4" size="lg">
-            {submitting ? "Placing…" : `Buy ${side.toUpperCase()}`}
+          <Button
+            onClick={placeTrade}
+            disabled={submitting || !validAmount || insufficient}
+            className="w-full mt-4"
+            size="lg"
+          >
+            {submitting ? (<><Loader2 className="h-4 w-4 animate-spin mr-2" />Placing…</>) : buyLabel}
           </Button>
         ) : (
           <Link to="/login" className="block mt-4">
             <Button className="w-full" size="lg">Sign in to trade</Button>
           </Link>
         )}
-        {profile && (
-          <div className="text-xs text-muted-foreground text-center mt-3 font-mono">
-            Balance: {fmtCredits(profile.credits)} credits
-          </div>
-        )}
       </div>
     );
   }
 
   function renderPositionBox() {
-    if (!position || (Number(position.yes_shares) <= 0 && Number(position.no_shares) <= 0)) return null;
+    const yesShares = position ? Number(position.yes_shares) : 0;
+    const noShares = position ? Number(position.no_shares) : 0;
+    const spent = position ? Number(position.credits_spent) : 0;
+    const hasPosition = yesShares > 0 || noShares > 0;
+    const value = yesShares * price + noShares * (1 - price);
+    const won = isResolved
+      ? market!.resolution === "yes" ? yesShares > 0 : market!.resolution === "no" ? noShares > 0 : null
+      : null;
+
     return (
       <div className="rounded-lg border border-border bg-card p-5 text-sm">
         <div className="font-display font-semibold mb-3">Your position</div>
-        <div className="space-y-1 font-mono">
-          <div className="flex justify-between"><span className="text-yes">YES shares</span><span>{Number(position.yes_shares).toFixed(2)}</span></div>
-          <div className="flex justify-between"><span className="text-no">NO shares</span><span>{Number(position.no_shares).toFixed(2)}</span></div>
-          <div className="flex justify-between text-muted-foreground border-t border-border pt-2 mt-2"><span>Spent</span><span>{fmtCredits(position.credits_spent)}c</span></div>
-        </div>
+        {hasPosition ? (
+          <div className="space-y-1 font-mono">
+            <div className="flex justify-between"><span className="text-yes">YES shares</span><span>{yesShares.toFixed(2)}</span></div>
+            <div className="flex justify-between"><span className="text-no">NO shares</span><span>{noShares.toFixed(2)}</span></div>
+            <div className="flex justify-between text-muted-foreground border-t border-border pt-2 mt-2"><span>Spent</span><span>{fmtCredits(spent)}c</span></div>
+            <div className="flex justify-between"><span className="text-muted-foreground">Current value</span><span>~{fmtCredits(value)}c</span></div>
+            {isResolved && (
+              <div className="pt-2 mt-2 border-t border-border font-sans">
+                Resolved <span className={market!.resolution === "yes" ? "text-yes" : "text-no"}>{market!.resolution?.toUpperCase()}</span>
+                {won === true && <span className="text-yes"> — you won</span>}
+                {won === false && <span className="text-no"> — you lost</span>}
+              </div>
+            )}
+          </div>
+        ) : (
+          <p className="text-muted-foreground">You have no position in this market yet.</p>
+        )}
       </div>
     );
   }
+
 
   function renderResolveBox() {
     if (!canResolve || isResolved) return null;

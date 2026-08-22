@@ -690,9 +690,10 @@ export type Database = {
       mark_notification_read: { Args: { _id: string }; Returns: undefined }
       place_trade: {
         Args: {
-          _credits: number
-          _market_id: string
-          _side: Database["public"]["Enums"]["trade_side"]
+          p_action: Database["public"]["Enums"]["trade_action"]
+          p_credits: number
+          p_market_id: string
+          p_side: Database["public"]["Enums"]["trade_side"]
         }
         Returns: Json
       }
