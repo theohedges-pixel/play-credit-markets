@@ -11,6 +11,8 @@ import { fmtCredits, fmtPct, timeUntil, yesPrice } from "@/lib/format";
 import { LineChart, Line, ResponsiveContainer, YAxis, Tooltip, XAxis } from "recharts";
 import { toast } from "sonner";
 import { format } from "date-fns";
+import { Loader2 } from "lucide-react";
+
 
 export const Route = createFileRoute("/markets/$id")({
   component: MarketDetail,
