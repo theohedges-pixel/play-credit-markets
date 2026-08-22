@@ -11,12 +11,12 @@
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as SignupRouteImport } from './routes/signup'
 import { Route as ResetPasswordRouteImport } from './routes/reset-password'
-import { Route as MarketsRouteImport } from './routes/markets'
 import { Route as LoginRouteImport } from './routes/login'
 import { Route as LeaderboardRouteImport } from './routes/leaderboard'
 import { Route as ForgotPasswordRouteImport } from './routes/forgot-password'
 import { Route as AuthenticatedRouteImport } from './routes/_authenticated'
 import { Route as IndexRouteImport } from './routes/index'
+import { Route as MarketsIndexRouteImport } from './routes/markets.index'
 import { Route as UsersUsernameRouteImport } from './routes/users.$username'
 import { Route as MarketsIdRouteImport } from './routes/markets.$id'
 import { Route as AuthenticatedSettingsRouteImport } from './routes/_authenticated/settings'
@@ -39,11 +39,6 @@ const SignupRoute = SignupRouteImport.update({
 const ResetPasswordRoute = ResetPasswordRouteImport.update({
   id: '/reset-password',
   path: '/reset-password',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const MarketsRoute = MarketsRouteImport.update({
-  id: '/markets',
-  path: '/markets',
   getParentRoute: () => rootRouteImport,
 } as any)
 const LoginRoute = LoginRouteImport.update({
@@ -70,15 +65,20 @@ const IndexRoute = IndexRouteImport.update({
   path: '/',
   getParentRoute: () => rootRouteImport,
 } as any)
+const MarketsIndexRoute = MarketsIndexRouteImport.update({
+  id: '/markets/',
+  path: '/markets/',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const UsersUsernameRoute = UsersUsernameRouteImport.update({
   id: '/users/$username',
   path: '/users/$username',
   getParentRoute: () => rootRouteImport,
 } as any)
 const MarketsIdRoute = MarketsIdRouteImport.update({
-  id: '/$id',
-  path: '/$id',
-  getParentRoute: () => MarketsRoute,
+  id: '/markets/$id',
+  path: '/markets/$id',
+  getParentRoute: () => rootRouteImport,
 } as any)
 const AuthenticatedSettingsRoute = AuthenticatedSettingsRouteImport.update({
   id: '/settings',
@@ -147,7 +147,6 @@ export interface FileRoutesByFullPath {
   '/forgot-password': typeof ForgotPasswordRoute
   '/leaderboard': typeof LeaderboardRoute
   '/login': typeof LoginRoute
-  '/markets': typeof MarketsRouteWithChildren
   '/reset-password': typeof ResetPasswordRoute
   '/signup': typeof SignupRoute
   '/friends': typeof AuthenticatedFriendsRoute
@@ -157,6 +156,7 @@ export interface FileRoutesByFullPath {
   '/settings': typeof AuthenticatedSettingsRoute
   '/markets/$id': typeof MarketsIdRoute
   '/users/$username': typeof UsersUsernameRoute
+  '/markets/': typeof MarketsIndexRoute
   '/admin/suggestions': typeof AuthenticatedAdminSuggestionsRoute
   '/group-bets/$id': typeof AuthenticatedGroupBetsIdRoute
   '/group-bets/create': typeof AuthenticatedGroupBetsCreateRoute
@@ -169,7 +169,6 @@ export interface FileRoutesByTo {
   '/forgot-password': typeof ForgotPasswordRoute
   '/leaderboard': typeof LeaderboardRoute
   '/login': typeof LoginRoute
-  '/markets': typeof MarketsRouteWithChildren
   '/reset-password': typeof ResetPasswordRoute
   '/signup': typeof SignupRoute
   '/friends': typeof AuthenticatedFriendsRoute
@@ -179,6 +178,7 @@ export interface FileRoutesByTo {
   '/settings': typeof AuthenticatedSettingsRoute
   '/markets/$id': typeof MarketsIdRoute
   '/users/$username': typeof UsersUsernameRoute
+  '/markets': typeof MarketsIndexRoute
   '/admin/suggestions': typeof AuthenticatedAdminSuggestionsRoute
   '/group-bets/$id': typeof AuthenticatedGroupBetsIdRoute
   '/group-bets/create': typeof AuthenticatedGroupBetsCreateRoute
@@ -193,7 +193,6 @@ export interface FileRoutesById {
   '/forgot-password': typeof ForgotPasswordRoute
   '/leaderboard': typeof LeaderboardRoute
   '/login': typeof LoginRoute
-  '/markets': typeof MarketsRouteWithChildren
   '/reset-password': typeof ResetPasswordRoute
   '/signup': typeof SignupRoute
   '/_authenticated/friends': typeof AuthenticatedFriendsRoute
@@ -203,6 +202,7 @@ export interface FileRoutesById {
   '/_authenticated/settings': typeof AuthenticatedSettingsRoute
   '/markets/$id': typeof MarketsIdRoute
   '/users/$username': typeof UsersUsernameRoute
+  '/markets/': typeof MarketsIndexRoute
   '/_authenticated/admin/suggestions': typeof AuthenticatedAdminSuggestionsRoute
   '/_authenticated/group-bets/$id': typeof AuthenticatedGroupBetsIdRoute
   '/_authenticated/group-bets/create': typeof AuthenticatedGroupBetsCreateRoute
@@ -217,7 +217,6 @@ export interface FileRouteTypes {
     | '/forgot-password'
     | '/leaderboard'
     | '/login'
-    | '/markets'
     | '/reset-password'
     | '/signup'
     | '/friends'
@@ -227,6 +226,7 @@ export interface FileRouteTypes {
     | '/settings'
     | '/markets/$id'
     | '/users/$username'
+    | '/markets/'
     | '/admin/suggestions'
     | '/group-bets/$id'
     | '/group-bets/create'
@@ -239,7 +239,6 @@ export interface FileRouteTypes {
     | '/forgot-password'
     | '/leaderboard'
     | '/login'
-    | '/markets'
     | '/reset-password'
     | '/signup'
     | '/friends'
@@ -249,6 +248,7 @@ export interface FileRouteTypes {
     | '/settings'
     | '/markets/$id'
     | '/users/$username'
+    | '/markets'
     | '/admin/suggestions'
     | '/group-bets/$id'
     | '/group-bets/create'
@@ -262,7 +262,6 @@ export interface FileRouteTypes {
     | '/forgot-password'
     | '/leaderboard'
     | '/login'
-    | '/markets'
     | '/reset-password'
     | '/signup'
     | '/_authenticated/friends'
@@ -272,6 +271,7 @@ export interface FileRouteTypes {
     | '/_authenticated/settings'
     | '/markets/$id'
     | '/users/$username'
+    | '/markets/'
     | '/_authenticated/admin/suggestions'
     | '/_authenticated/group-bets/$id'
     | '/_authenticated/group-bets/create'
@@ -286,10 +286,11 @@ export interface RootRouteChildren {
   ForgotPasswordRoute: typeof ForgotPasswordRoute
   LeaderboardRoute: typeof LeaderboardRoute
   LoginRoute: typeof LoginRoute
-  MarketsRoute: typeof MarketsRouteWithChildren
   ResetPasswordRoute: typeof ResetPasswordRoute
   SignupRoute: typeof SignupRoute
+  MarketsIdRoute: typeof MarketsIdRoute
   UsersUsernameRoute: typeof UsersUsernameRoute
+  MarketsIndexRoute: typeof MarketsIndexRoute
   ApiPublicHooksDiscoverTrendingMarketsRoute: typeof ApiPublicHooksDiscoverTrendingMarketsRoute
   ApiPublicHooksGenerateAiMarketsRoute: typeof ApiPublicHooksGenerateAiMarketsRoute
   ApiPublicHooksSyncPolymarketRoute: typeof ApiPublicHooksSyncPolymarketRoute
@@ -309,13 +310,6 @@ declare module '@tanstack/react-router' {
       path: '/reset-password'
       fullPath: '/reset-password'
       preLoaderRoute: typeof ResetPasswordRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/markets': {
-      id: '/markets'
-      path: '/markets'
-      fullPath: '/markets'
-      preLoaderRoute: typeof MarketsRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/login': {
@@ -353,6 +347,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof IndexRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/markets/': {
+      id: '/markets/'
+      path: '/markets'
+      fullPath: '/markets/'
+      preLoaderRoute: typeof MarketsIndexRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/users/$username': {
       id: '/users/$username'
       path: '/users/$username'
@@ -362,10 +363,10 @@ declare module '@tanstack/react-router' {
     }
     '/markets/$id': {
       id: '/markets/$id'
-      path: '/$id'
+      path: '/markets/$id'
       fullPath: '/markets/$id'
       preLoaderRoute: typeof MarketsIdRouteImport
-      parentRoute: typeof MarketsRoute
+      parentRoute: typeof rootRouteImport
     }
     '/_authenticated/settings': {
       id: '/_authenticated/settings'
@@ -485,27 +486,17 @@ const AuthenticatedRouteWithChildren = AuthenticatedRoute._addFileChildren(
   AuthenticatedRouteChildren,
 )
 
-interface MarketsRouteChildren {
-  MarketsIdRoute: typeof MarketsIdRoute
-}
-
-const MarketsRouteChildren: MarketsRouteChildren = {
-  MarketsIdRoute: MarketsIdRoute,
-}
-
-const MarketsRouteWithChildren =
-  MarketsRoute._addFileChildren(MarketsRouteChildren)
-
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   AuthenticatedRoute: AuthenticatedRouteWithChildren,
   ForgotPasswordRoute: ForgotPasswordRoute,
   LeaderboardRoute: LeaderboardRoute,
   LoginRoute: LoginRoute,
-  MarketsRoute: MarketsRouteWithChildren,
   ResetPasswordRoute: ResetPasswordRoute,
   SignupRoute: SignupRoute,
+  MarketsIdRoute: MarketsIdRoute,
   UsersUsernameRoute: UsersUsernameRoute,
+  MarketsIndexRoute: MarketsIndexRoute,
   ApiPublicHooksDiscoverTrendingMarketsRoute:
     ApiPublicHooksDiscoverTrendingMarketsRoute,
   ApiPublicHooksGenerateAiMarketsRoute: ApiPublicHooksGenerateAiMarketsRoute,
