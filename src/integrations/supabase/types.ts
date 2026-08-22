@@ -650,6 +650,14 @@ export type Database = {
         Returns: string
       }
       auto_close_markets: { Args: never; Returns: undefined }
+      buy_shares: {
+        Args: {
+          p_market_id: string
+          p_shares: number
+          p_side: Database["public"]["Enums"]["trade_side"]
+        }
+        Returns: Json
+      }
       claim_daily_credits: { Args: never; Returns: Json }
       claim_learning_reward: {
         Args: { _module_id: string; _score: number }
