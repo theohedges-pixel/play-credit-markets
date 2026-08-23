@@ -38,7 +38,24 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   };
 
   useEffect(() => {
+    // Recover sessions stranded in sessionStorage by an earlier "remember me"
+    // implementation, so users aren't signed out right after signing in.
+    if (typeof window !== "undefined") {
+      try {
+        for (let i = 0; i < sessionStorage.length; i++) {
+          const k = sessionStorage.key(i);
+          if (k && k.startsWith("sb-") && k.endsWith("-auth-token") && !localStorage.getItem(k)) {
+            const v = sessionStorage.getItem(k);
+            if (v != null) localStorage.setItem(k, v);
+          }
+        }
+      } catch {
+        /* ignore */
+      }
+    }
+
     const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, s) => {
+
       setSession(s);
       setUser(s?.user ?? null);
       if (s?.user) {
