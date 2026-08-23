@@ -27,25 +27,27 @@ function friendlyAuthError(message: string): string {
   return message;
 }
 
-// When "Remember me" is unchecked, move the persisted auth token from
-// localStorage into sessionStorage so the session ends when the tab closes.
-function makeSessionScoped() {
+// When "Remember me" is unchecked, sign out automatically when the tab closes.
+// (The session itself must stay in the client's own storage — moving the token
+// elsewhere breaks the session immediately after sign-in.)
+function markSessionOnly() {
   if (typeof window === "undefined") return;
   try {
-    const keys: string[] = [];
-    for (let i = 0; i < localStorage.length; i++) {
-      const k = localStorage.key(i);
-      if (k && k.startsWith("sb-") && k.endsWith("-auth-token")) keys.push(k);
-    }
-    for (const k of keys) {
-      const v = localStorage.getItem(k);
-      if (v != null) sessionStorage.setItem(k, v);
-      localStorage.removeItem(k);
-    }
+    sessionStorage.setItem("predikt-session-only", "1");
   } catch {
     /* ignore */
   }
 }
+
+function clearSessionOnlyFlag() {
+  if (typeof window === "undefined") return;
+  try {
+    sessionStorage.removeItem("predikt-session-only");
+  } catch {
+    /* ignore */
+  }
+}
+
 
 function LoginPage() {
   const navigate = useNavigate();
@@ -63,7 +65,9 @@ function LoginPage() {
         toast.error(friendlyAuthError(error.message));
         return;
       }
-      if (!remember) makeSessionScoped();
+      if (remember) clearSessionOnlyFlag();
+      else markSessionOnly();
+
       toast.success("Welcome back");
       navigate({ to: "/markets" });
     } catch (err) {
