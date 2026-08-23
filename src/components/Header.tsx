@@ -44,25 +44,31 @@ export function Header() {
           </nav>
         </div>
         <div className="flex items-center gap-3">
-          {user && profile ? (
+          {user ? (
             <>
               <NotificationsBell />
-              <div className="hidden sm:flex items-center gap-1.5 px-3 py-1.5 rounded-md bg-secondary text-sm font-mono">
-                <Coins size={14} className="text-primary" />
-                <span>{fmtCredits(profile.credits)}</span>
-              </div>
-              <Link
-                to="/settings"
-                className="text-sm text-muted-foreground hover:text-foreground flex items-center gap-2"
-              >
-                <UserAvatar
-                  username={profile.username}
-                  avatarUrl={profile.avatar_url}
-                  userId={user.id}
-                  size="sm"
-                />
-                @{profile.username}
-              </Link>
+              {profile ? (
+                <>
+                  <div className="hidden sm:flex items-center gap-1.5 px-3 py-1.5 rounded-md bg-secondary text-sm font-mono">
+                    <Coins size={14} className="text-primary" />
+                    <span>{fmtCredits(profile.credits)}</span>
+                  </div>
+                  <Link
+                    to="/settings"
+                    className="text-sm text-muted-foreground hover:text-foreground flex items-center gap-2"
+                  >
+                    <UserAvatar
+                      username={profile.username}
+                      avatarUrl={profile.avatar_url}
+                      userId={user.id}
+                      size="sm"
+                    />
+                    @{profile.username}
+                  </Link>
+                </>
+              ) : (
+                <div className="hidden sm:block h-8 w-28 animate-pulse rounded-md bg-secondary" aria-label="Loading account" />
+              )}
               <Button size="sm" variant="ghost" onClick={() => signOut().then(() => navigate({ to: "/" }))}>
                 Sign out
               </Button>

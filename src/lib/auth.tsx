@@ -54,10 +54,14 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       }
     }
 
+    let active = true;
+    let receivedAuthEvent = false;
     const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, s) => {
-
+      if (!active) return;
+      receivedAuthEvent = true;
       setSession(s);
       setUser(s?.user ?? null);
+      setLoading(false);
       if (s?.user) {
         setTimeout(() => loadProfile(s.user.id), 0);
       } else {
@@ -66,13 +70,17 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     });
 
     supabase.auth.getSession().then(({ data: { session: s } }) => {
+      if (!active || receivedAuthEvent) return;
       setSession(s);
       setUser(s?.user ?? null);
       if (s?.user) loadProfile(s.user.id);
       setLoading(false);
     });
 
-    return () => subscription.unsubscribe();
+    return () => {
+      active = false;
+      subscription.unsubscribe();
+    };
   }, []);
 
   const refreshProfile = async () => {
