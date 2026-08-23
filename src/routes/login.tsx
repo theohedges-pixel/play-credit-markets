@@ -65,7 +65,9 @@ function LoginPage() {
         toast.error(friendlyAuthError(error.message));
         return;
       }
-      if (!remember) makeSessionScoped();
+      if (remember) clearSessionOnlyFlag();
+      else markSessionOnly();
+
       toast.success("Welcome back");
       navigate({ to: "/markets" });
     } catch (err) {
