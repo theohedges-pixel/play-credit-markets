@@ -60,16 +60,20 @@ function LoginPage() {
     e.preventDefault();
     setLoading(true);
     try {
-      const { error } = await supabase.auth.signInWithPassword({ email, password });
+      const { data, error } = await supabase.auth.signInWithPassword({ email, password });
       if (error) {
         toast.error(friendlyAuthError(error.message));
+        return;
+      }
+      if (!data.session || !data.user) {
+        toast.error("Sign-in did not create a session. Please try again.");
         return;
       }
       if (remember) clearSessionOnlyFlag();
       else markSessionOnly();
 
       toast.success("Welcome back");
-      navigate({ to: "/markets" });
+      await navigate({ to: "/markets" });
     } catch (err) {
       const msg = err instanceof Error ? err.message : "Could not connect. Check your internet connection.";
       toast.error(friendlyAuthError(msg));
