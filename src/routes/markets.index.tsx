@@ -122,6 +122,8 @@ function MarketsPage() {
         .select(
           "id, title, closes_at, yes_pool, no_pool, volume, status, resolution, source, created_via, category:categories(name)",
         )
+        .eq("status", "open")
+        .gt("closes_at", new Date().toISOString())
         .order("created_at", { ascending: false });
       if (cat) query = query.eq("category_id", cat);
       if (q) query = query.ilike("title", `%${q}%`);
