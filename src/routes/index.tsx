@@ -18,6 +18,7 @@ function Index() {
         .from("markets")
         .select("id, title, closes_at, yes_pool, no_pool, volume, status, resolution, category:categories(name)")
         .eq("status", "open")
+        .gt("closes_at", new Date().toISOString())
         .order("volume", { ascending: false })
         .limit(6);
       return (data ?? []) as unknown as MarketCardData[];
