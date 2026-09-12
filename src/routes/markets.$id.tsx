@@ -118,34 +118,76 @@ function MarketDetail() {
   const validAmount = Number.isFinite(sharesNum) && sharesNum > 0;
   const balance = profile ? Number(profile.credits) : 0;
 
-  // Fixed price per share, rounded to whole cents — matches the server.
-  const sidePrice = side === "yes" ? Math.round(price * 100) / 100 : Math.round((1 - price) * 100) / 100;
-  const cost = validAmount ? Math.round(sharesNum * sidePrice * 100) / 100 : 0;
-  const insufficient = validAmount && !!profile && cost > balance;
-  const maxShares = sidePrice > 0 ? Math.floor(balance / sidePrice) : 0;
+  const heldYes = position ? Number(position.yes_shares) : 0;
+  const heldNo = position ? Number(position.no_shares) : 0;
+  const heldForSide = side === "yes" ? heldYes : heldNo;
+  const canSellAny = heldYes > 0 || heldNo > 0;
+
+  // Own pool / other pool for the selected side (mirrors the RPC math).
+  const ownPool = side === "yes" ? yesPool : noPool;
+  const otherPool = side === "yes" ? noPool : yesPool;
+
+  const quoteBuy = (s: number) => {
+    const b = ownPool - s + otherPool;
+    return Math.round(((-b + Math.sqrt(b * b + 4 * s * otherPool)) / 2) * 100) / 100;
+  };
+  const quoteSell = (s: number) => {
+    const b = ownPool + s + otherPool;
+    const disc = b * b - 4 * s * otherPool;
+    if (disc < 0) return 0;
+    return Math.round(((b - Math.sqrt(disc)) / 2) * 100) / 100;
+  };
+
+  const cost = validAmount && mode === "buy" ? quoteBuy(sharesNum) : 0;
+  const proceeds = validAmount && mode === "sell" ? quoteSell(sharesNum) : 0;
+  const quoted = mode === "buy" ? cost : proceeds;
+  const avgPrice = validAmount && quoted > 0 ? quoted / sharesNum : (side === "yes" ? price : 1 - price);
+  const insufficient = mode === "buy" && validAmount && !!profile && cost > balance;
+  const notEnoughShares = mode === "sell" && validAmount && sharesNum > heldForSide;
+
+  // Largest whole share count affordable with the current balance.
+  const maxShares = (() => {
+    if (!profile || balance <= 0) return 0;
+    let lo = 0, hi = Math.ceil(balance / 0.01);
+    while (lo < hi) {
+      const mid = Math.ceil((lo + hi) / 2);
+      if (mid < ownPool + otherPool && quoteBuy(mid) <= balance) lo = mid; else hi = mid - 1;
+    }
+    return lo;
+  })();
+
+  const refreshAll = () => {
+    refreshProfile();
+    qc.invalidateQueries({ queryKey: ["market", id] });
+    qc.invalidateQueries({ queryKey: ["price-history", id] });
+    qc.invalidateQueries({ queryKey: ["trades", id] });
+    qc.invalidateQueries({ queryKey: ["position", id, user?.id] });
+  };
 
   const placeTrade = async () => {
     if (!user) { toast.error("Sign in to trade"); return; }
     if (!validAmount) { toast.error("Enter a number of shares"); return; }
-    if (insufficient) { toast.error("Not enough credits"); return; }
+    if (mode === "buy" && insufficient) { toast.error("Not enough credits"); return; }
+    if (mode === "sell" && notEnoughShares) { toast.error("You don't hold that many shares"); return; }
     setSubmitting(true);
-    const res = await (supabase as any).rpc("buy_shares", {
+    const res = await (supabase as any).rpc(mode === "buy" ? "buy_shares" : "sell_shares", {
       p_market_id: id,
       p_side: side,
       p_shares: sharesNum,
     });
     setSubmitting(false);
     if (res.error) { toast.error(res.error.message); return; }
-    const result = res.data as { success?: boolean; error?: string; shares?: number; cost?: number };
+    const result = res.data as { success?: boolean; error?: string; shares?: number; cost?: number; proceeds?: number };
     if (result?.error) { toast.error(result.error); return; }
-    toast.success(`Bought ${Number(result.shares)} ${side.toUpperCase()} shares for ${fmtCredits(result.cost ?? 0)} credits.`);
+    if (mode === "buy") {
+      toast.success(`Bought ${Number(result.shares)} ${side.toUpperCase()} shares for ${fmtCredits(result.cost ?? 0)} credits.`);
+    } else {
+      toast.success(`Sold ${Number(result.shares)} ${side.toUpperCase()} shares for ${fmtCredits(result.proceeds ?? 0)} credits.`);
+    }
     setAmount("");
-    refreshProfile();
-    qc.invalidateQueries({ queryKey: ["market", id] });
-    qc.invalidateQueries({ queryKey: ["price-history", id] });
-    qc.invalidateQueries({ queryKey: ["trades", id] });
-    qc.invalidateQueries({ queryKey: ["position", id, user.id] });
+    refreshAll();
   };
+
 
 
   const resolveMarket = async (resolution: "yes" | "no" | "invalid") => {
