@@ -183,6 +183,7 @@ function Portfolio() {
             const price = yesPrice(Number(p.market.yes_pool), Number(p.market.no_pool));
             const value = Number(p.yes_shares) * price + Number(p.no_shares) * (1 - price);
             const pnl = value - Number(p.credits_spent);
+            const realized = Number(p.realized_pnl ?? 0);
             return (
               <Link key={p.id} to="/markets/$id" params={{ id: p.market.id }} className="block px-5 py-4 hover:bg-secondary/30 transition">
                 <div className="flex items-center justify-between gap-4">
@@ -196,8 +197,16 @@ function Portfolio() {
                   </div>
                   <div className="text-right shrink-0">
                     <div className="font-mono font-semibold">{fmtCredits(value)}c</div>
-                    <div className={`text-xs font-mono ${pnl >= 0 ? "text-yes" : "text-no"}`}>
-                      {pnl >= 0 ? "+" : ""}{fmtCredits(pnl)}c
+                    <div className={`text-xs font-mono ${pnlClass(pnl)}`}>
+                      Unrealized {signed(pnl)}c
+                    </div>
+                    {realized !== 0 && (
+                      <div className={`text-xs font-mono ${pnlClass(realized)}`}>
+                        Realized {signed(realized)}c
+                      </div>
+                    )}
+                    <div className={`text-xs font-mono ${pnlClass(pnl + realized)}`}>
+                      Total {signed(pnl + realized)}c
                     </div>
                   </div>
                 </div>
