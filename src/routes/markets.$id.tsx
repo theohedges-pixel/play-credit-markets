@@ -23,6 +23,7 @@ function MarketDetail() {
   const qc = useQueryClient();
   const { user, profile, refreshProfile } = useAuth();
   const [side, setSide] = useState<"yes" | "no">("yes");
+  const [mode, setMode] = useState<"buy" | "sell">("buy");
   const [amount, setAmount] = useState("10");
   const [submitting, setSubmitting] = useState(false);
 
@@ -117,34 +118,76 @@ function MarketDetail() {
   const validAmount = Number.isFinite(sharesNum) && sharesNum > 0;
   const balance = profile ? Number(profile.credits) : 0;
 
-  // Fixed price per share, rounded to whole cents — matches the server.
-  const sidePrice = side === "yes" ? Math.round(price * 100) / 100 : Math.round((1 - price) * 100) / 100;
-  const cost = validAmount ? Math.round(sharesNum * sidePrice * 100) / 100 : 0;
-  const insufficient = validAmount && !!profile && cost > balance;
-  const maxShares = sidePrice > 0 ? Math.floor(balance / sidePrice) : 0;
+  const heldYes = position ? Number(position.yes_shares) : 0;
+  const heldNo = position ? Number(position.no_shares) : 0;
+  const heldForSide = side === "yes" ? heldYes : heldNo;
+  const canSellAny = heldYes > 0 || heldNo > 0;
+
+  // Own pool / other pool for the selected side (mirrors the RPC math).
+  const ownPool = side === "yes" ? yesPool : noPool;
+  const otherPool = side === "yes" ? noPool : yesPool;
+
+  const quoteBuy = (s: number) => {
+    const b = ownPool - s + otherPool;
+    return Math.round(((-b + Math.sqrt(b * b + 4 * s * otherPool)) / 2) * 100) / 100;
+  };
+  const quoteSell = (s: number) => {
+    const b = ownPool + s + otherPool;
+    const disc = b * b - 4 * s * otherPool;
+    if (disc < 0) return 0;
+    return Math.round(((b - Math.sqrt(disc)) / 2) * 100) / 100;
+  };
+
+  const cost = validAmount && mode === "buy" ? quoteBuy(sharesNum) : 0;
+  const proceeds = validAmount && mode === "sell" ? quoteSell(sharesNum) : 0;
+  const quoted = mode === "buy" ? cost : proceeds;
+  const avgPrice = validAmount && quoted > 0 ? quoted / sharesNum : (side === "yes" ? price : 1 - price);
+  const insufficient = mode === "buy" && validAmount && !!profile && cost > balance;
+  const notEnoughShares = mode === "sell" && validAmount && sharesNum > heldForSide;
+
+  // Largest whole share count affordable with the current balance.
+  const maxShares = (() => {
+    if (!profile || balance <= 0) return 0;
+    let lo = 0, hi = Math.ceil(balance / 0.01);
+    while (lo < hi) {
+      const mid = Math.ceil((lo + hi) / 2);
+      if (mid < ownPool + otherPool && quoteBuy(mid) <= balance) lo = mid; else hi = mid - 1;
+    }
+    return lo;
+  })();
+
+  const refreshAll = () => {
+    refreshProfile();
+    qc.invalidateQueries({ queryKey: ["market", id] });
+    qc.invalidateQueries({ queryKey: ["price-history", id] });
+    qc.invalidateQueries({ queryKey: ["trades", id] });
+    qc.invalidateQueries({ queryKey: ["position", id, user?.id] });
+  };
 
   const placeTrade = async () => {
     if (!user) { toast.error("Sign in to trade"); return; }
     if (!validAmount) { toast.error("Enter a number of shares"); return; }
-    if (insufficient) { toast.error("Not enough credits"); return; }
+    if (mode === "buy" && insufficient) { toast.error("Not enough credits"); return; }
+    if (mode === "sell" && notEnoughShares) { toast.error("You don't hold that many shares"); return; }
     setSubmitting(true);
-    const res = await (supabase as any).rpc("buy_shares", {
+    const res = await (supabase as any).rpc(mode === "buy" ? "buy_shares" : "sell_shares", {
       p_market_id: id,
       p_side: side,
       p_shares: sharesNum,
     });
     setSubmitting(false);
     if (res.error) { toast.error(res.error.message); return; }
-    const result = res.data as { success?: boolean; error?: string; shares?: number; cost?: number };
+    const result = res.data as { success?: boolean; error?: string; shares?: number; cost?: number; proceeds?: number };
     if (result?.error) { toast.error(result.error); return; }
-    toast.success(`Bought ${Number(result.shares)} ${side.toUpperCase()} shares for ${fmtCredits(result.cost ?? 0)} credits.`);
+    if (mode === "buy") {
+      toast.success(`Bought ${Number(result.shares)} ${side.toUpperCase()} shares for ${fmtCredits(result.cost ?? 0)} credits.`);
+    } else {
+      toast.success(`Sold ${Number(result.shares)} ${side.toUpperCase()} shares for ${fmtCredits(result.proceeds ?? 0)} credits.`);
+    }
     setAmount("");
-    refreshProfile();
-    qc.invalidateQueries({ queryKey: ["market", id] });
-    qc.invalidateQueries({ queryKey: ["price-history", id] });
-    qc.invalidateQueries({ queryKey: ["trades", id] });
-    qc.invalidateQueries({ queryKey: ["position", id, user.id] });
+    refreshAll();
   };
+
 
 
   const resolveMarket = async (resolution: "yes" | "no" | "invalid") => {
@@ -306,26 +349,44 @@ function MarketDetail() {
         </div>
       );
     }
-    const buyLabel = !user
+    const actionLabel = !user
       ? "Sign in to trade"
       : !validAmount
         ? "Enter an amount"
-        : insufficient
-          ? "Insufficient credits"
-          : `Buy ${side.toUpperCase()}`;
+        : mode === "buy"
+          ? (insufficient ? "Insufficient credits" : `Buy ${side.toUpperCase()}`)
+          : (notEnoughShares ? "Insufficient shares" : `Sell ${side.toUpperCase()}`);
 
     return (
       <div className={`rounded-lg border border-border bg-card p-5 ${insideSheet ? "" : "sticky top-20"}`}>
+        <div className="grid grid-cols-2 gap-1 mb-4 p-1 rounded-md bg-secondary/60">
+          <button
+            onClick={() => { setMode("buy"); setAmount(""); }}
+            className={`py-2 rounded text-sm font-display font-semibold transition ${mode === "buy" ? "bg-card text-foreground" : "text-muted-foreground hover:text-foreground"}`}
+          >
+            Buy
+          </button>
+          <button
+            onClick={() => { setMode("sell"); setAmount(""); if (heldForSide <= 0) setSide(heldYes > 0 ? "yes" : "no"); }}
+            disabled={!canSellAny}
+            className={`py-2 rounded text-sm font-display font-semibold transition disabled:opacity-40 ${mode === "sell" ? "bg-card text-foreground" : "text-muted-foreground hover:text-foreground"}`}
+          >
+            Sell
+          </button>
+        </div>
+
         <div className="grid grid-cols-2 gap-2 mb-4">
           <button
             onClick={() => setSide("yes")}
-            className={`py-4 rounded-md font-display text-base font-semibold border transition ${side === "yes" ? "bg-yes text-yes-foreground border-yes" : "border-border text-muted-foreground hover:text-foreground"}`}
+            disabled={mode === "sell" && heldYes <= 0}
+            className={`py-4 rounded-md font-display text-base font-semibold border transition disabled:opacity-40 ${side === "yes" ? "bg-yes text-yes-foreground border-yes" : "border-border text-muted-foreground hover:text-foreground"}`}
           >
             YES {fmtPct(price)}
           </button>
           <button
             onClick={() => setSide("no")}
-            className={`py-4 rounded-md font-display text-base font-semibold border transition ${side === "no" ? "bg-no text-no-foreground border-no" : "border-border text-muted-foreground hover:text-foreground"}`}
+            disabled={mode === "sell" && heldNo <= 0}
+            className={`py-4 rounded-md font-display text-base font-semibold border transition disabled:opacity-40 ${side === "no" ? "bg-no text-no-foreground border-no" : "border-border text-muted-foreground hover:text-foreground"}`}
           >
             NO {fmtPct(1 - price)}
           </button>
@@ -337,7 +398,7 @@ function MarketDetail() {
           type="number"
           min="1"
           step="1"
-          max={maxShares || undefined}
+          max={(mode === "buy" ? maxShares : heldForSide) || undefined}
           placeholder="0"
           value={amount}
           onChange={(e) => setAmount(e.target.value)}
@@ -349,25 +410,39 @@ function MarketDetail() {
               {v}
             </button>
           ))}
-          <button
-            onClick={() => setAmount(String(maxShares))}
-            disabled={!profile}
-            className="text-xs px-2 py-1 rounded bg-secondary text-muted-foreground hover:text-foreground disabled:opacity-50"
-          >
-            Max
-          </button>
+          {mode === "buy" ? (
+            <button
+              onClick={() => setAmount(String(maxShares))}
+              disabled={!profile}
+              className="text-xs px-2 py-1 rounded bg-secondary text-muted-foreground hover:text-foreground disabled:opacity-50"
+            >
+              Max
+            </button>
+          ) : (
+            <button
+              onClick={() => setAmount(String(heldForSide))}
+              disabled={heldForSide <= 0}
+              className="text-xs px-2 py-1 rounded bg-secondary text-muted-foreground hover:text-foreground disabled:opacity-50"
+            >
+              Sell all
+            </button>
+          )}
         </div>
         <div className="text-xs text-muted-foreground mt-2 font-mono">
-          Balance: {profile ? fmtCredits(profile.credits) : "—"} credits
+          {mode === "buy"
+            ? <>Balance: {profile ? fmtCredits(profile.credits) : "—"} credits</>
+            : <>Held: {heldForSide.toFixed(2)} {side.toUpperCase()} shares</>}
         </div>
 
         <div className="mt-4 rounded-md border border-border bg-secondary/40 p-4">
-          <div className="text-xs uppercase tracking-wider text-muted-foreground">Total cost</div>
+          <div className="text-xs uppercase tracking-wider text-muted-foreground">
+            {mode === "buy" ? "Total cost" : "You receive"}
+          </div>
           <div className={`font-display text-3xl font-bold tabular-nums mt-1 ${side === "yes" ? "text-yes" : "text-no"}`}>
-            {cost.toFixed(2)} credits
+            {quoted.toFixed(2)} credits
           </div>
           <div className="mt-2 space-y-1 text-xs font-mono text-muted-foreground">
-            <div className="flex justify-between"><span>Price per share</span><span>{(sidePrice * 100).toFixed(0)}¢</span></div>
+            <div className="flex justify-between"><span>Avg price per share</span><span>{(avgPrice * 100).toFixed(1)}¢</span></div>
             <div className="flex justify-between"><span>Shares</span><span>{validAmount ? sharesNum : 0}</span></div>
           </div>
         </div>
@@ -376,11 +451,11 @@ function MarketDetail() {
         {user ? (
           <Button
             onClick={placeTrade}
-            disabled={submitting || !validAmount || insufficient}
+            disabled={submitting || !validAmount || insufficient || notEnoughShares}
             className="w-full mt-4"
             size="lg"
           >
-            {submitting ? (<><Loader2 className="h-4 w-4 animate-spin mr-2" />Placing…</>) : buyLabel}
+            {submitting ? (<><Loader2 className="h-4 w-4 animate-spin mr-2" />Placing…</>) : actionLabel}
           </Button>
         ) : (
           <Link to="/login" className="block mt-4">
@@ -389,6 +464,7 @@ function MarketDetail() {
         )}
       </div>
     );
+
   }
 
   function renderPositionBox() {
