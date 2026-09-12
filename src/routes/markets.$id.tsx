@@ -23,6 +23,7 @@ function MarketDetail() {
   const qc = useQueryClient();
   const { user, profile, refreshProfile } = useAuth();
   const [side, setSide] = useState<"yes" | "no">("yes");
+  const [mode, setMode] = useState<"buy" | "sell">("buy");
   const [amount, setAmount] = useState("10");
   const [submitting, setSubmitting] = useState(false);
 
