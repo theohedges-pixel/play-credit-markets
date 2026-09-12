@@ -5,6 +5,7 @@ import { Header } from "@/components/Header";
 import { MarketCard, type MarketCardData } from "@/components/MarketCard";
 import { Button } from "@/components/ui/button";
 import { ArrowRight, Sparkles, Zap, Trophy } from "lucide-react";
+import { useMarketListRealtime } from "@/lib/realtime";
 
 export const Route = createFileRoute("/")({
   component: Index,
@@ -24,6 +25,8 @@ function Index() {
       return (data ?? []) as unknown as MarketCardData[];
     },
   });
+
+  useMarketListRealtime(["trending-markets"], "markets:trending");
 
   return (
     <div className="min-h-screen">

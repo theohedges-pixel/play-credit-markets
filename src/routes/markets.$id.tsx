@@ -12,6 +12,7 @@ import { LineChart, Line, ResponsiveContainer, YAxis, Tooltip, XAxis } from "rec
 import { toast } from "sonner";
 import { format } from "date-fns";
 import { Loader2 } from "lucide-react";
+import { useMarketDetailRealtime } from "@/lib/realtime";
 
 
 export const Route = createFileRoute("/markets/$id")({
@@ -81,6 +82,9 @@ function MarketDetail() {
       return data;
     },
   });
+
+  // Live price/volume/status + chart updates over websocket.
+  useMarketDetailRealtime(id);
 
   if (!market) {
     return (
