@@ -59,13 +59,21 @@ function Portfolio() {
   const today = new Date().toISOString().slice(0, 10);
   const claimed = profile?.last_daily_claim === today;
 
-  // compute portfolio value
+  // compute portfolio value + P&L
   let posValue = 0;
+  let unrealizedPnl = 0;
+  let realizedPnl = 0;
   positions?.forEach((p: any) => {
+    realizedPnl += Number(p.realized_pnl ?? 0);
     if (!p.market) return;
     const price = yesPrice(Number(p.market.yes_pool), Number(p.market.no_pool));
-    posValue += Number(p.yes_shares) * price + Number(p.no_shares) * (1 - price);
+    const value = Number(p.yes_shares) * price + Number(p.no_shares) * (1 - price);
+    posValue += value;
+    unrealizedPnl += value - Number(p.credits_spent);
   });
+  const totalPnl = unrealizedPnl + realizedPnl;
+  const pnlClass = (v: number) => (v >= 0 ? "text-yes" : "text-no");
+  const signed = (v: number) => `${v >= 0 ? "+" : ""}${fmtCredits(v)}`;
 
   return (
     <div>
@@ -115,6 +123,25 @@ function Portfolio() {
           </div>
         </div>
 
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-8">
+          <div className="rounded-lg border border-border bg-card p-5">
+            <div className="text-xs uppercase tracking-wider text-muted-foreground">Unrealized P&amp;L</div>
+            <div className={`font-display text-2xl font-bold mt-1 tabular-nums ${pnlClass(unrealizedPnl)}`}>{signed(unrealizedPnl)}c</div>
+            <div className="text-[11px] text-muted-foreground mt-1">Open positions at current prices</div>
+          </div>
+          <div className="rounded-lg border border-border bg-card p-5">
+            <div className="text-xs uppercase tracking-wider text-muted-foreground">Realized P&amp;L</div>
+            <div className={`font-display text-2xl font-bold mt-1 tabular-nums ${pnlClass(realizedPnl)}`}>{signed(realizedPnl)}c</div>
+            <div className="text-[11px] text-muted-foreground mt-1">Locked in from shares you sold</div>
+          </div>
+          <div className="rounded-lg border border-border bg-card p-5">
+            <div className="text-xs uppercase tracking-wider text-muted-foreground">Total P&amp;L</div>
+            <div className={`font-display text-2xl font-bold mt-1 tabular-nums ${pnlClass(totalPnl)}`}>{signed(totalPnl)}c</div>
+            <div className="text-[11px] text-muted-foreground mt-1">Unrealized + realized</div>
+          </div>
+        </div>
+
+
         <div className="rounded-lg border border-border bg-card p-5 mb-8 flex items-center justify-between">
           <div>
             <div className="font-display font-semibold flex items-center gap-2"><Gift size={16} className="text-primary" /> Daily reward</div>
@@ -156,6 +183,7 @@ function Portfolio() {
             const price = yesPrice(Number(p.market.yes_pool), Number(p.market.no_pool));
             const value = Number(p.yes_shares) * price + Number(p.no_shares) * (1 - price);
             const pnl = value - Number(p.credits_spent);
+            const realized = Number(p.realized_pnl ?? 0);
             return (
               <Link key={p.id} to="/markets/$id" params={{ id: p.market.id }} className="block px-5 py-4 hover:bg-secondary/30 transition">
                 <div className="flex items-center justify-between gap-4">
@@ -169,8 +197,16 @@ function Portfolio() {
                   </div>
                   <div className="text-right shrink-0">
                     <div className="font-mono font-semibold">{fmtCredits(value)}c</div>
-                    <div className={`text-xs font-mono ${pnl >= 0 ? "text-yes" : "text-no"}`}>
-                      {pnl >= 0 ? "+" : ""}{fmtCredits(pnl)}c
+                    <div className={`text-xs font-mono ${pnlClass(pnl)}`}>
+                      Unrealized {signed(pnl)}c
+                    </div>
+                    {realized !== 0 && (
+                      <div className={`text-xs font-mono ${pnlClass(realized)}`}>
+                        Realized {signed(realized)}c
+                      </div>
+                    )}
+                    <div className={`text-xs font-mono ${pnlClass(pnl + realized)}`}>
+                      Total {signed(pnl + realized)}c
                     </div>
                   </div>
                 </div>

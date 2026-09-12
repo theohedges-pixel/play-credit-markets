@@ -15,10 +15,10 @@ function Leaderboard() {
   const { data: traders, isLoading } = useQuery({
     queryKey: ["leaderboard"],
     queryFn: async () => {
-      const { data } = await supabase
-        .from("profiles")
-        .select("id, username, credits, avatar_url")
-        .order("credits", { ascending: false })
+      const { data } = await (supabase as any)
+        .from("leaderboard_net_worth")
+        .select("id, username, avatar_url, credits, position_value, net_worth")
+        .order("net_worth", { ascending: false })
         .limit(50);
       return data ?? [];
     },
@@ -32,7 +32,7 @@ function Leaderboard() {
           <Trophy className="text-primary" />
           <h1 className="font-display text-4xl font-bold">Leaderboard</h1>
         </div>
-        <p className="text-muted-foreground text-sm mb-8">Top traders by credit balance.</p>
+        <p className="text-muted-foreground text-sm mb-8">Top traders by net worth — cash plus the value of open positions.</p>
         <div className="rounded-lg border border-border bg-card divide-y divide-border">
           {isLoading
             ? Array.from({ length: 10 }).map((_, i) => (
@@ -44,7 +44,7 @@ function Leaderboard() {
                   <div className="h-4 w-16 bg-secondary rounded" />
                 </div>
               ))
-            : traders?.map((t: any, i) => (
+            : traders?.map((t: any, i: number) => (
                 <Link
                   key={t.id}
                   to="/users/$username"
@@ -56,7 +56,12 @@ function Leaderboard() {
                     <UserAvatar username={t.username} avatarUrl={t.avatar_url} userId={t.id} size="md" />
                     <span className="font-medium">@{t.username}</span>
                   </div>
-                  <span className="font-mono tabular-nums">{fmtCredits(t.credits)}c</span>
+                  <div className="text-right">
+                    <div className="font-mono tabular-nums">{fmtCredits(t.net_worth)}c</div>
+                    <div className="text-[11px] font-mono text-muted-foreground">
+                      {fmtCredits(t.credits)} cash · {fmtCredits(t.position_value)} positions
+                    </div>
+                  </div>
                 </Link>
               ))}
         </div>

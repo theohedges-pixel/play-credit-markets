@@ -12,6 +12,7 @@ import { Button } from "@/components/ui/button";
 import { Search, Sparkles, Loader2, RefreshCw, Brain } from "lucide-react";
 import { toast } from "sonner";
 import { importPolymarketMarkets } from "@/lib/polymarket.functions";
+import { useMarketListRealtime } from "@/lib/realtime";
 
 export const Route = createFileRoute("/markets/")({
   head: () => ({
@@ -131,6 +132,8 @@ function MarketsPage() {
       return data ?? [];
     },
   });
+
+  useMarketListRealtime(["markets"], "markets:list");
 
   return (
     <div className="min-h-screen">
