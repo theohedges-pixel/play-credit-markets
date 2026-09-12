@@ -149,6 +149,29 @@ function MarketDetail() {
   const insufficient = mode === "buy" && validAmount && !!profile && cost > balance;
   const notEnoughShares = mode === "sell" && validAmount && sharesNum > heldForSide;
 
+  // Price after the trade, using the same constant-product update as the RPCs.
+  const resultingPrice = (() => {
+    if (!validAmount) return price;
+    const c = mode === "buy" ? quoteBuy(sharesNum) : quoteSell(sharesNum);
+    if (c <= 0) return price;
+    if (mode === "buy") {
+      const newOwn = ownPool + c - sharesNum;
+      const newOther = otherPool + c;
+      if (side === "yes") {
+        return yesPrice(newOwn, newOther);
+      }
+      return yesPrice(newOther, newOwn);
+    }
+    const newOwn = ownPool + sharesNum - c;
+    const newOther = otherPool - c;
+    if (side === "yes") {
+      return yesPrice(newOwn, newOther);
+    }
+    return yesPrice(newOther, newOwn);
+  })();
+  const priceImpactPoints = Math.abs((resultingPrice - price) * 100);
+  const largeImpact = priceImpactPoints > 5;
+
   // Largest whole share count affordable with the current balance.
   const maxShares = (() => {
     if (!profile || balance <= 0) return 0;
