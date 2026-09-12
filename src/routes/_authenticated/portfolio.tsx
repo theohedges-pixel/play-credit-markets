@@ -59,13 +59,21 @@ function Portfolio() {
   const today = new Date().toISOString().slice(0, 10);
   const claimed = profile?.last_daily_claim === today;
 
-  // compute portfolio value
+  // compute portfolio value + P&L
   let posValue = 0;
+  let unrealizedPnl = 0;
+  let realizedPnl = 0;
   positions?.forEach((p: any) => {
+    realizedPnl += Number(p.realized_pnl ?? 0);
     if (!p.market) return;
     const price = yesPrice(Number(p.market.yes_pool), Number(p.market.no_pool));
-    posValue += Number(p.yes_shares) * price + Number(p.no_shares) * (1 - price);
+    const value = Number(p.yes_shares) * price + Number(p.no_shares) * (1 - price);
+    posValue += value;
+    unrealizedPnl += value - Number(p.credits_spent);
   });
+  const totalPnl = unrealizedPnl + realizedPnl;
+  const pnlClass = (v: number) => (v >= 0 ? "text-yes" : "text-no");
+  const signed = (v: number) => `${v >= 0 ? "+" : ""}${fmtCredits(v)}`;
 
   return (
     <div>
