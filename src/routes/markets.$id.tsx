@@ -349,26 +349,44 @@ function MarketDetail() {
         </div>
       );
     }
-    const buyLabel = !user
+    const actionLabel = !user
       ? "Sign in to trade"
       : !validAmount
         ? "Enter an amount"
-        : insufficient
-          ? "Insufficient credits"
-          : `Buy ${side.toUpperCase()}`;
+        : mode === "buy"
+          ? (insufficient ? "Insufficient credits" : `Buy ${side.toUpperCase()}`)
+          : (notEnoughShares ? "Insufficient shares" : `Sell ${side.toUpperCase()}`);
 
     return (
       <div className={`rounded-lg border border-border bg-card p-5 ${insideSheet ? "" : "sticky top-20"}`}>
+        <div className="grid grid-cols-2 gap-1 mb-4 p-1 rounded-md bg-secondary/60">
+          <button
+            onClick={() => { setMode("buy"); setAmount(""); }}
+            className={`py-2 rounded text-sm font-display font-semibold transition ${mode === "buy" ? "bg-card text-foreground" : "text-muted-foreground hover:text-foreground"}`}
+          >
+            Buy
+          </button>
+          <button
+            onClick={() => { setMode("sell"); setAmount(""); if (heldForSide <= 0) setSide(heldYes > 0 ? "yes" : "no"); }}
+            disabled={!canSellAny}
+            className={`py-2 rounded text-sm font-display font-semibold transition disabled:opacity-40 ${mode === "sell" ? "bg-card text-foreground" : "text-muted-foreground hover:text-foreground"}`}
+          >
+            Sell
+          </button>
+        </div>
+
         <div className="grid grid-cols-2 gap-2 mb-4">
           <button
             onClick={() => setSide("yes")}
-            className={`py-4 rounded-md font-display text-base font-semibold border transition ${side === "yes" ? "bg-yes text-yes-foreground border-yes" : "border-border text-muted-foreground hover:text-foreground"}`}
+            disabled={mode === "sell" && heldYes <= 0}
+            className={`py-4 rounded-md font-display text-base font-semibold border transition disabled:opacity-40 ${side === "yes" ? "bg-yes text-yes-foreground border-yes" : "border-border text-muted-foreground hover:text-foreground"}`}
           >
             YES {fmtPct(price)}
           </button>
           <button
             onClick={() => setSide("no")}
-            className={`py-4 rounded-md font-display text-base font-semibold border transition ${side === "no" ? "bg-no text-no-foreground border-no" : "border-border text-muted-foreground hover:text-foreground"}`}
+            disabled={mode === "sell" && heldNo <= 0}
+            className={`py-4 rounded-md font-display text-base font-semibold border transition disabled:opacity-40 ${side === "no" ? "bg-no text-no-foreground border-no" : "border-border text-muted-foreground hover:text-foreground"}`}
           >
             NO {fmtPct(1 - price)}
           </button>
@@ -380,7 +398,7 @@ function MarketDetail() {
           type="number"
           min="1"
           step="1"
-          max={maxShares || undefined}
+          max={(mode === "buy" ? maxShares : heldForSide) || undefined}
           placeholder="0"
           value={amount}
           onChange={(e) => setAmount(e.target.value)}
@@ -392,25 +410,39 @@ function MarketDetail() {
               {v}
             </button>
           ))}
-          <button
-            onClick={() => setAmount(String(maxShares))}
-            disabled={!profile}
-            className="text-xs px-2 py-1 rounded bg-secondary text-muted-foreground hover:text-foreground disabled:opacity-50"
-          >
-            Max
-          </button>
+          {mode === "buy" ? (
+            <button
+              onClick={() => setAmount(String(maxShares))}
+              disabled={!profile}
+              className="text-xs px-2 py-1 rounded bg-secondary text-muted-foreground hover:text-foreground disabled:opacity-50"
+            >
+              Max
+            </button>
+          ) : (
+            <button
+              onClick={() => setAmount(String(heldForSide))}
+              disabled={heldForSide <= 0}
+              className="text-xs px-2 py-1 rounded bg-secondary text-muted-foreground hover:text-foreground disabled:opacity-50"
+            >
+              Sell all
+            </button>
+          )}
         </div>
         <div className="text-xs text-muted-foreground mt-2 font-mono">
-          Balance: {profile ? fmtCredits(profile.credits) : "—"} credits
+          {mode === "buy"
+            ? <>Balance: {profile ? fmtCredits(profile.credits) : "—"} credits</>
+            : <>Held: {heldForSide.toFixed(2)} {side.toUpperCase()} shares</>}
         </div>
 
         <div className="mt-4 rounded-md border border-border bg-secondary/40 p-4">
-          <div className="text-xs uppercase tracking-wider text-muted-foreground">Total cost</div>
+          <div className="text-xs uppercase tracking-wider text-muted-foreground">
+            {mode === "buy" ? "Total cost" : "You receive"}
+          </div>
           <div className={`font-display text-3xl font-bold tabular-nums mt-1 ${side === "yes" ? "text-yes" : "text-no"}`}>
-            {cost.toFixed(2)} credits
+            {quoted.toFixed(2)} credits
           </div>
           <div className="mt-2 space-y-1 text-xs font-mono text-muted-foreground">
-            <div className="flex justify-between"><span>Price per share</span><span>{(sidePrice * 100).toFixed(0)}¢</span></div>
+            <div className="flex justify-between"><span>Avg price per share</span><span>{(avgPrice * 100).toFixed(1)}¢</span></div>
             <div className="flex justify-between"><span>Shares</span><span>{validAmount ? sharesNum : 0}</span></div>
           </div>
         </div>
@@ -419,11 +451,11 @@ function MarketDetail() {
         {user ? (
           <Button
             onClick={placeTrade}
-            disabled={submitting || !validAmount || insufficient}
+            disabled={submitting || !validAmount || insufficient || notEnoughShares}
             className="w-full mt-4"
             size="lg"
           >
-            {submitting ? (<><Loader2 className="h-4 w-4 animate-spin mr-2" />Placing…</>) : buyLabel}
+            {submitting ? (<><Loader2 className="h-4 w-4 animate-spin mr-2" />Placing…</>) : actionLabel}
           </Button>
         ) : (
           <Link to="/login" className="block mt-4">
@@ -432,6 +464,7 @@ function MarketDetail() {
         )}
       </div>
     );
+
   }
 
   function renderPositionBox() {
