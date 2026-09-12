@@ -123,6 +123,25 @@ function Portfolio() {
           </div>
         </div>
 
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-8">
+          <div className="rounded-lg border border-border bg-card p-5">
+            <div className="text-xs uppercase tracking-wider text-muted-foreground">Unrealized P&amp;L</div>
+            <div className={`font-display text-2xl font-bold mt-1 tabular-nums ${pnlClass(unrealizedPnl)}`}>{signed(unrealizedPnl)}c</div>
+            <div className="text-[11px] text-muted-foreground mt-1">Open positions at current prices</div>
+          </div>
+          <div className="rounded-lg border border-border bg-card p-5">
+            <div className="text-xs uppercase tracking-wider text-muted-foreground">Realized P&amp;L</div>
+            <div className={`font-display text-2xl font-bold mt-1 tabular-nums ${pnlClass(realizedPnl)}`}>{signed(realizedPnl)}c</div>
+            <div className="text-[11px] text-muted-foreground mt-1">Locked in from shares you sold</div>
+          </div>
+          <div className="rounded-lg border border-border bg-card p-5">
+            <div className="text-xs uppercase tracking-wider text-muted-foreground">Total P&amp;L</div>
+            <div className={`font-display text-2xl font-bold mt-1 tabular-nums ${pnlClass(totalPnl)}`}>{signed(totalPnl)}c</div>
+            <div className="text-[11px] text-muted-foreground mt-1">Unrealized + realized</div>
+          </div>
+        </div>
+
+
         <div className="rounded-lg border border-border bg-card p-5 mb-8 flex items-center justify-between">
           <div>
             <div className="font-display font-semibold flex items-center gap-2"><Gift size={16} className="text-primary" /> Daily reward</div>
