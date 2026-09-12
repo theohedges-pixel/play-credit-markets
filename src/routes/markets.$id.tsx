@@ -476,6 +476,12 @@ function MarketDetail() {
         </div>
 
 
+        {largeImpact && (
+          <div className="mt-3 rounded-md border border-no/30 bg-no/10 px-3 py-2 text-xs text-no">
+            Large trade — this will move the market price significantly
+          </div>
+        )}
+
         {user ? (
           <Button
             onClick={placeTrade}
