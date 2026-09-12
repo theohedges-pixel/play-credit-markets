@@ -728,6 +728,14 @@ export type Database = {
         Args: { _accept: boolean; _friendship_id: string }
         Returns: undefined
       }
+      sell_shares: {
+        Args: {
+          p_market_id: string
+          p_shares: number
+          p_side: Database["public"]["Enums"]["trade_side"]
+        }
+        Returns: Json
+      }
       send_friend_request: { Args: { _addressee_id: string }; Returns: string }
     }
     Enums: {
