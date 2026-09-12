@@ -471,6 +471,7 @@ function MarketDetail() {
           <div className="mt-2 space-y-1 text-xs font-mono text-muted-foreground">
             <div className="flex justify-between"><span>Avg price per share</span><span>{(avgPrice * 100).toFixed(1)}¢</span></div>
             <div className="flex justify-between"><span>Shares</span><span>{validAmount ? sharesNum : 0}</span></div>
+            <div className="flex justify-between"><span>Price impact</span><span>{fmtPct(price)} → {fmtPct(resultingPrice)}</span></div>
           </div>
         </div>
 
