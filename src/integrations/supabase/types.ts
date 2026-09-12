@@ -772,15 +772,6 @@ export type Database = {
       }
       mark_all_notifications_read: { Args: never; Returns: undefined }
       mark_notification_read: { Args: { _id: string }; Returns: undefined }
-      place_trade: {
-        Args: {
-          p_action: Database["public"]["Enums"]["trade_action"]
-          p_credits: number
-          p_market_id: string
-          p_side: Database["public"]["Enums"]["trade_side"]
-        }
-        Returns: Json
-      }
       reject_market_suggestion: {
         Args: { _suggestion_id: string }
         Returns: undefined
