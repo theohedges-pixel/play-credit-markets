@@ -149,6 +149,29 @@ function MarketDetail() {
   const insufficient = mode === "buy" && validAmount && !!profile && cost > balance;
   const notEnoughShares = mode === "sell" && validAmount && sharesNum > heldForSide;
 
+  // Price after the trade, using the same constant-product update as the RPCs.
+  const resultingPrice = (() => {
+    if (!validAmount) return price;
+    const c = mode === "buy" ? quoteBuy(sharesNum) : quoteSell(sharesNum);
+    if (c <= 0) return price;
+    if (mode === "buy") {
+      const newOwn = ownPool + c - sharesNum;
+      const newOther = otherPool + c;
+      if (side === "yes") {
+        return yesPrice(newOwn, newOther);
+      }
+      return yesPrice(newOther, newOwn);
+    }
+    const newOwn = ownPool + sharesNum - c;
+    const newOther = otherPool - c;
+    if (side === "yes") {
+      return yesPrice(newOwn, newOther);
+    }
+    return yesPrice(newOther, newOwn);
+  })();
+  const priceImpactPoints = Math.abs((resultingPrice - price) * 100);
+  const largeImpact = priceImpactPoints > 5;
+
   // Largest whole share count affordable with the current balance.
   const maxShares = (() => {
     if (!profile || balance <= 0) return 0;
@@ -448,9 +471,16 @@ function MarketDetail() {
           <div className="mt-2 space-y-1 text-xs font-mono text-muted-foreground">
             <div className="flex justify-between"><span>Avg price per share</span><span>{(avgPrice * 100).toFixed(1)}¢</span></div>
             <div className="flex justify-between"><span>Shares</span><span>{validAmount ? sharesNum : 0}</span></div>
+            <div className="flex justify-between"><span>Price impact</span><span>{fmtPct(price)} → {fmtPct(resultingPrice)}</span></div>
           </div>
         </div>
 
+
+        {largeImpact && (
+          <div className="mt-3 rounded-md border border-no/30 bg-no/10 px-3 py-2 text-xs text-no">
+            Large trade — this will move the market price significantly
+          </div>
+        )}
 
         {user ? (
           <Button

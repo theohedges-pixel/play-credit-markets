@@ -82,24 +82,6 @@ function LoginPage() {
     }
   };
 
-  const onGuest = async () => {
-    setLoading(true);
-    try {
-      const { error } = await supabase.auth.signInAnonymously();
-      if (error) {
-        toast.error(friendlyAuthError(error.message));
-        return;
-      }
-      toast.success("Playing as guest — 1,000 credits to start.");
-      navigate({ to: "/markets" });
-    } catch (err) {
-      const msg = err instanceof Error ? err.message : "Could not connect. Check your internet connection.";
-      toast.error(friendlyAuthError(msg));
-    } finally {
-      setLoading(false);
-    }
-  };
-
   return (
     <div>
       <Header />
