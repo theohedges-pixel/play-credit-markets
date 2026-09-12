@@ -86,7 +86,21 @@ export type Database = {
             foreignKeyName: "friendships_addressee_id_fkey"
             columns: ["addressee_id"]
             isOneToOne: false
+            referencedRelation: "leaderboard_net_worth"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "friendships_addressee_id_fkey"
+            columns: ["addressee_id"]
+            isOneToOne: false
             referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "friendships_requester_id_fkey"
+            columns: ["requester_id"]
+            isOneToOne: false
+            referencedRelation: "leaderboard_net_worth"
             referencedColumns: ["id"]
           },
           {
@@ -126,6 +140,13 @@ export type Database = {
             columns: ["group_bet_id"]
             isOneToOne: false
             referencedRelation: "group_bets"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "group_bet_invites_invited_user_id_fkey"
+            columns: ["invited_user_id"]
+            isOneToOne: false
+            referencedRelation: "leaderboard_net_worth"
             referencedColumns: ["id"]
           },
           {
@@ -177,6 +198,13 @@ export type Database = {
             foreignKeyName: "group_bet_participants_user_id_fkey"
             columns: ["user_id"]
             isOneToOne: false
+            referencedRelation: "leaderboard_net_worth"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "group_bet_participants_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
             referencedRelation: "profiles"
             referencedColumns: ["id"]
           },
@@ -221,6 +249,13 @@ export type Database = {
           title?: string
         }
         Relationships: [
+          {
+            foreignKeyName: "group_bets_creator_id_fkey"
+            columns: ["creator_id"]
+            isOneToOne: false
+            referencedRelation: "leaderboard_net_worth"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "group_bets_creator_id_fkey"
             columns: ["creator_id"]
@@ -424,6 +459,13 @@ export type Database = {
             foreignKeyName: "markets_creator_id_fkey"
             columns: ["creator_id"]
             isOneToOne: false
+            referencedRelation: "leaderboard_net_worth"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "markets_creator_id_fkey"
+            columns: ["creator_id"]
+            isOneToOne: false
             referencedRelation: "profiles"
             referencedColumns: ["id"]
           },
@@ -459,6 +501,13 @@ export type Database = {
             foreignKeyName: "notifications_user_id_fkey"
             columns: ["user_id"]
             isOneToOne: false
+            referencedRelation: "leaderboard_net_worth"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "notifications_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
             referencedRelation: "profiles"
             referencedColumns: ["id"]
           },
@@ -470,6 +519,7 @@ export type Database = {
           id: string
           market_id: string
           no_shares: number
+          realized_pnl: number
           user_id: string
           yes_shares: number
         }
@@ -478,6 +528,7 @@ export type Database = {
           id?: string
           market_id: string
           no_shares?: number
+          realized_pnl?: number
           user_id: string
           yes_shares?: number
         }
@@ -486,6 +537,7 @@ export type Database = {
           id?: string
           market_id?: string
           no_shares?: number
+          realized_pnl?: number
           user_id?: string
           yes_shares?: number
         }
@@ -495,6 +547,13 @@ export type Database = {
             columns: ["market_id"]
             isOneToOne: false
             referencedRelation: "markets"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "positions_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "leaderboard_net_worth"
             referencedColumns: ["id"]
           },
           {
@@ -611,6 +670,13 @@ export type Database = {
             foreignKeyName: "trades_user_id_fkey"
             columns: ["user_id"]
             isOneToOne: false
+            referencedRelation: "leaderboard_net_worth"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "trades_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
             referencedRelation: "profiles"
             referencedColumns: ["id"]
           },
@@ -636,7 +702,17 @@ export type Database = {
       }
     }
     Views: {
-      [_ in never]: never
+      leaderboard_net_worth: {
+        Row: {
+          avatar_url: string | null
+          credits: number | null
+          id: string | null
+          net_worth: number | null
+          position_value: number | null
+          username: string | null
+        }
+        Relationships: []
+      }
     }
     Functions: {
       approve_market_suggestion: {
