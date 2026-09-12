@@ -133,6 +133,8 @@ function MarketsPage() {
     },
   });
 
+  useMarketListRealtime(["markets"], "markets:list");
+
   return (
     <div className="min-h-screen">
       <Header />

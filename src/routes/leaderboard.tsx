@@ -15,10 +15,10 @@ function Leaderboard() {
   const { data: traders, isLoading } = useQuery({
     queryKey: ["leaderboard"],
     queryFn: async () => {
-      const { data } = await supabase
-        .from("profiles")
-        .select("id, username, credits, avatar_url")
-        .order("credits", { ascending: false })
+      const { data } = await (supabase as any)
+        .from("leaderboard_net_worth")
+        .select("id, username, avatar_url, credits, position_value, net_worth")
+        .order("net_worth", { ascending: false })
         .limit(50);
       return data ?? [];
     },
