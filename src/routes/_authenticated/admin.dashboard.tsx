@@ -892,6 +892,13 @@ function Chart({
                 fontSize: 12,
               }}
             />
+            {keys.length > 1 && (
+              <Legend
+                iconSize={8}
+                iconType="circle"
+                wrapperStyle={{ fontSize: 11, color: "var(--muted-foreground)" }}
+              />
+            )}
             {keys.map((k, i) => (
               <Line
                 key={k.k}
