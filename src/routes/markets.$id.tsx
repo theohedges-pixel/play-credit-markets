@@ -267,7 +267,7 @@ function MarketDetail() {
     refreshProfile();
     qc.invalidateQueries({ queryKey: ["market", id] });
     qc.invalidateQueries({ queryKey: ["price-history", id] });
-    qc.invalidateQueries({ queryKey: ["trades", id] });
+    qc.invalidateQueries({ queryKey: ["market-activity", id] });
     qc.invalidateQueries({ queryKey: ["position", id, user?.id] });
     qc.invalidateQueries({ queryKey: ["net-worth", user?.id] });
   };
@@ -442,20 +442,27 @@ function MarketDetail() {
 
           {/* Recent trades */}
           <div className="rounded-lg border border-border bg-card">
-            <div className="px-5 py-3 border-b border-border font-display font-semibold">Your activity</div>
+            <div className="px-5 py-3 border-b border-border font-display font-semibold">Activity</div>
             <div className="divide-y divide-border">
               {trades && trades.length > 0 ? trades.map((t: any) => (
-                <div key={t.id} className="px-5 py-3 flex items-center justify-between text-sm">
-                  <span className={`text-xs font-mono px-1.5 py-0.5 rounded ${t.side === "yes" ? "bg-yes/15 text-yes" : "bg-no/15 text-no"}`}>
+                <div key={t.id} className="px-5 py-3 flex items-center gap-3 text-sm">
+                  <span className={`text-xs font-mono px-1.5 py-0.5 rounded shrink-0 ${t.side === "yes" ? "bg-yes/15 text-yes" : "bg-no/15 text-no"}`}>
                     {t.action.toUpperCase()} {t.side.toUpperCase()}
                   </span>
-                  <div className="font-mono text-muted-foreground">
+                  <Link
+                    to="/users/$username"
+                    params={{ username: t.username }}
+                    className="text-xs text-muted-foreground hover:text-primary truncate min-w-0"
+                  >
+                    @{t.username}
+                  </Link>
+                  <div className="font-mono text-muted-foreground ml-auto shrink-0 text-xs">
                     {Number(t.shares).toFixed(2)} sh · {fmtCredits(t.credits)}c · {fmtPct(Number(t.price))}
                   </div>
                 </div>
               )) : (
                 <div className="px-5 py-6 text-sm text-muted-foreground">
-                  {user ? "You haven't traded this market yet." : "Sign in to see your activity here."}
+                  {user ? "No public activity on this market yet." : "Sign in to see activity here."}
                 </div>
               )}
             </div>

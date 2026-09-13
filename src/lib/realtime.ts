@@ -33,7 +33,7 @@ export function useMarketDetailRealtime(id: string) {
               : prev,
           );
           // recent activity list is cheap and unpredictable in shape — refetch it
-          qc.invalidateQueries({ queryKey: ["trades", id] });
+          qc.invalidateQueries({ queryKey: ["market-activity", id] });
         },
       )
       .on(
