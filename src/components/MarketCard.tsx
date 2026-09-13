@@ -25,7 +25,7 @@ function timeClass(closesAt: string): string {
 }
 
 export function MarketCard({ m }: { m: MarketCardData }) {
-  const p = yesPrice(m);
+  const p = yesPrice(m.yes_pool, m.no_pool);
   const zeroVolume = !m.volume || m.volume <= 0;
 
   return (
