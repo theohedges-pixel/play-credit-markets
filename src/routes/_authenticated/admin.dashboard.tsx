@@ -866,20 +866,28 @@ function Chart({
   data: any[];
   keys: { k: string; label: string }[];
 }) {
-  const colors = ["hsl(var(--primary))", "hsl(var(--muted-foreground))"];
+  // Theme tokens are raw oklch() colors — wrapping them in hsl() yields an
+  // invalid color and recharts renders the stroke as nothing.
+  const colors = ["var(--primary)", "var(--muted-foreground)"];
+  const hasActivity = data.some((row) => keys.some((k) => Number(row[k.k]) > 0));
   return (
     <div className="rounded-lg border border-border bg-card p-4">
       <h3 className="font-display text-sm font-semibold mb-3">{title}</h3>
       <div className="h-48">
+        {!hasActivity ? (
+          <div className="h-full flex items-center justify-center text-sm text-muted-foreground">
+            No activity in this period.
+          </div>
+        ) : (
         <ResponsiveContainer width="100%" height="100%">
           <LineChart data={data} margin={{ top: 4, right: 8, left: -20, bottom: 0 }}>
-            <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
-            <XAxis dataKey="day" tick={{ fontSize: 10 }} stroke="hsl(var(--muted-foreground))" minTickGap={24} />
-            <YAxis tick={{ fontSize: 10 }} stroke="hsl(var(--muted-foreground))" allowDecimals={false} />
+            <CartesianGrid strokeDasharray="3 3" stroke="var(--border)" />
+            <XAxis dataKey="day" tick={{ fontSize: 10 }} stroke="var(--muted-foreground)" minTickGap={24} />
+            <YAxis tick={{ fontSize: 10 }} stroke="var(--muted-foreground)" allowDecimals={false} />
             <RTooltip
               contentStyle={{
-                background: "hsl(var(--card))",
-                border: "1px solid hsl(var(--border))",
+                background: "var(--card)",
+                border: "1px solid var(--border)",
                 borderRadius: 8,
                 fontSize: 12,
               }}
@@ -892,11 +900,15 @@ function Chart({
                 name={k.label}
                 stroke={colors[i % colors.length]}
                 strokeWidth={2}
-                dot={false}
+                // Dots matter here: a series with a single non-zero day draws
+                // no line segment, so without them the chart looks empty.
+                dot={{ r: 2, fill: colors[i % colors.length], strokeWidth: 0 }}
+                activeDot={{ r: 4 }}
               />
             ))}
           </LineChart>
         </ResponsiveContainer>
+        )}
       </div>
     </div>
   );
