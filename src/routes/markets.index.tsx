@@ -134,7 +134,7 @@ function MarketsPage() {
   });
 
   const { data: markets, isLoading } = useQuery({
-    queryKey: ["markets", q, cat],
+    queryKey: ["markets", q, cat, sortKey],
     queryFn: async () => {
       let query = supabase
         .from("markets")
@@ -142,8 +142,10 @@ function MarketsPage() {
           "id, title, closes_at, created_at, yes_pool, no_pool, volume, status, resolution, source, created_via, category:categories(name)",
         )
         .eq("status", "open")
-        .gt("closes_at", new Date().toISOString())
-        .order("created_at", { ascending: false });
+        .gt("closes_at", new Date().toISOString());
+      if (sortKey === "active") query = query.order("volume", { ascending: false });
+      else if (sortKey === "closing") query = query.order("closes_at", { ascending: true });
+      else query = query.order("created_at", { ascending: false });
       if (cat) query = query.eq("category_id", cat);
       if (q) query = query.ilike("title", `%${q}%`);
       const { data } = await query.limit(60);
