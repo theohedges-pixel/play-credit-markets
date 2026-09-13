@@ -7,7 +7,7 @@ import { Header } from "@/components/Header";
 import { useAuth } from "@/lib/auth";
 import { useNetWorth } from "@/lib/use-net-worth";
 import { fmtCredits } from "@/lib/format";
-import { MILESTONE_TIERS, nextTier, tierLabel, tierStyle } from "@/lib/milestones";
+import { MILESTONE_TIERS, TIER_COPY, nextTier, tierLabel, tierStyle } from "@/lib/milestones";
 import { cn } from "@/lib/utils";
 
 export const Route = createFileRoute("/_authenticated/achievements")({
