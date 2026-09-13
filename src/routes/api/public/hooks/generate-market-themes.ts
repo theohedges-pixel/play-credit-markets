@@ -16,7 +16,7 @@ export async function runThemeGeneration() {
 
   await supabaseAdmin.from("app_settings").upsert({
     key: "last_theme_generation",
-    value: { at: new Date().toISOString(), ...result },
+    value: JSON.parse(JSON.stringify({ at: new Date().toISOString(), ...result })),
     updated_at: new Date().toISOString(),
   });
 
