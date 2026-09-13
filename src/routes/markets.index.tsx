@@ -114,7 +114,7 @@ function MarketsPage() {
       else query = query.order("created_at", { ascending: false });
       if (cat) query = query.eq("category_id", cat);
       if (q) query = query.ilike("title", `%${q}%`);
-      const { data } = await query.limit(60);
+      const { data } = await query.limit(200);
       return data ?? [];
     },
   });
