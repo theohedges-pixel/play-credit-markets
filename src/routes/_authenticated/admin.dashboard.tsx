@@ -567,6 +567,26 @@ function MarketsTab() {
   const [pruning, setPruning] = useState(false);
   const runBackfill = useServerFn(backfillPolymarketHistoryNow);
   const [backfilling, setBackfilling] = useState(false);
+  const runRegenThemes = useServerFn(regenerateMarketThemesNow);
+  const [themeing, setThemeing] = useState(false);
+
+  // Full rebuild of every category's AI sub-themes (also runs daily on a schedule).
+  const onRegenThemes = async () => {
+    setThemeing(true);
+    try {
+      const body: any = await runRegenThemes();
+      toast.success(
+        `Rebuilt ${body.themes} theme${body.themes === 1 ? "" : "s"} across ${body.regenerated} categor${body.regenerated === 1 ? "y" : "ies"}`,
+        { duration: 8000 },
+      );
+      qc.invalidateQueries({ queryKey: ["market-themes"] });
+      qc.invalidateQueries({ queryKey: ["markets"] });
+    } catch (e) {
+      toast.error(e instanceof Error ? e.message : "Theme regeneration failed");
+    } finally {
+      setThemeing(false);
+    }
+  };
 
   const { data: prunable, isLoading } = useQuery({
     queryKey: ["admin-prunable"],
