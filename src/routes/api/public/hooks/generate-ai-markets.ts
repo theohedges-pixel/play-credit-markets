@@ -15,9 +15,19 @@ const MIN_POOL = 50;
 const MAX_INSERT = 15;
 
 const SYSTEM = `You are a real-time research desk for a play-money prediction market platform.
-Use your knowledge of current events to surface 10-15 distinct, genuinely trending real-world
-events that people are actively speculating about RIGHT NOW (politics, sports, crypto,
-entertainment, tech, science). Each must be a clear YES/NO question with a verifiable resolution.
+SEARCH THE WEB FIRST. Do not rely on your training data for topic selection — your training data
+is stale and will make you propose events that have already happened. Every topic must come from
+search results dated within the last 14 days.
+
+Surface 10-15 distinct real-world events that people are actively speculating about RIGHT NOW
+(politics, sports, crypto, entertainment, tech, science). Each must be a clear YES/NO question
+with a verifiable resolution.
+
+For EACH candidate, before you include it, run a second search specifically to check whether the
+outcome is ALREADY publicly known, announced, reported or otherwise settled. If the answer is
+already knowable today — the announcement happened, the game was played, the threshold was
+crossed, the release shipped, the election was held — DROP the candidate. Only questions whose
+answer is genuinely still unknown today may be returned.
 
 Return STRICT JSON ONLY (no prose, no markdown fences):
 {
@@ -145,6 +155,114 @@ function isCloseMatch(a: string, b: string): boolean {
   return false;
 }
 
+const STALE_SYSTEM = `You audit candidate questions for a prediction market.
+SEARCH THE WEB and decide whether the real-world outcome of the question is ALREADY publicly
+known, announced, reported or otherwise settled as of today, or whether the event it refers to
+has already happened or can no longer happen as described.
+
+Return STRICT JSON ONLY:
+{ "stale": true | false, "confidence": 0.0-1.0, "reasoning": "1-2 sentences citing the evidence" }
+stale=true if the answer is already knowable today. If the answer is genuinely still unknown,
+stale=false.`;
+
+/** Grounded second pass: is this candidate's outcome already public? */
+async function verifyUnsettled(
+  apiKey: string,
+  ev: AiEvent,
+): Promise<{ stale: boolean; reasoning: string }> {
+  try {
+    const res = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
+      method: "POST",
+      headers: { "Content-Type": "application/json", "Lovable-API-Key": apiKey },
+      body: JSON.stringify({
+        model: "google/gemini-3-flash-preview",
+        tools: [{ google_search: {} }],
+        messages: [
+          { role: "system", content: STALE_SYSTEM },
+          {
+            role: "user",
+            content: `Today is ${new Date().toISOString().slice(0, 10)}.
+Question: ${ev.title}
+Details: ${ev.description}
+Proposed close: ${ev.closes_at}`,
+          },
+        ],
+      }),
+    });
+    if (!res.ok) throw new Error(`AI gateway ${res.status}`);
+    const json = await res.json();
+    const text: string = json?.choices?.[0]?.message?.content ?? "";
+    const m = text.match(/\{[\s\S]*\}/);
+    const parsed = JSON.parse(m ? m[0] : text) as {
+      stale?: unknown;
+      confidence?: unknown;
+      reasoning?: unknown;
+    };
+    const confidence = Number(parsed.confidence ?? 1);
+    const stale = parsed.stale === true && (!Number.isFinite(confidence) || confidence >= 0.7);
+    return { stale, reasoning: String(parsed.reasoning ?? "") };
+  } catch (e) {
+    // Verification is a gate, not a nice-to-have: if we cannot confirm the
+    // topic is still open, drop it rather than publish a possibly-settled one.
+    console.warn(`[generate-ai-markets] staleness check failed for "${ev.title}":`, (e as Error).message);
+    return { stale: true, reasoning: "verification failed" };
+  }
+}
+
+/**
+ * Topic-level duplicate detection. Literal title similarity misses
+ * "...at their October event" vs "...at their September event", so ask the
+ * model whether each candidate is about the same underlying real-world event
+ * as anything already in the catalogue.
+ */
+async function findSemanticDuplicates(
+  apiKey: string,
+  candidates: AiEvent[],
+  existingTitles: string[],
+): Promise<Set<number>> {
+  const dupes = new Set<number>();
+  if (candidates.length === 0) return dupes;
+  try {
+    const res = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
+      method: "POST",
+      headers: { "Content-Type": "application/json", "Lovable-API-Key": apiKey },
+      body: JSON.stringify({
+        model: "google/gemini-3-flash-preview",
+        response_format: { type: "json_object" },
+        messages: [
+          {
+            role: "system",
+            content: `You de-duplicate prediction market questions by TOPIC, not wording.
+Two questions are duplicates when they hinge on the same underlying real-world event, entity and
+outcome, even if the dates, phrasing or framing differ (e.g. "foldable iPhone at the September
+event" and "foldable iPhone at the October event" are the SAME topic).
+Return STRICT JSON ONLY: { "duplicates": [ { "index": <candidate index>, "matches": "<existing title or other candidate>" } ] }
+Include a candidate index once if it duplicates an existing market OR an earlier candidate in the list.`,
+          },
+          {
+            role: "user",
+            content: `EXISTING MARKETS:\n${existingTitles.map((t) => `- ${t}`).join("\n")}\n\nCANDIDATES:\n${candidates
+              .map((c, i) => `${i}. ${c.title}`)
+              .join("\n")}`,
+          },
+        ],
+      }),
+    });
+    if (!res.ok) throw new Error(`AI gateway ${res.status}`);
+    const json = await res.json();
+    const text: string = json?.choices?.[0]?.message?.content ?? "{}";
+    const parsed = JSON.parse(stripFences(text)) as { duplicates?: Array<{ index?: unknown }> };
+    for (const d of parsed.duplicates ?? []) {
+      const i = Number(d?.index);
+      if (Number.isInteger(i) && i >= 0 && i < candidates.length) dupes.add(i);
+    }
+  } catch (e) {
+    // Non-fatal: fall back to literal matching only.
+    console.warn("[generate-ai-markets] semantic dedupe failed:", (e as Error).message);
+  }
+  return dupes;
+}
+
 export async function runGenerate() {
   const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
   const apiKey = process.env.LOVABLE_API_KEY;
@@ -177,23 +295,58 @@ export async function runGenerate() {
     .limit(2000);
   const existingTitles = (existing ?? []).map((m) => m.title);
 
-  // Dedup within batch + against DB
-  const accepted: AiEvent[] = [];
+  // Open + recently resolved markets are what the semantic pass compares against.
+  const sixtyDaysAgo = new Date(Date.now() - 60 * 24 * 3600 * 1000).toISOString();
+  const { data: recent } = await supabaseAdmin
+    .from("markets")
+    .select("title, status, resolved_at")
+    .or(`status.eq.open,resolved_at.gte.${sixtyDaysAgo}`)
+    .order("created_at", { ascending: false })
+    .limit(200);
+  const compareTitles = (recent ?? []).map((m) => m.title);
+
+  // Pass 1: literal dedup within batch + against DB
+  const shortlist: AiEvent[] = [];
   for (const ev of valid) {
     if (existingTitles.some((t) => isCloseMatch(t, ev.title))) continue;
-    if (accepted.some((a) => isCloseMatch(a.title, ev.title))) continue;
-    accepted.push(ev);
-    if (accepted.length >= MAX_INSERT) break;
+    if (shortlist.some((a) => isCloseMatch(a.title, ev.title))) continue;
+    shortlist.push(ev);
   }
+
+  // Pass 2: topic-level dedup against open + recently resolved markets
+  const semanticDupes = await findSemanticDuplicates(apiKey, shortlist, compareTitles);
+  const unique = shortlist.filter((_, i) => !semanticDupes.has(i));
+
+  // Pass 3: grounded staleness gate — discard anything already publicly settled
+  const verdicts = await Promise.all(unique.map((ev) => verifyUnsettled(apiKey, ev)));
+  const accepted: AiEvent[] = [];
+  let stale = 0;
+  unique.forEach((ev, i) => {
+    if (verdicts[i].stale) {
+      stale++;
+      console.warn(`[generate-ai-markets] discarded settled topic: "${ev.title}" — ${verdicts[i].reasoning}`);
+      return;
+    }
+    if (accepted.length < MAX_INSERT) accepted.push(ev);
+  });
+
+  const duplicates = valid.length - unique.length;
 
   if (accepted.length === 0) {
     await supabaseAdmin.from("app_settings").upsert({
       key: "last_ai_market_run",
-      value: { at: new Date().toISOString(), inserted: 0, reason: "all duplicates" },
+      value: {
+        at: new Date().toISOString(),
+        inserted: 0,
+        reason: stale > 0 ? "all candidates duplicate or already settled" : "all duplicates",
+        duplicates,
+        stale,
+      },
       updated_at: new Date().toISOString(),
     });
-    return { inserted: 0, scanned: raw.length, malformed, duplicates: valid.length };
+    return { inserted: 0, scanned: raw.length, malformed, duplicates, stale };
   }
+
 
   // Look up categories
   const { data: cats } = await supabaseAdmin.from("categories").select("id, slug");
@@ -237,11 +390,11 @@ export async function runGenerate() {
 
   const nowIso = new Date().toISOString();
   await supabaseAdmin.from("app_settings").upsert([
-    { key: "last_ai_market_run", value: { at: nowIso, inserted: inserted?.length ?? 0 }, updated_at: nowIso },
+    { key: "last_ai_market_run", value: { at: nowIso, inserted: inserted?.length ?? 0, duplicates, stale }, updated_at: nowIso },
     { key: "last_ai_market_count", value: { count: inserted?.length ?? 0, at: nowIso }, updated_at: nowIso },
   ]);
 
-  return { inserted: inserted?.length ?? 0, scanned: raw.length, malformed };
+  return { inserted: inserted?.length ?? 0, scanned: raw.length, malformed, duplicates, stale };
 }
 
 export const Route = createFileRoute("/api/public/hooks/generate-ai-markets")({
