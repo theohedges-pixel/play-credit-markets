@@ -39,6 +39,7 @@ import {
   discoverTrendingNow,
   resolveAiMarketsNow,
   approveSuggestionChecked,
+  backfillPolymarketHistoryNow,
 } from "@/lib/admin-jobs.functions";
 import { toast } from "sonner";
 import {
@@ -55,6 +56,7 @@ import {
   Pencil,
   ChevronDown,
   ChevronRight,
+  History,
 } from "lucide-react";
 
 export const Route = createFileRoute("/_authenticated/admin/dashboard")({
@@ -563,6 +565,8 @@ function MarketsTab() {
   const [genAi, setGenAi] = useState(false);
   const [picked, setPicked] = useState<Record<string, boolean>>({});
   const [pruning, setPruning] = useState(false);
+  const runBackfill = useServerFn(backfillPolymarketHistoryNow);
+  const [backfilling, setBackfilling] = useState(false);
 
   const { data: prunable, isLoading } = useQuery({
     queryKey: ["admin-prunable"],
@@ -604,6 +608,24 @@ function MarketsTab() {
     }
   };
 
+  // One-time job: pulls each untraded Polymarket import's real price history
+  // from before it was mirrored into Predikt. Slow by design (throttled).
+  const onBackfillHistory = async () => {
+    setBackfilling(true);
+    try {
+      const body: any = await runBackfill({ data: {} });
+      toast.success(
+        `Backfilled ${body.points} price point${body.points === 1 ? "" : "s"} across ${body.backfilled} of ${body.scanned} market${body.scanned === 1 ? "" : "s"}${body.sparse ? ` (${body.sparse} only had coarse upstream data)` : ""}`,
+        { duration: 8000 },
+      );
+      qc.invalidateQueries({ queryKey: ["markets"] });
+    } catch (e) {
+      toast.error(e instanceof Error ? e.message : "History backfill failed");
+    } finally {
+      setBackfilling(false);
+    }
+  };
+
   const onPrune = async () => {
     setPruning(true);
     const { data, error } = await rpc("admin_prune_markets", { _ids: pickedIds });
@@ -632,7 +654,20 @@ function MarketsTab() {
             {genAi ? <Loader2 size={14} className="animate-spin" /> : <Brain size={14} />}
             {genAi ? "Generating…" : "Generate AI markets"}
           </Button>
+          <Button
+            variant="outline"
+            className="gap-2"
+            onClick={onBackfillHistory}
+            disabled={backfilling}
+          >
+            {backfilling ? <Loader2 size={14} className="animate-spin" /> : <History size={14} />}
+            {backfilling ? "Backfilling…" : "Backfill Polymarket history"}
+          </Button>
         </div>
+        <p className="text-xs text-muted-foreground mt-2">
+          One-time fill-in of real pre-import price history for imported markets with no Predikt
+          trades. New imports get their history automatically.
+        </p>
       </section>
 
       <NeedsResolutionSection />

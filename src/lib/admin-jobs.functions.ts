@@ -43,6 +43,31 @@ export const resolveAiMarketsNow = createServerFn({ method: "POST" })
   });
 
 /**
+ * One-time historical price backfill for already-imported Polymarket markets.
+ * Manual (admin-triggered) on purpose: it fills in history that already exists
+ * upstream, so there is nothing for a recurring cron to keep up with — new
+ * imports get their history automatically at import time instead.
+ */
+export const backfillPolymarketHistoryNow = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((data) =>
+    z.object({ marketId: z.string().uuid().optional(), limit: z.number().min(1).max(100).optional() })
+      .parse(data ?? {}),
+  )
+  .handler(async ({ context, data }) => {
+    await requireAdmin(context.supabase, context.userId);
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    const { backfillMarketHistory, backfillAllPolymarketHistory } = await import(
+      "@/lib/polymarket-history.server"
+    );
+    if (data.marketId) {
+      const r = await backfillMarketHistory(supabaseAdmin, data.marketId);
+      return { scanned: 1, backfilled: r.status === "inserted" ? 1 : 0, points: r.points, sparse: r.sparse ? 1 : 0, results: [r] };
+    }
+    return backfillAllPolymarketHistory(supabaseAdmin, data.limit ?? 40);
+  });
+
+/**
  * Admin approval of an AI suggestion. Re-runs the staleness + topic-duplicate
  * gates immediately before creating the market, because a topic can go from
  * "open" to "settled" between queueing and approval.

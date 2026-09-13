@@ -1,6 +1,11 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { verifyCronSecret } from "@/lib/cron-auth.server";
 import { parseYesProbability, seedPools } from "@/lib/polymarket-odds";
+import {
+  yesClobTokenId,
+  backfillMarketHistory,
+  THROTTLE_MS,
+} from "@/lib/polymarket-history.server";
 
 interface PolyMarket {
   id?: string;
@@ -15,6 +20,8 @@ interface PolyMarket {
   lastTradePrice?: number | string | null;
   bestBid?: number | string | null;
   bestAsk?: number | string | null;
+  /** Gamma returns a JSON string array of [YES token, NO token]. */
+  clobTokenIds?: string | string[] | null;
 }
 
 const CATEGORY_NAMES = ["Politics", "Crypto", "Sports", "Tech", "Pop Culture", "Science"] as const;
@@ -115,7 +122,7 @@ export async function runSync() {
   {
     const { data: imports } = await supabaseAdmin
       .from("markets")
-      .select("id, polymarket_id, yes_pool, no_pool")
+      .select("id, polymarket_id, yes_pool, no_pool, polymarket_clob_token_id")
       .eq("created_via", "polymarket_import")
       .eq("status", "open")
       .not("polymarket_id", "is", null);
@@ -133,6 +140,17 @@ export async function runSync() {
       if (traded.has(m.id)) continue; // real Predikt trades exist — never touch pools
       const upstream = remoteByPid.get(m.polymarket_id!);
       if (!upstream) continue;
+      // Older imports predate the CLOB token column — capture it opportunistically
+      // so the history backfill can run on them.
+      if (!(m as { polymarket_clob_token_id?: string | null }).polymarket_clob_token_id) {
+        const token = yesClobTokenId(upstream);
+        if (token) {
+          await supabaseAdmin
+            .from("markets")
+            .update({ polymarket_clob_token_id: token } as never)
+            .eq("id", m.id);
+        }
+      }
       const prob = parseYesProbability(upstream);
       if (prob === null) continue;
       const pools = seedPools(prob);
@@ -170,6 +188,7 @@ export async function runSync() {
     .slice(0, MAX_INSERTS_PER_RUN);
 
   let inserted = 0;
+  let backfilledPoints = 0;
   if (fresh.length && apiKey) {
     const cats = await classifyWithAI(
       apiKey,
@@ -200,6 +219,7 @@ export async function runSync() {
         volume: 0,
         source: "polymarket",
         polymarket_id: m.id ?? null,
+        polymarket_clob_token_id: yesClobTokenId(m),
         created_via: "polymarket_import" as const,
       };
     });
@@ -222,6 +242,17 @@ export async function runSync() {
             yes_price: Number(m.no_pool) / (Number(m.yes_pool) + Number(m.no_pool)),
           })),
         );
+        // Every NEW import gets its full Polymarket history immediately, so the
+        // chart opens with real movement instead of a single seed point.
+        if (row.polymarket_clob_token_id) {
+          try {
+            const res = await backfillMarketHistory(supabaseAdmin, data[0]!.id);
+            backfilledPoints += res.points;
+          } catch (e) {
+            console.error("[sync-polymarket] history backfill failed", data[0]!.id, (e as Error).message);
+          }
+          await new Promise((r) => setTimeout(r, THROTTLE_MS));
+        }
       }
     }
   }
@@ -235,7 +266,7 @@ export async function runSync() {
     .from("app_settings")
     .upsert({ key: "last_polymarket_sync", value: { at: new Date().toISOString() }, updated_at: new Date().toISOString() });
 
-  return { inserted, closed, refreshed, mirrored, scanned: items.length };
+  return { inserted, closed, refreshed, mirrored, backfilledPoints, scanned: items.length };
 }
 
 /**
