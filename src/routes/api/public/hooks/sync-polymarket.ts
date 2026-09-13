@@ -218,6 +218,7 @@ export async function runSync() {
         volume: 0,
         source: "polymarket",
         polymarket_id: m.id ?? null,
+        polymarket_clob_token_id: yesClobTokenId(m),
         created_via: "polymarket_import" as const,
       };
     });
