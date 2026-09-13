@@ -7,6 +7,7 @@ import { useAuth } from "@/lib/auth";
 import { Header } from "@/components/Header";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea";
 import { UserAvatar } from "@/components/UserAvatar";
 import { fmtCredits } from "@/lib/format";
 import { format } from "date-fns";
@@ -25,6 +26,8 @@ function GroupBetDetail() {
   const [amount, setAmount] = useState("");
   const [submitting, setSubmitting] = useState(false);
   const [origin, setOrigin] = useState("");
+  const [voteSide, setVoteSide] = useState<"yes" | "no" | "invalid">("yes");
+  const [voteReason, setVoteReason] = useState("");
 
   useEffect(() => {
     if (typeof window !== "undefined") setOrigin(window.location.origin);
@@ -49,6 +52,19 @@ function GroupBetDetail() {
         .from("group_bet_participants" as any)
         .select(
           "id, user_id, side, credits_wagered, payout, user:profiles!group_bet_participants_user_id_fkey(id, username, avatar_url)",
+        )
+        .eq("group_bet_id", id);
+      return (data ?? []) as any[];
+    },
+  });
+
+  const { data: votes } = useQuery({
+    queryKey: ["gb-votes", id],
+    queryFn: async () => {
+      const { data } = await supabase
+        .from("group_bet_resolution_votes" as any)
+        .select(
+          "id, voter_id, proposed_resolution, reason, voter:profiles!group_bet_resolution_votes_voter_id_fkey(id, username, avatar_url)",
         )
         .eq("group_bet_id", id);
       return (data ?? []) as any[];
@@ -132,18 +148,40 @@ function GroupBetDetail() {
     qc.invalidateQueries({ queryKey: ["gb-parts", id] });
   };
 
-  const resolve = async (resolution: "yes" | "no" | "invalid") => {
-    setSubmitting(true);
-    const { error } = await supabase.rpc("resolve_group_bet" as any, {
-      _group_bet_id: id,
-      _resolution: resolution,
-    });
-    setSubmitting(false);
-    if (error) return toast.error(error.message);
-    toast.success("Resolved");
+  const refreshAll = () => {
     refreshProfile();
     qc.invalidateQueries({ queryKey: ["gb-detail", id] });
     qc.invalidateQueries({ queryKey: ["gb-parts", id] });
+    qc.invalidateQueries({ queryKey: ["gb-votes", id] });
+  };
+
+  const castVote = async () => {
+    if (!voteReason.trim()) return toast.error("Add a short reason for your vote");
+    setSubmitting(true);
+    const { data, error } = await supabase.rpc("propose_group_bet_resolution" as any, {
+      _group_bet_id: id,
+      _resolution: voteSide,
+      _reason: voteReason.trim(),
+    });
+    setSubmitting(false);
+    if (error) return toast.error(error.message);
+    const r = data as any;
+    toast.success(
+      r?.resolved
+        ? `Settled ${String(r.resolution).toUpperCase()} — the group agreed`
+        : `Vote recorded (${r?.votes} of ${r?.eligible})`,
+    );
+    setVoteReason("");
+    refreshAll();
+  };
+
+  const flagAuto = async () => {
+    setSubmitting(true);
+    const { error } = await supabase.rpc("flag_auto_resolution" as any, { _group_bet_id: id });
+    setSubmitting(false);
+    if (error) return toast.error(error.message);
+    toast.success("Flagged — the group will vote on the outcome instead");
+    refreshAll();
   };
 
   return (
