@@ -284,7 +284,7 @@ function MarketDetail() {
                         fill="var(--primary)"
                         stroke="var(--background)"
                         strokeWidth={2}
-                        label={{ value: "AI estimate", position: "top", fill: "var(--primary)", fontSize: 10 }}
+                        label={{ value: "AI estimate", position: "insideTopRight", fill: "var(--primary)", fontSize: 10 }}
                       />
                     )}
                   </LineChart>
