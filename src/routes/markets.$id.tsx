@@ -68,13 +68,16 @@ function MarketDetail() {
     },
   });
 
+  // Trades are private (owner-only RLS): this is the viewer's own activity.
   const { data: trades } = useQuery({
-    queryKey: ["trades", id],
+    queryKey: ["trades", id, user?.id],
+    enabled: !!user,
     queryFn: async () => {
       const { data } = await supabase
         .from("trades")
-        .select("id, side, action, shares, credits, price, created_at, user:profiles(username)")
+        .select("id, side, action, shares, credits, price, created_at")
         .eq("market_id", id)
+        .eq("user_id", user!.id)
         .order("created_at", { ascending: false })
         .limit(20);
       return data ?? [];
@@ -311,22 +314,21 @@ function MarketDetail() {
 
           {/* Recent trades */}
           <div className="rounded-lg border border-border bg-card">
-            <div className="px-5 py-3 border-b border-border font-display font-semibold">Recent activity</div>
+            <div className="px-5 py-3 border-b border-border font-display font-semibold">Your activity</div>
             <div className="divide-y divide-border">
               {trades && trades.length > 0 ? trades.map((t: any) => (
                 <div key={t.id} className="px-5 py-3 flex items-center justify-between text-sm">
-                  <div className="flex items-center gap-3">
-                    <span className={`text-xs font-mono px-1.5 py-0.5 rounded ${t.side === "yes" ? "bg-yes/15 text-yes" : "bg-no/15 text-no"}`}>
-                      {t.side.toUpperCase()}
-                    </span>
-                    <span className="text-muted-foreground">@{t.user?.username ?? "anon"}</span>
-                  </div>
+                  <span className={`text-xs font-mono px-1.5 py-0.5 rounded ${t.side === "yes" ? "bg-yes/15 text-yes" : "bg-no/15 text-no"}`}>
+                    {t.action.toUpperCase()} {t.side.toUpperCase()}
+                  </span>
                   <div className="font-mono text-muted-foreground">
                     {Number(t.shares).toFixed(2)} sh · {fmtCredits(t.credits)}c · {fmtPct(Number(t.price))}
                   </div>
                 </div>
               )) : (
-                <div className="px-5 py-6 text-sm text-muted-foreground">No trades yet.</div>
+                <div className="px-5 py-6 text-sm text-muted-foreground">
+                  {user ? "You haven't traded this market yet." : "Sign in to see your activity here."}
+                </div>
               )}
             </div>
           </div>

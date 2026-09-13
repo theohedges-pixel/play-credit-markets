@@ -1,11 +1,10 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { format, formatDistanceToNow } from "date-fns";
+import { format } from "date-fns";
 import { supabase } from "@/integrations/supabase/client";
 import { Header } from "@/components/Header";
 import { UserAvatar } from "@/components/UserAvatar";
 import { Button } from "@/components/ui/button";
-import { fmtCredits, yesPrice } from "@/lib/format";
 import { useAuth } from "@/lib/auth";
 import { toast } from "sonner";
 
@@ -44,18 +43,10 @@ function PublicProfile() {
   });
 
   const uid = profile?.id;
+  const isOwnProfile = !!me && me.id === uid;
 
-  const { data: positions } = useQuery({
-    queryKey: ["public-positions", uid],
-    enabled: !!uid,
-    queryFn: async () => {
-      const { data } = await supabase
-        .from("positions")
-        .select("yes_shares, no_shares, credits_spent, market:markets(id, status, resolution, yes_pool, no_pool)")
-        .eq("user_id", uid!);
-      return data ?? [];
-    },
-  });
+  // NOTE: positions/trades are private (owner-only RLS) — no cross-user
+  // holdings or activity queries here.
 
   const { data: marketsCreated } = useQuery({
     queryKey: ["public-markets-created", uid],
@@ -66,20 +57,6 @@ function PublicProfile() {
         .select("id", { count: "exact", head: true })
         .eq("creator_id", uid!);
       return count ?? 0;
-    },
-  });
-
-  const { data: trades } = useQuery({
-    queryKey: ["public-trades", uid],
-    enabled: !!uid,
-    queryFn: async () => {
-      const { data } = await supabase
-        .from("trades")
-        .select("id, side, action, shares, credits, price, created_at, market:markets(id, title)")
-        .eq("user_id", uid!)
-        .order("created_at", { ascending: false })
-        .limit(10);
-      return data ?? [];
     },
   });
 
@@ -176,24 +153,6 @@ function PublicProfile() {
     );
   }
 
-  // Compute net worth
-  let posValue = 0;
-  let resolvedTotal = 0;
-  let resolvedWins = 0;
-  (positions ?? []).forEach((p: any) => {
-    if (!p.market) return;
-    const price = yesPrice(Number(p.market.yes_pool), Number(p.market.no_pool));
-    posValue += Number(p.yes_shares) * price + Number(p.no_shares) * (1 - price);
-    if (p.market.status === "resolved") {
-      resolvedTotal++;
-      const won =
-        (p.market.resolution === "yes" && Number(p.yes_shares) > 0) ||
-        (p.market.resolution === "no" && Number(p.no_shares) > 0);
-      if (won) resolvedWins++;
-    }
-  });
-  const netWorth = Number(profile.credits) + posValue;
-  const winRate = resolvedTotal > 0 ? (resolvedWins / resolvedTotal) * 100 : null;
 
   return (
     <div>
@@ -228,51 +187,18 @@ function PublicProfile() {
           </div>
         </div>
 
-        <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 mb-8">
-          <Stat label="Net worth" value={`${fmtCredits(netWorth)}c`} />
-          <Stat
-            label="Win rate"
-            value={winRate === null ? "—" : `${winRate.toFixed(0)}%`}
-            hint={resolvedTotal > 0 ? `${resolvedWins}/${resolvedTotal}` : "No resolved"}
-          />
+        <div className="grid grid-cols-2 gap-3 mb-8">
           <Stat label="Markets created" value={String(marketsCreated ?? 0)} />
           <Stat label="Friends" value={String(friendCount ?? 0)} />
         </div>
 
-        <h2 className="font-display text-xl font-semibold mb-4">Recent activity</h2>
-        <div className="rounded-lg border border-border bg-card divide-y divide-border">
-          {trades && trades.length > 0 ? (
-            trades.map((t: any) => (
-              <Link
-                key={t.id}
-                to="/markets/$id"
-                params={{ id: t.market?.id ?? "" }}
-                className="block px-5 py-3 hover:bg-secondary/30 transition"
-              >
-                <div className="flex items-center justify-between gap-4">
-                  <div className="min-w-0">
-                    <div className="text-sm truncate">{t.market?.title ?? "—"}</div>
-                    <div className="text-xs text-muted-foreground mt-0.5">
-                      {formatDistanceToNow(new Date(t.created_at), { addSuffix: true })}
-                    </div>
-                  </div>
-                  <div className="text-right shrink-0">
-                    <div className={`text-xs font-mono uppercase ${t.side === "yes" ? "text-yes" : "text-no"}`}>
-                      {t.side}
-                    </div>
-                    <div className="text-xs font-mono text-muted-foreground">
-                      {fmtCredits(Number(t.credits))}c
-                    </div>
-                  </div>
-                </div>
-              </Link>
-            ))
-          ) : (
-            <div className="px-5 py-8 text-center text-sm text-muted-foreground">
-              No trades yet.
-            </div>
-          )}
-        </div>
+        <p className="text-xs text-muted-foreground">
+          Holdings and trade history are private — check the{" "}
+          <Link to="/leaderboard" className="text-primary hover:underline">
+            leaderboard
+          </Link>{" "}
+          for public rankings.
+        </p>
       </div>
     </div>
   );
