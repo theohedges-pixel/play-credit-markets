@@ -122,7 +122,7 @@ export async function runSync() {
   {
     const { data: imports } = await supabaseAdmin
       .from("markets")
-      .select("id, polymarket_id, yes_pool, no_pool")
+      .select("id, polymarket_id, yes_pool, no_pool, polymarket_clob_token_id")
       .eq("created_via", "polymarket_import")
       .eq("status", "open")
       .not("polymarket_id", "is", null);
