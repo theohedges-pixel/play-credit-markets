@@ -891,6 +891,7 @@ export type Database = {
           credits: number
           id: string
           last_daily_claim: string | null
+          peak_net_worth: number
           username: string
         }
         Insert: {
@@ -900,6 +901,7 @@ export type Database = {
           credits?: number
           id: string
           last_daily_claim?: string | null
+          peak_net_worth?: number
           username: string
         }
         Update: {
@@ -909,6 +911,7 @@ export type Database = {
           credits?: number
           id?: string
           last_daily_claim?: string | null
+          peak_net_worth?: number
           username?: string
         }
         Relationships: []
@@ -1045,6 +1048,49 @@ export type Database = {
           },
         ]
       }
+      user_milestones: {
+        Row: {
+          id: string
+          reached_at: string
+          tier: number
+          user_id: string
+        }
+        Insert: {
+          id?: string
+          reached_at?: string
+          tier: number
+          user_id: string
+        }
+        Update: {
+          id?: string
+          reached_at?: string
+          tier?: number
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "user_milestones_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "leaderboard_net_worth"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "user_milestones_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "user_milestones_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "public_profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       user_roles: {
         Row: {
           granted_at: string
@@ -1075,6 +1121,7 @@ export type Database = {
           credits: number | null
           id: string | null
           net_worth: number | null
+          peak_net_worth: number | null
           position_value: number | null
           username: string | null
         }
@@ -1086,6 +1133,7 @@ export type Database = {
           bio: string | null
           created_at: string | null
           id: string | null
+          peak_net_worth: number | null
           username: string | null
         }
         Insert: {
@@ -1093,6 +1141,7 @@ export type Database = {
           bio?: string | null
           created_at?: string | null
           id?: string | null
+          peak_net_worth?: number | null
           username?: string | null
         }
         Update: {
@@ -1100,6 +1149,7 @@ export type Database = {
           bio?: string | null
           created_at?: string | null
           id?: string | null
+          peak_net_worth?: number | null
           username?: string | null
         }
         Relationships: []
@@ -1246,6 +1296,7 @@ export type Database = {
         }
         Returns: string
       }
+      current_net_worth: { Args: { _user_id: string }; Returns: number }
       finalize_group_bet: {
         Args: {
           _auto: boolean
@@ -1312,6 +1363,7 @@ export type Database = {
       }
       mark_all_notifications_read: { Args: never; Returns: undefined }
       mark_notification_read: { Args: { _id: string }; Returns: undefined }
+      milestone_tiers: { Args: never; Returns: number[] }
       notify_admins: {
         Args: { _actor: string; _kind: string; _payload: Json }
         Returns: undefined
@@ -1351,6 +1403,8 @@ export type Database = {
         Returns: Json
       }
       send_friend_request: { Args: { _addressee_id: string }; Returns: string }
+      sync_all_peak_net_worth: { Args: never; Returns: number }
+      sync_peak_net_worth: { Args: { _user_id: string }; Returns: Json }
     }
     Enums: {
       app_role: "admin" | "user"
