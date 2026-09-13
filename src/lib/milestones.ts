@@ -13,6 +13,67 @@ export const tierLabel = (tier: number) => {
   return `${tier / 1_000}K`;
 };
 
+/** Display copy for each tier (final copy — use exactly as-is). */
+export const TIER_COPY: Record<number, { name: string; description: string }> = {
+  5_000: {
+    name: "Rookie Forecaster",
+    description:
+      "You've survived your first few bets without going broke. Baby steps.",
+  },
+  10_000: {
+    name: "Sharp Shooter",
+    description:
+      "Double digits! You're starting to see patterns... or you're just lucky.",
+  },
+  50_000: {
+    name: "Trend Spotter",
+    description: "People are starting to ask what you're betting on.",
+  },
+  250_000: {
+    name: "Market Mover",
+    description:
+      "Your trades are big enough to nudge the odds. Try not to let it go to your head.",
+  },
+  500_000: {
+    name: "Half-Millionaire",
+    description: "Halfway to the big leagues. The other half is just vibes.",
+  },
+  1_000_000: {
+    name: "Certified Oracle",
+    description:
+      "Seven figures. You might actually know what you're talking about.",
+  },
+  5_000_000: {
+    name: "Whale Alert",
+    description:
+      "You're the reason the price moved before anyone else even refreshed.",
+  },
+  25_000_000: {
+    name: "Prophet Status",
+    description:
+      "Your username gets mentioned in group chats you're not even in.",
+  },
+  50_000_000: {
+    name: "Market Maker",
+    description:
+      "Markets bend to your will. Or you just got lucky. Repeatedly.",
+  },
+  100_000_000: {
+    name: "Nine-Digit Nostradamus",
+    description: "At this point you might actually own a crystal ball.",
+  },
+  500_000_000: {
+    name: "Legend of Predikt",
+    description:
+      "There should be a statue. There is not a statue. There should be.",
+  },
+  1_000_000_000: {
+    name: "The Oracle of Everything",
+    description:
+      "Billionaire (in credits). A real billionaire somewhere just felt a disturbance.",
+  },
+};
+
 /** Highest tier a peak net worth has earned, or null below the first tier. */
 export const highestTier = (peak: number | string | null | undefined) => {
   const n = Number(peak ?? 0);
