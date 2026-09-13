@@ -72,7 +72,11 @@ function CreateGroupBet() {
     setSubmitting(false);
     if (error) return toast.error(error.message);
     toast.success("Group bet created");
-    navigate({ to: "/group-bets/$id", params: { id: data as string } });
+    navigate({
+      to: "/group-bets/$id",
+      params: { id: data as string },
+      search: { new: "1" },
+    });
   };
 
   return (
