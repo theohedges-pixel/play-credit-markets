@@ -290,10 +290,10 @@ export async function runGenerate() {
       .from("app_settings")
       .upsert({
         key: "last_ai_market_run",
-        value: { at: new Date().toISOString(), inserted: 0, reason: "no valid events" },
+        value: { at: new Date().toISOString(), inserted: 0, reason: "no valid events", round_date: roundDate },
         updated_at: new Date().toISOString(),
       });
-    return { inserted: 0, scanned: raw.length, malformed };
+    return { inserted: 0, scanned: raw.length, malformed, round_date: roundDate };
   }
 
   // Existing titles for dedup
@@ -349,10 +349,11 @@ export async function runGenerate() {
         reason: stale > 0 ? "all candidates duplicate or already settled" : "all duplicates",
         duplicates,
         stale,
+        round_date: roundDate,
       },
       updated_at: new Date().toISOString(),
     });
-    return { inserted: 0, scanned: raw.length, malformed, duplicates, stale };
+    return { inserted: 0, scanned: raw.length, malformed, duplicates, stale, round_date: roundDate };
   }
 
 
@@ -398,11 +399,11 @@ export async function runGenerate() {
 
   const nowIso = new Date().toISOString();
   await supabaseAdmin.from("app_settings").upsert([
-    { key: "last_ai_market_run", value: { at: nowIso, inserted: inserted?.length ?? 0, duplicates, stale }, updated_at: nowIso },
+    { key: "last_ai_market_run", value: { at: nowIso, inserted: inserted?.length ?? 0, duplicates, stale, round_date: roundDate }, updated_at: nowIso },
     { key: "last_ai_market_count", value: { count: inserted?.length ?? 0, at: nowIso }, updated_at: nowIso },
   ]);
 
-  return { inserted: inserted?.length ?? 0, scanned: raw.length, malformed, duplicates, stale };
+  return { inserted: inserted?.length ?? 0, scanned: raw.length, malformed, duplicates, stale, round_date: roundDate };
 }
 
 export const Route = createFileRoute("/api/public/hooks/generate-ai-markets")({
