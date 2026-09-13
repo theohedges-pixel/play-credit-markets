@@ -148,6 +148,24 @@ function MarketsPage() {
     },
   });
 
+  // A member's own suggested markets start with zero volume, so they fall
+  // outside the capped page query. Fetch them separately so they can be pinned.
+  const { data: ownSuggested } = useQuery({
+    queryKey: ["my-suggested-markets", user?.id],
+    enabled: !!user,
+    queryFn: async () => {
+      const { data } = await supabase
+        .from("markets")
+        .select(
+          "id, title, closes_at, created_at, yes_pool, no_pool, volume, status, resolution, source, created_via, category_id, suggested_by, polymarket_event_id, polymarket_event_title, group_item_title, category:categories(name)",
+        )
+        .eq("status", "open")
+        .eq("suggested_by", user!.id)
+        .gt("closes_at", new Date().toISOString());
+      return data ?? [];
+    },
+  });
+
   // Theme filtering is OR across the selected chips, inside the chosen category.
   const filtered =
     themeIds.length > 0 && themeMatchIds
@@ -157,6 +175,12 @@ function MarketsPage() {
   if (unfiltered && siblings) {
     const have = new Set(filtered.map((m) => m.id));
     for (const s of siblings) if (!have.has(s.id)) merged.push(s);
+  }
+  if (unfiltered && ownSuggested) {
+    const have = new Set(merged.map((m) => m.id));
+    for (const m of ownSuggested)
+      if (!have.has(m.id) && (!cat || (m as { category_id?: string }).category_id === cat))
+        merged.push(m);
   }
   // A user's own suggested markets are pinned to the top of THEIR list only —
   // everyone else sees the ordinary ordering.
