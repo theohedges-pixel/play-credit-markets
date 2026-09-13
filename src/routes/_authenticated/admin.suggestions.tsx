@@ -1,3 +1,5 @@
+import { useServerFn } from "@tanstack/react-start";
+import { discoverTrendingNow } from "@/lib/admin-jobs.functions";
 import { createFileRoute, Navigate } from "@tanstack/react-router";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useState } from "react";
@@ -76,12 +78,12 @@ function AdminSuggestions() {
   const catName = (id: string | null) =>
     categories?.find((c) => c.id === id)?.name ?? "Uncategorized";
 
+  const runDiscoverNow = useServerFn(discoverTrendingNow);
+
   const onDiscover = async () => {
     setDiscovering(true);
     try {
-      const r = await fetch("/api/public/hooks/discover-trending-markets", { method: "POST" });
-      const body = await r.json();
-      if (!r.ok || !body.ok) throw new Error(body.error ?? "Discovery failed");
+      const body = await runDiscoverNow();
       toast.success(`Discovered ${body.inserted} new suggestions`);
       qc.invalidateQueries({ queryKey: ["market-suggestions"] });
     } catch (e) {
