@@ -1,5 +1,5 @@
 import { useEffect, useRef } from "react";
-import { useQueryClient } from "@tanstack/react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import confetti from "canvas-confetti";
 import { toast } from "sonner";
 import { Gem } from "lucide-react";
@@ -8,42 +8,68 @@ import { useAuth } from "@/lib/auth";
 import { tierLabel, tierStyle } from "@/lib/milestones";
 import { fmtCredits } from "@/lib/format";
 
+const SEEN_KEY = "predikt.milestones.celebrated";
+
+const loadSeen = (): string[] => {
+  try {
+    return JSON.parse(localStorage.getItem(SEEN_KEY) ?? "[]");
+  } catch {
+    return [];
+  }
+};
+
 /**
- * Listens for milestone notifications written by the database and celebrates
- * them once, wherever the user happens to be in the app.
+ * Celebrates wealth milestones the moment the database awards one, wherever the
+ * user happens to be. Polls for fresh milestone notifications (the notifications
+ * table isn't in the realtime publication) and fires each one exactly once.
  */
 export function MilestoneCelebration() {
   const { user } = useAuth();
   const qc = useQueryClient();
   const seen = useRef<Set<string>>(new Set());
 
+  const { data: pending } = useQuery({
+    queryKey: ["milestone-notifications", user?.id],
+    enabled: !!user?.id,
+    refetchInterval: 15_000,
+    queryFn: async () => {
+      const { data } = await supabase
+        .from("notifications" as any)
+        .select("id, payload, created_at")
+        .eq("kind", "milestone_reached")
+        .is("read_at", null)
+        .order("created_at", { ascending: false })
+        .limit(5);
+      return (data as any[] | null) ?? [];
+    },
+  });
+
   useEffect(() => {
-    if (!user) return;
-    const ch = supabase
-      .channel(`milestone-${user.id}`)
-      .on(
-        "postgres_changes",
-        {
-          event: "INSERT",
-          schema: "public",
-          table: "notifications",
-          filter: `user_id=eq.${user.id}`,
-        },
-        (payload) => {
-          const row = payload.new as { id: string; kind: string; payload: any };
-          if (row.kind !== "milestone_reached") return;
-          if (seen.current.has(row.id)) return;
-          seen.current.add(row.id);
-          celebrate(Number(row.payload?.tier ?? 0), Number(row.payload?.net_worth ?? 0));
-          qc.invalidateQueries({ queryKey: ["net-worth", user.id] });
-          qc.invalidateQueries({ queryKey: ["milestones", user.id] });
-        },
-      )
-      .subscribe();
-    return () => {
-      supabase.removeChannel(ch);
-    };
-  }, [user, qc]);
+    if (!user || !pending?.length) return;
+    if (seen.current.size === 0) loadSeen().forEach((id) => seen.current.add(id));
+
+    const fresh = pending.filter((n) => !seen.current.has(n.id));
+    if (!fresh.length) return;
+
+    // Only the highest tier gets the fanfare if several landed at once.
+    const top = fresh.reduce((a, b) =>
+      Number(a.payload?.tier ?? 0) >= Number(b.payload?.tier ?? 0) ? a : b,
+    );
+    celebrate(Number(top.payload?.tier ?? 0), Number(top.payload?.net_worth ?? 0));
+
+    fresh.forEach((n) => {
+      seen.current.add(n.id);
+      void supabase.rpc("mark_notification_read" as any, { _id: n.id });
+    });
+    try {
+      localStorage.setItem(SEEN_KEY, JSON.stringify([...seen.current].slice(-50)));
+    } catch {
+      /* private mode — the read flag still prevents repeats */
+    }
+    qc.invalidateQueries({ queryKey: ["net-worth", user.id] });
+    qc.invalidateQueries({ queryKey: ["milestones", user.id] });
+    qc.invalidateQueries({ queryKey: ["notifications", user.id] });
+  }, [pending, user, qc]);
 
   return null;
 }
