@@ -284,9 +284,11 @@ function GroupBetDetail() {
           <Stat label="NO" value={`${fmtCredits(totals.no)}c`} tone="no" />
         </div>
 
-        {!myPart && !isCreator && bet.status === "open" && !closed && (
+        {!myPart && bet.status === "open" && !closed && (
           <div className="rounded-lg border border-border bg-card p-5">
-            <h2 className="font-display font-semibold mb-3">Join this bet</h2>
+            <h2 className="font-display font-semibold mb-3">
+              {isCreator ? "Take a side in your own bet" : "Join this bet"}
+            </h2>
             <div className="flex gap-2 mb-3">
               <Button
                 size="sm"
