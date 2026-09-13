@@ -28,7 +28,7 @@ function GroupBetDetail() {
   const [origin, setOrigin] = useState("");
   const [voteSide, setVoteSide] = useState<"yes" | "no" | "invalid">("yes");
   const [voteReason, setVoteReason] = useState("");
-  const search = useSearch() as { new?: string };
+  const search = useSearch({ strict: false }) as { new?: string };
   const justCreated = search.new === "1";
 
   useEffect(() => {
