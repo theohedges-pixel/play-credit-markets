@@ -23,8 +23,33 @@ interface PolyMarket {
   bestAsk?: number | string | null;
   /** Gamma returns a JSON string array of [YES token, NO token]. */
   clobTokenIds?: string | string[] | null;
+  /** Present on sports markets: the real kickoff/first-pitch time. */
+  gameStartTime?: string | null;
+  /** False once Polymarket has stopped taking orders on their side. */
+  acceptingOrders?: boolean | null;
   /** Gamma returns a JSON string array of the two outcome labels, YES first. */
   outcomes?: string | string[] | null;
+}
+
+/**
+ * Polymarket's endDate on sports markets is a generous fallback (often the
+ * game start + 7 days), not when trading actually stops. When a real
+ * gameStartTime exists we cap our own deadline at start + 6h — long enough to
+ * cover a full game plus delays, short enough that a finished game can't stay
+ * tradable for a week. The upstream-status sweep below is the primary signal;
+ * this is only the fallback deadline.
+ */
+const GAME_GRACE_MS = 6 * 60 * 60 * 1000;
+
+export function effectiveClosesAt(m: PolyMarket): string | null {
+  const endRaw = m.endDate ?? m.end_date_iso ?? null;
+  const end = endRaw ? new Date(endRaw).getTime() : NaN;
+  const start = m.gameStartTime ? new Date(m.gameStartTime.replace(" ", "T")).getTime() : NaN;
+  const candidates = [end, Number.isFinite(start) ? start + GAME_GRACE_MS : NaN].filter((n) =>
+    Number.isFinite(n),
+  );
+  if (candidates.length === 0) return null;
+  return new Date(Math.min(...candidates)).toISOString();
 }
 
 const CATEGORY_NAMES = ["Politics", "Crypto", "Sports", "Tech", "Pop Culture", "Science"] as const;
@@ -185,7 +210,8 @@ export async function runSync() {
       const pidHit = m.id && existingByPidMap.has(m.id);
       const titleHit = existingByTitleLower.has(m.question!.toLowerCase());
       if (pidHit || titleHit) return false;
-      const closes = new Date(m.endDate ?? m.end_date_iso ?? "").getTime();
+      const closesIso = effectiveClosesAt(m);
+      const closes = closesIso ? new Date(closesIso).getTime() : NaN;
       return Number.isFinite(closes) && closes > now + 60_000;
     })
     .slice(0, MAX_INSERTS_PER_RUN);
@@ -217,7 +243,7 @@ export async function runSync() {
           m.outcomes,
         ),
         category_id: catByName.get(cats[i]) ?? null,
-        closes_at: new Date(m.endDate ?? m.end_date_iso!).toISOString(),
+        closes_at: effectiveClosesAt(m)!,
         status: "open" as const,
         yes_pool: pools.yes_pool,
         no_pool: pools.no_pool,
@@ -272,6 +298,11 @@ export async function runSync() {
     }
   }
 
+  // Polymarket is the source of truth for WHEN trading stops: sweep every open
+  // import against their live closed flag, regardless of our own closes_at.
+  const upstreamClosed = await sweepUpstreamClosures(supabaseAdmin);
+  closed += upstreamClosed;
+
   // Mirror upstream settlements: any closed Predikt import whose Polymarket
   // twin has settled is resolved to the SAME outcome. Polymarket is the ground
   // truth here, so no AI guess and no review window are involved.
@@ -281,7 +312,100 @@ export async function runSync() {
     .from("app_settings")
     .upsert({ key: "last_polymarket_sync", value: { at: new Date().toISOString() }, updated_at: new Date().toISOString() });
 
-  return { inserted, closed, refreshed, mirrored, backfilledPoints, scanned: items.length };
+  return {
+    inserted,
+    closed,
+    upstreamClosed,
+    refreshed,
+    mirrored,
+    backfilledPoints,
+    scanned: items.length,
+  };
+}
+
+/**
+ * Close any OPEN Polymarket import whose upstream twin has stopped trading,
+ * whatever our stored closes_at says. Upstream markets vanish from the
+ * active feed the moment they close, so this queries Gamma by id with
+ * closed=true: anything that comes back is finished on their side.
+ *
+ * Also re-tightens closes_at on still-open imports whose stored deadline is
+ * looser than the real game start allows.
+ */
+export async function sweepUpstreamClosures(supabaseAdmin: any): Promise<number> {
+  const { data: open } = await supabaseAdmin
+    .from("markets")
+    .select("id, polymarket_id, closes_at")
+    .eq("status", "open")
+    .eq("created_via", "polymarket_import")
+    .not("polymarket_id", "is", null);
+
+  const rows = (open ?? []) as { id: string; polymarket_id: string; closes_at: string }[];
+  if (rows.length === 0) return 0;
+
+  const byPid = new Map(rows.map((r) => [String(r.polymarket_id), r]));
+  const ids = [...byPid.keys()];
+  const CHUNK = 40;
+  let closedCount = 0;
+
+  for (let i = 0; i < ids.length; i += CHUNK) {
+    const chunk = ids.slice(i, i + CHUNK);
+    const qs = chunk.map((id) => `id=${encodeURIComponent(id)}`).join("&");
+
+    // 1. Finished upstream → close ours immediately.
+    try {
+      const r = await fetch(
+        `https://gamma-api.polymarket.com/markets?${qs}&closed=true&limit=${CHUNK}`,
+        { headers: { accept: "application/json" } },
+      );
+      if (r.ok) {
+        const body = (await r.json()) as PolyMarket[];
+        for (const up of Array.isArray(body) ? body : []) {
+          const local = up.id ? byPid.get(String(up.id)) : undefined;
+          if (!local) continue;
+          const { error } = await supabaseAdmin
+            .from("markets")
+            .update({ status: "closed", closes_at: new Date().toISOString() })
+            .eq("id", local.id)
+            .eq("status", "open");
+          if (!error) closedCount++;
+        }
+      }
+    } catch (e) {
+      console.error("[sync-polymarket] upstream closed sweep failed", (e as Error).message);
+    }
+
+    // 2. Still trading upstream → keep our fallback deadline honest.
+    try {
+      const r = await fetch(
+        `https://gamma-api.polymarket.com/markets?${qs}&active=true&limit=${CHUNK}`,
+        { headers: { accept: "application/json" } },
+      );
+      if (!r.ok) continue;
+      const body = (await r.json()) as PolyMarket[];
+      for (const up of Array.isArray(body) ? body : []) {
+        const local = up.id ? byPid.get(String(up.id)) : undefined;
+        if (!local) continue;
+        if (up.closed || up.acceptingOrders === false) {
+          const { error } = await supabaseAdmin
+            .from("markets")
+            .update({ status: "closed", closes_at: new Date().toISOString() })
+            .eq("id", local.id)
+            .eq("status", "open");
+          if (!error) closedCount++;
+          continue;
+        }
+        const tightened = effectiveClosesAt(up);
+        if (tightened && new Date(tightened).getTime() < new Date(local.closes_at).getTime()) {
+          await supabaseAdmin.from("markets").update({ closes_at: tightened }).eq("id", local.id);
+        }
+      }
+    } catch (e) {
+      console.error("[sync-polymarket] upstream deadline sweep failed", (e as Error).message);
+    }
+  }
+
+  return closedCount;
 }
 
 /**
@@ -298,7 +422,7 @@ async function mirrorResolutions(supabaseAdmin: any): Promise<number> {
     .is("resolution", null)
     .eq("created_via", "polymarket_import")
     .not("polymarket_id", "is", null)
-    .limit(25);
+    .limit(75);
 
   let mirrored = 0;
   for (const m of pending ?? []) {
