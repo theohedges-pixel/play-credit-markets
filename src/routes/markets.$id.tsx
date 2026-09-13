@@ -72,7 +72,11 @@ function MarketDetail() {
         .select("yes_price, recorded_at")
         .eq("market_id", id)
         .order("recorded_at")
-        .limit(200);
+        // Imported markets carry a month+ of backfilled pre-import history.
+        // The old ascending limit of 200 silently cut the series off, so the
+        // chart only ever showed a slice. Fetch the full series and thin it
+        // client-side instead of truncating it here.
+        .limit(5000);
       return (data ?? []).map((p) => ({
         t: new Date(p.recorded_at).getTime(),
         price: Number(p.yes_price) * 100,
@@ -174,6 +178,18 @@ function MarketDetail() {
     chartData.push(...inWindow);
     const last = chartData[chartData.length - 1];
     if (!last || last.t < chartNow) chartData.push({ t: chartNow, price: price * 100 });
+  }
+
+  // Thin dense series (backfilled imports run to thousands of points) down to
+  // a chart-friendly count, always keeping the first and last point.
+  const MAX_PLOT_POINTS = 400;
+  if (chartData.length > MAX_PLOT_POINTS) {
+    const step = Math.ceil(chartData.length / MAX_PLOT_POINTS);
+    const thinned = chartData.filter((_, i) => i % step === 0);
+    const last = chartData[chartData.length - 1]!;
+    if (thinned[thinned.length - 1]!.t !== last.t) thinned.push(last);
+    chartData.length = 0;
+    chartData.push(...thinned);
   }
 
   // Only annotate the AI seed when the real first point falls inside the window.
