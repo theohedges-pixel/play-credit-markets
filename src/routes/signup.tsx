@@ -9,12 +9,32 @@ import { toast } from "sonner";
 import { Mail } from "lucide-react";
 
 export const Route = createFileRoute("/signup")({
-  head: () => ({ meta: [{ title: "Create account — Predikt" }] }),
+  validateSearch: (search: Record<string, unknown>): { ref?: string } => {
+    const r = typeof search.ref === "string" ? search.ref.slice(0, 40) : undefined;
+    return r ? { ref: r } : {};
+  },
+  head: () => ({
+    meta: [
+      { title: "Create account — Predikt" },
+      {
+        name: "description",
+        content: "Create a free Predikt account and start forecasting with credits — no real money.",
+      },
+      { property: "og:title", content: "Create account — Predikt" },
+      {
+        property: "og:description",
+        content: "Create a free Predikt account and start forecasting with credits — no real money.",
+      },
+      { property: "og:type", content: "website" },
+      { name: "twitter:card", content: "summary_large_image" },
+    ],
+  }),
   component: SignupPage,
 });
 
 function SignupPage() {
   const navigate = useNavigate();
+  const { ref: referrer } = Route.useSearch();
   const [email, setEmail] = useState("");
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
