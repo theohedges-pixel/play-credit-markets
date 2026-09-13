@@ -62,14 +62,27 @@ function Portfolio() {
   });
 
   const claimDaily = async () => {
-    const { error } = await supabase.rpc("claim_daily_credits");
+    const { data, error } = await supabase.rpc("claim_daily_credits");
     if (error) { toast.error(error.message); return; }
-    toast.success("+100 credits claimed!");
+    const res = (data ?? {}) as { claimed?: number; bonus?: number; streak?: number; bonus_granted?: boolean };
+    if (res.bonus_granted) {
+      fireCelebration();
+      toast.success(`+${res.claimed ?? 5} credits, plus a ${res.bonus ?? 50}-credit streak bonus!`, {
+        description: `${res.streak}-day streak — the bonus repeats every 30 days.`,
+        duration: 8000,
+      });
+    } else {
+      toast.success(`+${res.claimed ?? 5} credits claimed!`, {
+        description: res.streak ? `🔥 ${res.streak}-day streak` : undefined,
+      });
+    }
     refreshProfile();
   };
 
   const today = new Date().toISOString().slice(0, 10);
   const claimed = profile?.last_daily_claim === today;
+  const streak = Number(profile?.claim_streak ?? 0);
+  const daysToBonus = 30 - (streak % 30);
 
   // Value a position the same way the leaderboard's net worth does: only
   // markets still trading carry position value. A resolved market has already
