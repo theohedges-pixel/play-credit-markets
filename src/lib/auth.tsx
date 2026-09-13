@@ -44,7 +44,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     }
     const { data } = await (supabase as any)
       .from("profiles")
-      .select("id, username, credits, avatar_url, bio, last_daily_claim, peak_net_worth")
+      .select("id, username, credits, avatar_url, bio, last_daily_claim, peak_net_worth, trading_history_public")
       .eq("id", uid)
       .maybeSingle();
     setProfile(data ? { ...data, credits: Number(data.credits) } : null);
