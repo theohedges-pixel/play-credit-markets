@@ -76,6 +76,8 @@ function FriendsPage() {
       <div className="max-w-3xl mx-auto px-6 py-10">
         <h1 className="font-display text-3xl font-bold mb-6">Friends</h1>
 
+        <InviteFriends />
+
         <Tabs defaultValue="friends">
           <TabsList>
             <TabsTrigger value="friends">My friends ({accepted.length})</TabsTrigger>
