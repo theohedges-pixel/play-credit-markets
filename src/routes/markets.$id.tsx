@@ -12,6 +12,18 @@ import { LineChart, Line, ResponsiveContainer, YAxis, Tooltip, XAxis, ReferenceD
 import { toast } from "sonner";
 import { format } from "date-fns";
 import { Loader2 } from "lucide-react";
+
+// Renders the "AI estimate" annotation offset into the chart so it never clips
+// at the left edge (the seed point is always the leftmost x).
+function AiEstimateLabel(props: any) {
+  const { viewBox } = props;
+  if (!viewBox) return null;
+  return (
+    <text x={viewBox.x + 10} y={viewBox.y - 10} fill="var(--primary)" fontSize={10}>
+      AI estimate
+    </text>
+  );
+}
 import { useMarketDetailRealtime } from "@/lib/realtime";
 
 
@@ -284,7 +296,7 @@ function MarketDetail() {
                         fill="var(--primary)"
                         stroke="var(--background)"
                         strokeWidth={2}
-                        label={{ value: "AI estimate", position: "insideTopRight", fill: "var(--primary)", fontSize: 10 }}
+                        label={<AiEstimateLabel />}
                       />
                     )}
                   </LineChart>
