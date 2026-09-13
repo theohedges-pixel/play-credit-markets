@@ -82,8 +82,9 @@ function Portfolio() {
     unrealizedPnl += value - Number(p.credits_spent);
   });
   const totalPnl = unrealizedPnl + realizedPnl;
-  const valueClass = (v: number) => (v > 0 ? "text-yes" : v < 0 ? "text-no" : "text-muted-foreground");
-  const signed = (v: number) => `${v >= 0 ? "+" : ""}${fmtCredits(v)}`;
+  const displayedValue = (v: number) => Math.round(v);
+  const valueClass = (v: number) => displayedValue(v) > 0 ? "text-yes" : displayedValue(v) < 0 ? "text-no" : "text-muted-foreground";
+  const signed = (v: number) => `${displayedValue(v) > 0 ? "+" : ""}${fmtCredits(displayedValue(v))}`;
   const positionRows = (positions ?? [])
     .filter((position: any) => position.market)
     .map((position: any) => {
