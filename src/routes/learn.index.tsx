@@ -7,6 +7,7 @@ import { useAuth } from "@/lib/auth";
 import { cn } from "@/lib/utils";
 import {
   FEATURED_PART,
+  PART_DESCRIPTIONS,
   LEVEL_STYLE,
   articleState,
   buildStats,
@@ -193,10 +194,14 @@ function LearnIndex() {
                       Part {part} · {inPart[0]?.part_name}
                     </h2>
                   </div>
-                  {featured && (
+                  {PART_DESCRIPTIONS[part] && (
                     <p className="text-xs text-muted-foreground mt-1">
-                      Start here. This section is about keeping play healthy and spotting
-                      gambling harm — the most important thing on Predikt.
+                      {PART_DESCRIPTIONS[part]}
+                    </p>
+                  )}
+                  {featured && (
+                    <p className="text-xs text-primary/80 mt-1">
+                      Start here — the most important section on Predikt.
                     </p>
                   )}
                 </div>
