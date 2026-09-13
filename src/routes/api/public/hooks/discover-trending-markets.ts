@@ -107,7 +107,7 @@ export async function runDiscover() {
   const minClose = now + 24 * 60 * 60 * 1000;
   const maxClose = now + 365 * 24 * 60 * 60 * 1000;
 
-  const rows = suggestions
+  const shortlist = suggestions
     .filter((s) => !isDuplicate(s.title))
     .map((s) => {
       const closes = new Date(s.suggested_closes_at).getTime();
@@ -122,9 +122,60 @@ export async function runDiscover() {
         status: "pending" as const,
       };
     })
-    .filter(Boolean) as Array<Record<string, unknown>>;
+    .filter(Boolean) as Array<{
+    title: string;
+    description: string;
+    category_id: string | null;
+    suggested_closes_at: string;
+    source_summary: string;
+    status: "pending";
+  }>;
 
-  if (rows.length === 0) return { inserted: 0, scanned: suggestions.length };
+  if (shortlist.length === 0) return { inserted: 0, scanned: suggestions.length };
+
+  // Same gates the market generator uses: never queue a candidate whose topic
+  // duplicates a live/recent market or whose outcome is already public.
+  const compareTitles = await loadComparisonTitles(supabaseAdmin);
+  const semanticDupes = await findSemanticDuplicates(
+    apiKey,
+    shortlist.map((s) => ({ title: s.title })),
+    compareTitles,
+  );
+  const notDuped = shortlist.filter((s, i) => {
+    if (semanticDupes.has(i)) {
+      console.warn(
+        `[discover-trending-markets] dropped duplicate topic: "${s.title}" — matches ${semanticDupes.get(i)}`,
+      );
+      return false;
+    }
+    return true;
+  });
+
+  const verdicts = await Promise.all(
+    notDuped.map((s) =>
+      verifyUnsettled(apiKey, {
+        title: s.title,
+        description: s.description,
+        closes_at: s.suggested_closes_at,
+      }),
+    ),
+  );
+  const rows = notDuped.filter((s, i) => {
+    if (verdicts[i].stale) {
+      console.warn(
+        `[discover-trending-markets] dropped settled topic: "${s.title}" — ${verdicts[i].reasoning}`,
+      );
+      return false;
+    }
+    return true;
+  });
+
+  const duplicates = shortlist.length - notDuped.length;
+  const stale = notDuped.length - rows.length;
+
+  if (rows.length === 0) {
+    return { inserted: 0, scanned: suggestions.length, duplicates, stale };
+  }
 
   const { error, data } = await (supabaseAdmin as any)
     .from("market_suggestions")
@@ -136,11 +187,11 @@ export async function runDiscover() {
     .from("app_settings")
     .upsert({
       key: "last_market_discovery",
-      value: { at: new Date().toISOString(), inserted: data?.length ?? 0 },
+      value: { at: new Date().toISOString(), inserted: data?.length ?? 0, duplicates, stale },
       updated_at: new Date().toISOString(),
     });
 
-  return { inserted: data?.length ?? 0, scanned: suggestions.length };
+  return { inserted: data?.length ?? 0, scanned: suggestions.length, duplicates, stale };
 }
 
 export const Route = createFileRoute("/api/public/hooks/discover-trending-markets")({
