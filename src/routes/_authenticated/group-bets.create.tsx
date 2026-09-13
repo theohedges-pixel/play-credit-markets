@@ -28,6 +28,7 @@ function CreateGroupBet() {
   const [title, setTitle] = useState("");
   const [description, setDescription] = useState("");
   const [closesAt, setClosesAt] = useState("");
+  const [resolutionSource, setResolutionSource] = useState("");
   const [picked, setPicked] = useState<Set<string>>(new Set());
   const [submitting, setSubmitting] = useState(false);
 
