@@ -19,11 +19,16 @@ export const Route = createFileRoute("/_authenticated/group-bets/$id")({
 
 function GroupBetDetail() {
   const { id } = Route.useParams();
-  const { user, refreshProfile } = useAuth();
+  const { user, profile, refreshProfile } = useAuth();
   const qc = useQueryClient();
   const [side, setSide] = useState<"yes" | "no">("yes");
   const [amount, setAmount] = useState("");
   const [submitting, setSubmitting] = useState(false);
+  const [origin, setOrigin] = useState("");
+
+  useEffect(() => {
+    if (typeof window !== "undefined") setOrigin(window.location.origin);
+  }, []);
 
   const { data: bet, isLoading } = useQuery({
     queryKey: ["gb-detail", id],
