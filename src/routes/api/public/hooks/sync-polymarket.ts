@@ -171,7 +171,7 @@ export async function runSync() {
   {
     const { data: imports } = await supabaseAdmin
       .from("markets")
-      .select("id, polymarket_id, yes_pool, no_pool, polymarket_clob_token_id")
+      .select("id, polymarket_id, yes_pool, no_pool, polymarket_clob_token_id, polymarket_event_id")
       .eq("created_via", "polymarket_import")
       .eq("status", "open")
       .not("polymarket_id", "is", null);
@@ -198,6 +198,13 @@ export async function runSync() {
             .from("markets")
             .update({ polymarket_clob_token_id: token } as never)
             .eq("id", m.id);
+        }
+      }
+      // Same for the event grouping fields, which older imports also predate.
+      if (!(m as { polymarket_event_id?: string | null }).polymarket_event_id) {
+        const g = groupingFields(upstream);
+        if (g.polymarket_event_id) {
+          await supabaseAdmin.from("markets").update(g as never).eq("id", m.id);
         }
       }
       const prob = parseYesProbability(upstream);
