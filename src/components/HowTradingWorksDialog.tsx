@@ -22,7 +22,7 @@ export function HowTradingWorksDialog() {
           <CircleHelp className="h-5 w-5" />
         </Button>
       </DialogTrigger>
-      <DialogContent className="w-[calc(100%-2rem)] max-w-lg max-h-[85vh] flex flex-col gap-0 p-0">
+      <DialogContent className="max-w-[calc(100vw-2rem)] sm:max-w-lg max-h-[85vh] flex flex-col gap-0 p-0">
         <DialogHeader className="px-5 pt-5 pb-3 border-b border-border shrink-0">
           <DialogTitle className="font-display text-xl">How Predikt works</DialogTitle>
           <DialogDescription className="sr-only">
