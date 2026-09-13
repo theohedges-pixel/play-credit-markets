@@ -607,11 +607,17 @@ function MarketsTab() {
   return (
     <div className="space-y-8">
       <section>
-        <h2 className="font-display text-lg font-semibold mb-3">Polymarket sync</h2>
-        <Button variant="outline" className="gap-2" onClick={onSync} disabled={syncing}>
-          {syncing ? <Loader2 size={14} className="animate-spin" /> : <RefreshCw size={14} />}
-          Sync Polymarket now
-        </Button>
+        <h2 className="font-display text-lg font-semibold mb-3">Market ingestion</h2>
+        <div className="flex items-center gap-3 flex-wrap">
+          <Button variant="outline" className="gap-2" onClick={onSync} disabled={syncing}>
+            {syncing ? <Loader2 size={14} className="animate-spin" /> : <RefreshCw size={14} />}
+            Sync Polymarket now
+          </Button>
+          <Button variant="outline" className="gap-2" onClick={onGenerateAi} disabled={genAi}>
+            {genAi ? <Loader2 size={14} className="animate-spin" /> : <Brain size={14} />}
+            {genAi ? "Generating…" : "Generate AI markets"}
+          </Button>
+        </div>
       </section>
 
       <NeedsResolutionSection />
