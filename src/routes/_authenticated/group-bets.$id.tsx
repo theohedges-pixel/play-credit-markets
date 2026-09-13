@@ -226,16 +226,26 @@ function GroupBetDetail() {
         </div>
 
         {canShare && (
-          <div className="rounded-lg border border-border bg-card p-5">
+          <div
+            className={`rounded-lg border p-5 ${
+              justCreated
+                ? "border-primary/40 bg-primary/5"
+                : "border-border bg-card"
+            }`}
+          >
             <div className="flex items-center justify-between gap-4">
               <div className="min-w-0">
-                <h2 className="font-display font-semibold">Share this bet</h2>
+                <h2 className="font-display font-semibold">
+                  {justCreated ? "Bet created! Invite people to join" : "Share this bet"}
+                </h2>
                 <p className="text-xs text-muted-foreground mt-1">
-                  Anyone with your link can join — even if they're not on Predikt yet.
+                  {justCreated
+                    ? "Anyone with your link can join — friends or not — even if they're not on Predikt yet."
+                    : "Anyone with your link can join — even if they're not on Predikt yet."}
                 </p>
               </div>
               <Button size="sm" onClick={share}>
-                <Share2 size={14} /> Share
+                <Share2 size={14} /> {justCreated ? "Invite" : "Share"}
               </Button>
             </div>
             <Input readOnly value={shareUrl} onFocus={(e) => e.currentTarget.select()} className="mt-3 text-xs" />
