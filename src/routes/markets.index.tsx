@@ -182,6 +182,35 @@ function MarketsPage() {
           ))}
         </div>
 
+        {cat && themes && themes.length > 0 && (
+          <div className="flex flex-wrap items-center gap-2 -mt-4 mb-8">
+            {themes.map((t) => {
+              const on = themeIds.includes(t.id);
+              return (
+                <button
+                  key={t.id}
+                  onClick={() =>
+                    setThemeIds((prev) =>
+                      prev.includes(t.id) ? prev.filter((x) => x !== t.id) : [...prev, t.id],
+                    )
+                  }
+                  className={`px-2.5 py-1 rounded-full text-xs border ${on ? "bg-secondary text-foreground border-primary/60" : "border-border text-muted-foreground hover:text-foreground"}`}
+                >
+                  {t.name}
+                </button>
+              );
+            })}
+            {themeIds.length > 0 && (
+              <button
+                onClick={() => setThemeIds([])}
+                className="text-xs text-muted-foreground hover:text-foreground underline underline-offset-2"
+              >
+                Clear
+              </button>
+            )}
+          </div>
+        )}
+
         {isLoading ? (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
             {Array.from({ length: 6 }).map((_, i) => (
