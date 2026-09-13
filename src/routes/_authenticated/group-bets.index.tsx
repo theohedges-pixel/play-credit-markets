@@ -84,6 +84,26 @@ function GroupBetsList() {
       (invitedIds ?? []).includes(b.id) && !(participatingIds ?? []).includes(b.id),
   );
 
+  const allBets = [...(created ?? []), ...(invitedBets ?? [])];
+  const allIds = Array.from(new Set(allBets.map((b) => b.id))).sort();
+  const { data: splits } = useQuery({
+    queryKey: ["gb-splits", allIds.join(",")],
+    enabled: allIds.length > 0,
+    queryFn: async () => {
+      const { data } = await (supabase as any)
+        .from("group_bet_participants")
+        .select("group_bet_id, side, credits_wagered")
+        .in("group_bet_id", allIds);
+      const map: Record<string, { yes: number; no: number }> = {};
+      for (const row of (data ?? []) as Array<{ group_bet_id: string; side: string; credits_wagered: number }>) {
+        const m = (map[row.group_bet_id] ??= { yes: 0, no: 0 });
+        if (row.side === "yes") m.yes += Number(row.credits_wagered);
+        else m.no += Number(row.credits_wagered);
+      }
+      return map;
+    },
+  });
+
   return (
     <div>
       <Header />
@@ -106,13 +126,13 @@ function GroupBetsList() {
             <TabsTrigger value="created">Created ({created?.length ?? 0})</TabsTrigger>
           </TabsList>
           <TabsContent value="participating" className="mt-4">
-            <BetList bets={participating} empty="You haven't joined any group bets yet." />
+            <BetList bets={participating} splits={splits} empty="You haven't joined any group bets yet." />
           </TabsContent>
           <TabsContent value="invited" className="mt-4">
-            <BetList bets={invited} empty="No pending invites." />
+            <BetList bets={invited} splits={splits} empty="No pending invites." />
           </TabsContent>
           <TabsContent value="created" className="mt-4">
-            <BetList bets={created ?? []} empty="You haven't created any group bets." />
+            <BetList bets={created ?? []} splits={splits} empty="You haven't created any group bets." />
           </TabsContent>
         </Tabs>
       </div>
@@ -120,7 +140,15 @@ function GroupBetsList() {
   );
 }
 
-function BetList({ bets, empty }: { bets: Bet[]; empty: string }) {
+function BetList({
+  bets,
+  splits,
+  empty,
+}: {
+  bets: Bet[];
+  splits?: Record<string, { yes: number; no: number }>;
+  empty: string;
+}) {
   if (bets.length === 0) {
     return (
       <p className="text-sm text-muted-foreground text-center py-8 rounded-lg border border-border bg-card">
@@ -130,7 +158,11 @@ function BetList({ bets, empty }: { bets: Bet[]; empty: string }) {
   }
   return (
     <div className="rounded-lg border border-border bg-card divide-y divide-border">
-      {bets.map((b) => (
+      {bets.map((b) => {
+        const s = splits?.[b.id];
+        const pot = (s?.yes ?? 0) + (s?.no ?? 0);
+        const yesPct = pot > 0 ? Math.round(((s?.yes ?? 0) / pot) * 100) : null;
+        return (
         <Link
           key={b.id}
           to="/group-bets/$id"
@@ -142,6 +174,14 @@ function BetList({ bets, empty }: { bets: Bet[]; empty: string }) {
               <div className="font-medium truncate">{b.title}</div>
               <div className="text-xs text-muted-foreground mt-0.5">
                 Closes {format(new Date(b.closes_at), "MMM d, yyyy")}
+                {yesPct != null && (
+                  <>
+                    {" · "}
+                    <span className="text-yes">{yesPct}% YES</span>
+                    {" · "}
+                    {pot.toLocaleString()}c pot
+                  </>
+                )}
               </div>
             </div>
             <span className="text-xs uppercase tracking-wider text-muted-foreground">
@@ -155,7 +195,8 @@ function BetList({ bets, empty }: { bets: Bet[]; empty: string }) {
             </span>
           </div>
         </Link>
-      ))}
+        );
+      })}
     </div>
   );
 }
