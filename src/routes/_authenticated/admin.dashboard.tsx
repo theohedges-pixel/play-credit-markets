@@ -912,6 +912,7 @@ function Chart({
             {keys.map((k, i) => (
               <Line
                 key={k.k}
+                yAxisId={i === 0 ? "left" : "right"}
                 type="monotone"
                 dataKey={k.k}
                 name={k.label}
