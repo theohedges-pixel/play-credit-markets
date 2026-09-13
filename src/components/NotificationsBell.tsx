@@ -159,6 +159,20 @@ export function NotificationsBell() {
         </Link>
       );
     }
+    if (n.kind === "streak_bonus") {
+      return (
+        <Link
+          to="/portfolio"
+          onClick={() => setOpen(false)}
+          className="block px-4 py-3 hover:bg-secondary/50 text-sm"
+        >
+          <div>
+            🔥 {n.payload.streak}-day claim streak — {n.payload.bonus} bonus credits
+          </div>
+          <div className="text-xs text-muted-foreground">{ts}</div>
+        </Link>
+      );
+    }
     return (
       <div className="px-4 py-3 text-sm">
         <div>{n.kind}</div>
