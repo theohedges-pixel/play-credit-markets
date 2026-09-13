@@ -230,17 +230,29 @@ function Portfolio() {
         )}
 
 
-        <div className="my-8 rounded-lg border border-border bg-card p-5 flex items-center justify-between gap-5">
+        <div className="my-8 rounded-lg border border-border bg-card p-5 flex items-center justify-between gap-5 flex-wrap">
           <div>
             <div className="font-display font-semibold flex items-center gap-2"><Gift size={16} className="text-primary" /> Daily reward</div>
-            <p className="text-sm text-muted-foreground mt-1">Claim 100 free credits every day. Resets at 00:00 UTC.</p>
+            <p className="text-sm text-muted-foreground mt-1">Claim 5 free credits every day. Resets at 00:00 UTC.</p>
+            <p className="text-xs text-muted-foreground mt-2">
+              {streak > 0
+                ? `${daysToBonus} ${daysToBonus === 1 ? "day" : "days"} until your next 50-credit bonus`
+                : "Claim 30 days in a row for a 50-credit bonus"}
+            </p>
           </div>
-          <TooltipProvider>
-            <Tooltip>
-              <TooltipTrigger asChild><span tabIndex={0}><Button onClick={claimDaily} disabled={claimed}>{claimed ? "Claimed today" : "Claim +100"}</Button></span></TooltipTrigger>
-              {claimed && <TooltipContent>Come back tomorrow</TooltipContent>}
-            </Tooltip>
-          </TooltipProvider>
+          <div className="flex items-center gap-3">
+            {streak > 0 && (
+              <span className="rounded-full border border-primary/40 bg-primary/10 px-3 py-1 text-sm font-medium text-primary tabular-nums">
+                🔥 {streak}-day streak
+              </span>
+            )}
+            <TooltipProvider>
+              <Tooltip>
+                <TooltipTrigger asChild><span tabIndex={0}><Button onClick={claimDaily} disabled={claimed}>{claimed ? "Claimed today" : "Claim +5"}</Button></span></TooltipTrigger>
+                {claimed && <TooltipContent>Come back tomorrow</TooltipContent>}
+              </Tooltip>
+            </TooltipProvider>
+          </div>
         </div>
 
         <section className="border-t border-border pt-8">
