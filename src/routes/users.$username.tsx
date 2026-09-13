@@ -7,6 +7,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { Header } from "@/components/Header";
 import { UserAvatar } from "@/components/UserAvatar";
 import { TierBadge } from "@/components/TierBadge";
+import { TradeLedger, type LedgerTrade } from "@/components/TradeRow";
 import { Button } from "@/components/ui/button";
 import { useAuth } from "@/lib/auth";
 import { toast } from "sonner";
@@ -280,40 +281,11 @@ function PublicProfile() {
 
               <div>
                 <h3 className="text-[11px] uppercase tracking-wider text-muted-foreground mb-2">
-                  Trades
+                  Trade ledger
                 </h3>
-                {tradingHistory.trades.length === 0 ? (
-                  <EmptyNote>No trades yet.</EmptyNote>
-                ) : (
-                  <div className="rounded-lg border border-border bg-card divide-y divide-border">
-                    {tradingHistory.trades.map((t: any) => (
-                      <div key={t.id} className="px-4 py-3 flex items-center gap-3 flex-wrap">
-                        <span
-                          className={`text-[10px] font-mono px-1.5 py-0.5 rounded shrink-0 ${
-                            t.side === "yes" ? "bg-yes/15 text-yes" : "bg-no/15 text-no"
-                          }`}
-                        >
-                          {String(t.action).toUpperCase()} {String(t.side).toUpperCase()}
-                        </span>
-                        <Link
-                          to="/markets/$id"
-                          params={{ id: t.market_id }}
-                          className="flex-1 min-w-0 text-sm hover:text-primary truncate"
-                        >
-                          {t.market_title}
-                        </Link>
-                        <span className="text-xs font-mono text-muted-foreground shrink-0">
-                          {Number(t.shares).toFixed(2)} sh · {fmtCredits(t.credits)}c ·{" "}
-                          {fmtPct(Number(t.price))}
-                        </span>
-                        <span className="text-[10px] text-muted-foreground shrink-0 w-20 text-right">
-                          {format(new Date(t.created_at), "d MMM HH:mm")}
-                        </span>
-                      </div>
-                    ))}
-                  </div>
-                )}
+                <TradeLedger trades={(tradingHistory.trades ?? []) as LedgerTrade[]} />
               </div>
+
             </div>
           )}
         </section>

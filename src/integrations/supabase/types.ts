@@ -994,6 +994,7 @@ export type Database = {
           id: string
           market_id: string
           price: number
+          realized_gain: number | null
           shares: number
           side: Database["public"]["Enums"]["trade_side"]
           user_id: string
@@ -1005,6 +1006,7 @@ export type Database = {
           id?: string
           market_id: string
           price: number
+          realized_gain?: number | null
           shares: number
           side: Database["public"]["Enums"]["trade_side"]
           user_id: string
@@ -1016,6 +1018,7 @@ export type Database = {
           id?: string
           market_id?: string
           price?: number
+          realized_gain?: number | null
           shares?: number
           side?: Database["public"]["Enums"]["trade_side"]
           user_id?: string
@@ -1341,8 +1344,14 @@ export type Database = {
           avatar_url: string
           created_at: string
           credits: number
+          current_yes_price: number
           id: string
+          market_id: string
+          market_resolution: Database["public"]["Enums"]["market_resolution"]
+          market_status: Database["public"]["Enums"]["market_status"]
+          market_title: string
           price: number
+          realized_gain: number
           shares: number
           side: Database["public"]["Enums"]["trade_side"]
           user_id: string
