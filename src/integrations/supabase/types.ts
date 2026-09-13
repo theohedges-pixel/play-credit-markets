@@ -276,11 +276,13 @@ export type Database = {
             | Database["public"]["Enums"]["group_bet_resolution"]
             | null
           resolution: Database["public"]["Enums"]["group_bet_resolution"] | null
+          resolution_method: string | null
           resolution_reason: string | null
           resolution_source: string | null
           resolved_at: string | null
           status: Database["public"]["Enums"]["group_bet_status"]
           title: string
+          voting_started_at: string | null
         }
         Insert: {
           auto_checked_at?: string | null
@@ -297,11 +299,13 @@ export type Database = {
           resolution?:
             | Database["public"]["Enums"]["group_bet_resolution"]
             | null
+          resolution_method?: string | null
           resolution_reason?: string | null
           resolution_source?: string | null
           resolved_at?: string | null
           status?: Database["public"]["Enums"]["group_bet_status"]
           title: string
+          voting_started_at?: string | null
         }
         Update: {
           auto_checked_at?: string | null
@@ -318,11 +322,13 @@ export type Database = {
           resolution?:
             | Database["public"]["Enums"]["group_bet_resolution"]
             | null
+          resolution_method?: string | null
           resolution_reason?: string | null
           resolution_source?: string | null
           resolved_at?: string | null
           status?: Database["public"]["Enums"]["group_bet_status"]
           title?: string
+          voting_started_at?: string | null
         }
         Relationships: [
           {
@@ -887,11 +893,13 @@ export type Database = {
         Args: {
           _auto: boolean
           _group_bet_id: string
+          _method?: string
           _reason: string
           _resolution: Database["public"]["Enums"]["group_bet_resolution"]
         }
         Returns: undefined
       }
+      finalize_group_bet_voting_deadlines: { Args: never; Returns: number }
       finalize_pending_auto_resolutions: { Args: never; Returns: number }
       flag_auto_resolution: {
         Args: { _group_bet_id: string }
@@ -932,6 +940,7 @@ export type Database = {
       }
       mark_all_notifications_read: { Args: never; Returns: undefined }
       mark_notification_read: { Args: { _id: string }; Returns: undefined }
+      open_group_bet_voting: { Args: never; Returns: number }
       propose_group_bet_resolution: {
         Args: {
           _group_bet_id: string

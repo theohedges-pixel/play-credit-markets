@@ -31,8 +31,15 @@ function GroupBetDetail() {
   const search = useSearch({ strict: false }) as { new?: number };
   const justCreated = search.new === 1;
 
+  const [, setTick] = useState(0);
+
   useEffect(() => {
     if (typeof window !== "undefined") setOrigin(window.location.origin);
+  }, []);
+
+  useEffect(() => {
+    const t = setInterval(() => setTick((n) => n + 1), 60_000);
+    return () => clearInterval(t);
   }, []);
 
   const { data: bet, isLoading } = useQuery({
@@ -200,6 +207,25 @@ function GroupBetDetail() {
   const pendingAuto = bet.status === "pending_auto_resolution";
   const canFlag = pendingAuto && (isCreator || !!myPart);
 
+  const fallbackAt = bet.voting_started_at
+    ? new Date(new Date(bet.voting_started_at).getTime() + 24 * 3600 * 1000)
+    : null;
+  const msLeft = fallbackAt ? fallbackAt.getTime() - Date.now() : 0;
+  const timeLeft =
+    msLeft <= 0
+      ? "any moment now"
+      : msLeft >= 3600_000
+        ? `${Math.floor(msLeft / 3600_000)}h ${Math.floor((msLeft % 3600_000) / 60_000)}m`
+        : `${Math.max(1, Math.floor(msLeft / 60_000))}m`;
+  const methodNote =
+    bet.resolution_method === "majority_fallback"
+      ? "Settled by majority fallback, not unanimous agreement"
+      : bet.resolution_method === "no_consensus_refund"
+        ? "No consensus reached — everyone was refunded"
+        : bet.auto_resolved
+          ? "Settled by automatic check"
+          : "Settled by unanimous agreement";
+
   return (
     <div>
       <Header />
@@ -298,7 +324,7 @@ function GroupBetDetail() {
             </h2>
             <p className="text-sm text-muted-foreground mt-2">{bet.resolution_reason}</p>
             <p className="text-[10px] uppercase tracking-wider text-muted-foreground mt-3">
-              {bet.auto_resolved ? "Settled by automatic check" : "Settled by group vote"}
+              {methodNote}
             </p>
           </div>
         )}
@@ -323,11 +349,24 @@ function GroupBetDetail() {
           </div>
         )}
 
+        {bet.status === "voting" && fallbackAt && (
+          <div className="rounded-lg border border-border bg-secondary/30 p-4">
+            <p className="text-sm">
+              Unanimous agreement needed to settle immediately — falls back to majority vote in{" "}
+              <span className="font-mono">{timeLeft}</span>.
+            </p>
+            <p className="text-xs text-muted-foreground mt-1">
+              {(votes ?? []).length} of {eligibleCount} votes in.
+            </p>
+          </div>
+        )}
+
         {canVote && (
           <div className="rounded-lg border border-border bg-card p-5">
             <h2 className="font-display font-semibold mb-1">What was the outcome?</h2>
             <p className="text-xs text-muted-foreground mb-3">
-              Everyone in this bet gets one vote. It settles as soon as more than half agree.
+              Everyone in this bet gets one vote. It settles straight away only if everyone votes
+              the same way — otherwise majority rule kicks in after 24 hours.
             </p>
             <div className="flex gap-2 mb-3">
               {(["yes", "no", "invalid"] as const).map((s) => (
