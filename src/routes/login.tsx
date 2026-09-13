@@ -57,6 +57,7 @@ function clearSessionOnlyFlag() {
 
 function LoginPage() {
   const navigate = useNavigate();
+  const { bet, sharer } = Route.useSearch();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [remember, setRemember] = useState(true);
