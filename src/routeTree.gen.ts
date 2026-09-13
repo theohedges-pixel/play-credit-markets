@@ -28,7 +28,6 @@ import { Route as AuthenticatedFriendsRouteImport } from './routes/_authenticate
 import { Route as AuthenticatedGroupBetsIndexRouteImport } from './routes/_authenticated/group-bets.index'
 import { Route as AuthenticatedGroupBetsCreateRouteImport } from './routes/_authenticated/group-bets.create'
 import { Route as AuthenticatedGroupBetsIdRouteImport } from './routes/_authenticated/group-bets.$id'
-import { Route as AuthenticatedAdminSuggestionsRouteImport } from './routes/_authenticated/admin.suggestions'
 import { Route as AuthenticatedAdminDashboardRouteImport } from './routes/_authenticated/admin.dashboard'
 import { Route as ApiPublicHooksSyncPolymarketRouteImport } from './routes/api/public/hooks/sync-polymarket'
 import { Route as ApiPublicHooksGenerateAiMarketsRouteImport } from './routes/api/public/hooks/generate-ai-markets'
@@ -132,12 +131,6 @@ const AuthenticatedGroupBetsIdRoute =
     path: '/$id',
     getParentRoute: () => AuthenticatedGroupBetsRoute,
   } as any)
-const AuthenticatedAdminSuggestionsRoute =
-  AuthenticatedAdminSuggestionsRouteImport.update({
-    id: '/admin/suggestions',
-    path: '/admin/suggestions',
-    getParentRoute: () => AuthenticatedRoute,
-  } as any)
 const AuthenticatedAdminDashboardRoute =
   AuthenticatedAdminDashboardRouteImport.update({
     id: '/admin/dashboard',
@@ -186,7 +179,6 @@ export interface FileRoutesByFullPath {
   '/users/$username': typeof UsersUsernameRoute
   '/markets/': typeof MarketsIndexRoute
   '/admin/dashboard': typeof AuthenticatedAdminDashboardRoute
-  '/admin/suggestions': typeof AuthenticatedAdminSuggestionsRoute
   '/group-bets/$id': typeof AuthenticatedGroupBetsIdRoute
   '/group-bets/create': typeof AuthenticatedGroupBetsCreateRoute
   '/group-bets/': typeof AuthenticatedGroupBetsIndexRoute
@@ -211,7 +203,6 @@ export interface FileRoutesByTo {
   '/users/$username': typeof UsersUsernameRoute
   '/markets': typeof MarketsIndexRoute
   '/admin/dashboard': typeof AuthenticatedAdminDashboardRoute
-  '/admin/suggestions': typeof AuthenticatedAdminSuggestionsRoute
   '/group-bets/$id': typeof AuthenticatedGroupBetsIdRoute
   '/group-bets/create': typeof AuthenticatedGroupBetsCreateRoute
   '/group-bets': typeof AuthenticatedGroupBetsIndexRoute
@@ -239,7 +230,6 @@ export interface FileRoutesById {
   '/users/$username': typeof UsersUsernameRoute
   '/markets/': typeof MarketsIndexRoute
   '/_authenticated/admin/dashboard': typeof AuthenticatedAdminDashboardRoute
-  '/_authenticated/admin/suggestions': typeof AuthenticatedAdminSuggestionsRoute
   '/_authenticated/group-bets/$id': typeof AuthenticatedGroupBetsIdRoute
   '/_authenticated/group-bets/create': typeof AuthenticatedGroupBetsCreateRoute
   '/_authenticated/group-bets/': typeof AuthenticatedGroupBetsIndexRoute
@@ -267,7 +257,6 @@ export interface FileRouteTypes {
     | '/users/$username'
     | '/markets/'
     | '/admin/dashboard'
-    | '/admin/suggestions'
     | '/group-bets/$id'
     | '/group-bets/create'
     | '/group-bets/'
@@ -292,7 +281,6 @@ export interface FileRouteTypes {
     | '/users/$username'
     | '/markets'
     | '/admin/dashboard'
-    | '/admin/suggestions'
     | '/group-bets/$id'
     | '/group-bets/create'
     | '/group-bets'
@@ -319,7 +307,6 @@ export interface FileRouteTypes {
     | '/users/$username'
     | '/markets/'
     | '/_authenticated/admin/dashboard'
-    | '/_authenticated/admin/suggestions'
     | '/_authenticated/group-bets/$id'
     | '/_authenticated/group-bets/create'
     | '/_authenticated/group-bets/'
@@ -482,13 +469,6 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedGroupBetsIdRouteImport
       parentRoute: typeof AuthenticatedGroupBetsRoute
     }
-    '/_authenticated/admin/suggestions': {
-      id: '/_authenticated/admin/suggestions'
-      path: '/admin/suggestions'
-      fullPath: '/admin/suggestions'
-      preLoaderRoute: typeof AuthenticatedAdminSuggestionsRouteImport
-      parentRoute: typeof AuthenticatedRoute
-    }
     '/_authenticated/admin/dashboard': {
       id: '/_authenticated/admin/dashboard'
       path: '/admin/dashboard'
@@ -552,7 +532,6 @@ interface AuthenticatedRouteChildren {
   AuthenticatedPortfolioRoute: typeof AuthenticatedPortfolioRoute
   AuthenticatedSettingsRoute: typeof AuthenticatedSettingsRoute
   AuthenticatedAdminDashboardRoute: typeof AuthenticatedAdminDashboardRoute
-  AuthenticatedAdminSuggestionsRoute: typeof AuthenticatedAdminSuggestionsRoute
 }
 
 const AuthenticatedRouteChildren: AuthenticatedRouteChildren = {
@@ -562,7 +541,6 @@ const AuthenticatedRouteChildren: AuthenticatedRouteChildren = {
   AuthenticatedPortfolioRoute: AuthenticatedPortfolioRoute,
   AuthenticatedSettingsRoute: AuthenticatedSettingsRoute,
   AuthenticatedAdminDashboardRoute: AuthenticatedAdminDashboardRoute,
-  AuthenticatedAdminSuggestionsRoute: AuthenticatedAdminSuggestionsRoute,
 }
 
 const AuthenticatedRouteWithChildren = AuthenticatedRoute._addFileChildren(
