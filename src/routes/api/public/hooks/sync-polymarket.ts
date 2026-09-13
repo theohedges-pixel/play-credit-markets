@@ -1,6 +1,11 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { verifyCronSecret } from "@/lib/cron-auth.server";
 import { parseYesProbability, seedPools } from "@/lib/polymarket-odds";
+import {
+  yesClobTokenId,
+  backfillMarketHistory,
+  THROTTLE_MS,
+} from "@/lib/polymarket-history.server";
 
 interface PolyMarket {
   id?: string;
