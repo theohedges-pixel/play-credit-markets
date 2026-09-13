@@ -38,6 +38,7 @@ import {
   generateAiMarketsNow,
   discoverTrendingNow,
   resolveAiMarketsNow,
+  approveSuggestionChecked,
 } from "@/lib/admin-jobs.functions";
 import { toast } from "sonner";
 import {
