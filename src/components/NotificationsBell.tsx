@@ -121,6 +121,22 @@ export function NotificationsBell() {
         </Link>
       );
     }
+    if (n.kind === "admin_granted" || n.kind === "admin_revoked") {
+      const granted = n.kind === "admin_granted";
+      return (
+        <Link
+          to="/admin/dashboard"
+          onClick={() => setOpen(false)}
+          className="block px-4 py-3 hover:bg-secondary/50 text-sm"
+        >
+          <div>
+            @{n.payload.actor_username} {granted ? "gave" : "removed"} admin access{" "}
+            {granted ? "to" : "from"} @{n.payload.target_username}
+          </div>
+          <div className="text-xs text-muted-foreground">{ts}</div>
+        </Link>
+      );
+    }
     return (
       <div className="px-4 py-3 text-sm">
         <div>{n.kind}</div>
