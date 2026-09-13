@@ -323,10 +323,23 @@ function MarketDetail() {
                 <div className="mt-1">{isResolved ? `Resolved ${market!.resolution?.toUpperCase()}` : timeUntil(market.closes_at)}</div>
               </div>
             </div>
+            <div className="flex items-center gap-1.5 mb-3">
+              {RANGES.map((r) => (
+                <Button
+                  key={r.key}
+                  size="sm"
+                  variant={r.key === range ? "default" : "outline"}
+                  className="h-7 px-2.5 text-xs"
+                  onClick={() => setRange(r.key)}
+                >
+                  {r.label}
+                </Button>
+              ))}
+            </div>
             <div className="h-48">
-              {history && (history.length > 1 || (aiGenerated && history.length > 0)) ? (
+              {chartData.length > 1 ? (
                 <ResponsiveContainer width="100%" height="100%">
-                  <LineChart data={history}>
+                  <LineChart data={chartData}>
                     {/* Real elapsed time on X, padded auto-range on Y so small
                         moves are visible instead of squashed against 0-100. */}
                     <XAxis dataKey="t" type="number" scale="time" domain={["dataMin", "dataMax"]} hide />
@@ -343,10 +356,10 @@ function MarketDetail() {
                       formatter={(v) => [`${(v as number).toFixed(0)}¢`, "YES"]}
                     />
                     <Line type="monotone" dataKey="price" stroke="oklch(0.78 0.20 145)" strokeWidth={2} dot={false} />
-                    {aiGenerated && history.length > 0 && (
+                    {aiGenerated && seedVisible && (
                       <ReferenceDot
-                        x={history[0].t}
-                        y={history[0].price}
+                        x={history![0].t}
+                        y={history![0].price}
                         r={5}
                         fill="var(--primary)"
                         stroke="var(--background)"
@@ -362,6 +375,7 @@ function MarketDetail() {
                 </div>
               )}
             </div>
+
           </div>
 
           {/* Recent trades */}
