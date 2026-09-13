@@ -29,6 +29,16 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [loading, setLoading] = useState(true);
 
   const loadProfile = async (uid: string) => {
+    // Pay out a pending invite reward to whoever invited this user, now that
+    // their email is confirmed (the RPC checks confirmation server-side).
+    if (!claimedReferral.has(uid)) {
+      claimedReferral.add(uid);
+      try {
+        await (supabase as any).rpc("claim_referral_reward");
+      } catch {
+        /* ignore */
+      }
+    }
     const { data } = await (supabase as any)
       .from("profiles")
       .select("id, username, credits, avatar_url, bio, last_daily_claim")
