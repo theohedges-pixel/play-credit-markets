@@ -654,7 +654,20 @@ function MarketsTab() {
             {genAi ? <Loader2 size={14} className="animate-spin" /> : <Brain size={14} />}
             {genAi ? "Generating…" : "Generate AI markets"}
           </Button>
+          <Button
+            variant="outline"
+            className="gap-2"
+            onClick={onBackfillHistory}
+            disabled={backfilling}
+          >
+            {backfilling ? <Loader2 size={14} className="animate-spin" /> : <History size={14} />}
+            {backfilling ? "Backfilling…" : "Backfill Polymarket history"}
+          </Button>
         </div>
+        <p className="text-xs text-muted-foreground mt-2">
+          One-time fill-in of real pre-import price history for imported markets with no Predikt
+          trades. New imports get their history automatically.
+        </p>
       </section>
 
       <NeedsResolutionSection />
