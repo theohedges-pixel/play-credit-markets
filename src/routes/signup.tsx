@@ -9,12 +9,32 @@ import { toast } from "sonner";
 import { Mail } from "lucide-react";
 
 export const Route = createFileRoute("/signup")({
-  head: () => ({ meta: [{ title: "Create account — Predikt" }] }),
+  validateSearch: (search: Record<string, unknown>): { ref?: string } => {
+    const r = typeof search.ref === "string" ? search.ref.slice(0, 40) : undefined;
+    return r ? { ref: r } : {};
+  },
+  head: () => ({
+    meta: [
+      { title: "Create account — Predikt" },
+      {
+        name: "description",
+        content: "Create a free Predikt account and start forecasting with credits — no real money.",
+      },
+      { property: "og:title", content: "Create account — Predikt" },
+      {
+        property: "og:description",
+        content: "Create a free Predikt account and start forecasting with credits — no real money.",
+      },
+      { property: "og:type", content: "website" },
+      { name: "twitter:card", content: "summary_large_image" },
+    ],
+  }),
   component: SignupPage,
 });
 
 function SignupPage() {
   const navigate = useNavigate();
+  const { ref: referrer } = Route.useSearch();
   const [email, setEmail] = useState("");
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
@@ -31,7 +51,7 @@ function SignupPage() {
         password,
         options: {
           emailRedirectTo: redirectUrl,
-          data: { username },
+          data: referrer ? { username, referrer_username: referrer } : { username },
         },
       });
       if (error) {
@@ -88,7 +108,11 @@ function SignupPage() {
       <Header />
       <div className="max-w-md mx-auto px-6 py-20">
         <h1 className="font-display text-3xl font-bold mb-2">Create your account</h1>
-        <p className="text-muted-foreground mb-8 text-sm">Start with 1,000 free credits. Claim 100 more every day.</p>
+        <p className="text-muted-foreground mb-8 text-sm">
+          {referrer
+            ? `Invited by @${referrer} — start with 1,250 free credits. Claim 100 more every day.`
+            : "Start with 1,000 free credits. Claim 100 more every day."}
+        </p>
         <form onSubmit={onSubmit} className="space-y-4">
           <div>
             <Label>Username</Label>

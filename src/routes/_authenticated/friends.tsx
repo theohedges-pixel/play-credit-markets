@@ -1,11 +1,11 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
-import { useState } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/lib/auth";
 import { Header } from "@/components/Header";
 import { Button } from "@/components/ui/button";
 import { UserAvatar } from "@/components/UserAvatar";
+import { InviteFriends } from "@/components/InviteFriends";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { toast } from "sonner";
 
@@ -75,6 +75,8 @@ function FriendsPage() {
       <Header />
       <div className="max-w-3xl mx-auto px-6 py-10">
         <h1 className="font-display text-3xl font-bold mb-6">Friends</h1>
+
+        <InviteFriends />
 
         <Tabs defaultValue="friends">
           <TabsList>

@@ -19,6 +19,7 @@ import { Route as IndexRouteImport } from './routes/index'
 import { Route as MarketsIndexRouteImport } from './routes/markets.index'
 import { Route as UsersUsernameRouteImport } from './routes/users.$username'
 import { Route as MarketsIdRouteImport } from './routes/markets.$id'
+import { Route as JoinUsernameRouteImport } from './routes/join.$username'
 import { Route as AuthenticatedSettingsRouteImport } from './routes/_authenticated/settings'
 import { Route as AuthenticatedPortfolioRouteImport } from './routes/_authenticated/portfolio'
 import { Route as AuthenticatedLearnRouteImport } from './routes/_authenticated/learn'
@@ -78,6 +79,11 @@ const UsersUsernameRoute = UsersUsernameRouteImport.update({
 const MarketsIdRoute = MarketsIdRouteImport.update({
   id: '/markets/$id',
   path: '/markets/$id',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const JoinUsernameRoute = JoinUsernameRouteImport.update({
+  id: '/join/$username',
+  path: '/join/$username',
   getParentRoute: () => rootRouteImport,
 } as any)
 const AuthenticatedSettingsRoute = AuthenticatedSettingsRouteImport.update({
@@ -154,6 +160,7 @@ export interface FileRoutesByFullPath {
   '/learn': typeof AuthenticatedLearnRoute
   '/portfolio': typeof AuthenticatedPortfolioRoute
   '/settings': typeof AuthenticatedSettingsRoute
+  '/join/$username': typeof JoinUsernameRoute
   '/markets/$id': typeof MarketsIdRoute
   '/users/$username': typeof UsersUsernameRoute
   '/markets/': typeof MarketsIndexRoute
@@ -176,6 +183,7 @@ export interface FileRoutesByTo {
   '/learn': typeof AuthenticatedLearnRoute
   '/portfolio': typeof AuthenticatedPortfolioRoute
   '/settings': typeof AuthenticatedSettingsRoute
+  '/join/$username': typeof JoinUsernameRoute
   '/markets/$id': typeof MarketsIdRoute
   '/users/$username': typeof UsersUsernameRoute
   '/markets': typeof MarketsIndexRoute
@@ -200,6 +208,7 @@ export interface FileRoutesById {
   '/_authenticated/learn': typeof AuthenticatedLearnRoute
   '/_authenticated/portfolio': typeof AuthenticatedPortfolioRoute
   '/_authenticated/settings': typeof AuthenticatedSettingsRoute
+  '/join/$username': typeof JoinUsernameRoute
   '/markets/$id': typeof MarketsIdRoute
   '/users/$username': typeof UsersUsernameRoute
   '/markets/': typeof MarketsIndexRoute
@@ -224,6 +233,7 @@ export interface FileRouteTypes {
     | '/learn'
     | '/portfolio'
     | '/settings'
+    | '/join/$username'
     | '/markets/$id'
     | '/users/$username'
     | '/markets/'
@@ -246,6 +256,7 @@ export interface FileRouteTypes {
     | '/learn'
     | '/portfolio'
     | '/settings'
+    | '/join/$username'
     | '/markets/$id'
     | '/users/$username'
     | '/markets'
@@ -269,6 +280,7 @@ export interface FileRouteTypes {
     | '/_authenticated/learn'
     | '/_authenticated/portfolio'
     | '/_authenticated/settings'
+    | '/join/$username'
     | '/markets/$id'
     | '/users/$username'
     | '/markets/'
@@ -288,6 +300,7 @@ export interface RootRouteChildren {
   LoginRoute: typeof LoginRoute
   ResetPasswordRoute: typeof ResetPasswordRoute
   SignupRoute: typeof SignupRoute
+  JoinUsernameRoute: typeof JoinUsernameRoute
   MarketsIdRoute: typeof MarketsIdRoute
   UsersUsernameRoute: typeof UsersUsernameRoute
   MarketsIndexRoute: typeof MarketsIndexRoute
@@ -366,6 +379,13 @@ declare module '@tanstack/react-router' {
       path: '/markets/$id'
       fullPath: '/markets/$id'
       preLoaderRoute: typeof MarketsIdRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/join/$username': {
+      id: '/join/$username'
+      path: '/join/$username'
+      fullPath: '/join/$username'
+      preLoaderRoute: typeof JoinUsernameRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/_authenticated/settings': {
@@ -494,6 +514,7 @@ const rootRouteChildren: RootRouteChildren = {
   LoginRoute: LoginRoute,
   ResetPasswordRoute: ResetPasswordRoute,
   SignupRoute: SignupRoute,
+  JoinUsernameRoute: JoinUsernameRoute,
   MarketsIdRoute: MarketsIdRoute,
   UsersUsernameRoute: UsersUsernameRoute,
   MarketsIndexRoute: MarketsIndexRoute,
