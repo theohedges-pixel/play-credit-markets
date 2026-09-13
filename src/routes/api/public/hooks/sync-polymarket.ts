@@ -29,6 +29,27 @@ interface PolyMarket {
   acceptingOrders?: boolean | null;
   /** Gamma returns a JSON string array of the two outcome labels, YES first. */
   outcomes?: string | string[] | null;
+  /** Present on the LIST endpoint only: the parent event(s) this market belongs to. */
+  events?: { id?: string | number; slug?: string; title?: string }[] | null;
+  /** Shared across every outcome of a negative-risk (multi-outcome) event. */
+  negRiskMarketID?: string | null;
+  /** Clean per-outcome label, e.g. "0 - 2" or a team name. */
+  groupItemTitle?: string | null;
+}
+
+/**
+ * The three grouping identifiers Polymarket exposes, plus the clean per-outcome
+ * label. All come straight from the API — we never infer grouping from titles.
+ */
+export function groupingFields(m: PolyMarket) {
+  const ev = Array.isArray(m.events) && m.events.length > 0 ? m.events[0] : null;
+  return {
+    polymarket_event_id: ev?.id != null ? String(ev.id) : null,
+    polymarket_event_slug: ev?.slug ?? null,
+    polymarket_neg_risk_id: m.negRiskMarketID ? String(m.negRiskMarketID) : null,
+    polymarket_event_title: ev?.title ?? null,
+    group_item_title: m.groupItemTitle?.trim() || null,
+  };
 }
 
 /**
@@ -150,7 +171,7 @@ export async function runSync() {
   {
     const { data: imports } = await supabaseAdmin
       .from("markets")
-      .select("id, polymarket_id, yes_pool, no_pool, polymarket_clob_token_id")
+      .select("id, polymarket_id, yes_pool, no_pool, polymarket_clob_token_id, polymarket_event_id")
       .eq("created_via", "polymarket_import")
       .eq("status", "open")
       .not("polymarket_id", "is", null);
@@ -177,6 +198,13 @@ export async function runSync() {
             .from("markets")
             .update({ polymarket_clob_token_id: token } as never)
             .eq("id", m.id);
+        }
+      }
+      // Same for the event grouping fields, which older imports also predate.
+      if (!(m as { polymarket_event_id?: string | null }).polymarket_event_id) {
+        const g = groupingFields(upstream);
+        if (g.polymarket_event_id) {
+          await supabaseAdmin.from("markets").update(g as never).eq("id", m.id);
         }
       }
       const prob = parseYesProbability(upstream);
@@ -252,6 +280,7 @@ export async function runSync() {
         polymarket_id: m.id ?? null,
         polymarket_clob_token_id: yesClobTokenId(m),
         created_via: "polymarket_import" as const,
+        ...groupingFields(m),
       };
     });
     // Insert row-by-row so a rare concurrent duplicate (blocked by the unique

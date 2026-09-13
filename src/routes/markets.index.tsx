@@ -5,6 +5,7 @@ import { formatDistanceToNow } from "date-fns";
 import { supabase } from "@/integrations/supabase/client";
 import { Header } from "@/components/Header";
 import { MarketCard } from "@/components/MarketCard";
+import { GroupedMarketCard } from "@/components/GroupedMarketCard";
 import { Input } from "@/components/ui/input";
 import { Search } from "lucide-react";
 import { useMarketListRealtime } from "@/lib/realtime";
@@ -104,7 +105,7 @@ function MarketsPage() {
       let query = supabase
         .from("markets")
         .select(
-          "id, title, closes_at, created_at, yes_pool, no_pool, volume, status, resolution, source, created_via, category:categories(name)",
+          "id, title, closes_at, created_at, yes_pool, no_pool, volume, status, resolution, source, created_via, polymarket_event_id, polymarket_event_title, group_item_title, category:categories(name)",
         )
         .eq("status", "open")
         .gt("closes_at", new Date().toISOString());
@@ -113,7 +114,7 @@ function MarketsPage() {
       else query = query.order("created_at", { ascending: false });
       if (cat) query = query.eq("category_id", cat);
       if (q) query = query.ilike("title", `%${q}%`);
-      const { data } = await query.limit(60);
+      const { data } = await query.limit(200);
       return data ?? [];
     },
   });
@@ -126,6 +127,37 @@ function MarketsPage() {
       ? (markets ?? []).filter((m) => themeMatchIds.includes(m.id))
       : (markets ?? []);
   const visible = [...filtered].sort(SORTS[sortKey].order);
+
+  // Markets that share a Polymarket event are rendered as one card. Grouping
+  // uses only the identifiers Polymarket supplies — never title matching — and
+  // a group of one falls back to the ordinary card. Each group takes the list
+  // position of its highest-ranked member.
+  type Entry =
+    | { kind: "single"; key: string; market: (typeof visible)[number] }
+    | { kind: "group"; key: string; title: string; markets: typeof visible };
+
+  const entries: Entry[] = [];
+  const seenEvents = new Set<string>();
+  for (const m of visible) {
+    const eid = m.polymarket_event_id;
+    if (!eid) {
+      entries.push({ kind: "single", key: m.id, market: m });
+      continue;
+    }
+    if (seenEvents.has(eid)) continue;
+    seenEvents.add(eid);
+    const members = visible.filter((x) => x.polymarket_event_id === eid);
+    if (members.length === 1) {
+      entries.push({ kind: "single", key: m.id, market: m });
+    } else {
+      entries.push({
+        kind: "group",
+        key: `event-${eid}`,
+        title: m.polymarket_event_title ?? m.title,
+        markets: members,
+      });
+    }
+  }
 
   return (
     <div className="min-h-screen">
@@ -235,7 +267,13 @@ function MarketsPage() {
           </div>
         ) : visible.length > 0 ? (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-            {visible.map((m) => <MarketCard key={m.id} m={m} />)}
+            {entries.map((e) =>
+              e.kind === "group" ? (
+                <GroupedMarketCard key={e.key} markets={e.markets} eventTitle={e.title} />
+              ) : (
+                <MarketCard key={e.key} m={e.market} />
+              ),
+            )}
           </div>
         ) : (
           <div className="text-muted-foreground py-12 text-center">No markets match.</div>

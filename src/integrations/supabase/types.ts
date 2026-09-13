@@ -768,11 +768,16 @@ export type Database = {
           created_via: Database["public"]["Enums"]["market_origin"]
           creator_id: string | null
           description: string | null
+          group_item_title: string | null
           id: string
           needs_manual_resolution: boolean
           no_pool: number
           polymarket_clob_token_id: string | null
+          polymarket_event_id: string | null
+          polymarket_event_slug: string | null
+          polymarket_event_title: string | null
           polymarket_id: string | null
+          polymarket_neg_risk_id: string | null
           proposed_resolution:
             | Database["public"]["Enums"]["market_resolution"]
             | null
@@ -796,11 +801,16 @@ export type Database = {
           created_via?: Database["public"]["Enums"]["market_origin"]
           creator_id?: string | null
           description?: string | null
+          group_item_title?: string | null
           id?: string
           needs_manual_resolution?: boolean
           no_pool?: number
           polymarket_clob_token_id?: string | null
+          polymarket_event_id?: string | null
+          polymarket_event_slug?: string | null
+          polymarket_event_title?: string | null
           polymarket_id?: string | null
+          polymarket_neg_risk_id?: string | null
           proposed_resolution?:
             | Database["public"]["Enums"]["market_resolution"]
             | null
@@ -824,11 +834,16 @@ export type Database = {
           created_via?: Database["public"]["Enums"]["market_origin"]
           creator_id?: string | null
           description?: string | null
+          group_item_title?: string | null
           id?: string
           needs_manual_resolution?: boolean
           no_pool?: number
           polymarket_clob_token_id?: string | null
+          polymarket_event_id?: string | null
+          polymarket_event_slug?: string | null
+          polymarket_event_title?: string | null
           polymarket_id?: string | null
+          polymarket_neg_risk_id?: string | null
           proposed_resolution?:
             | Database["public"]["Enums"]["market_resolution"]
             | null
