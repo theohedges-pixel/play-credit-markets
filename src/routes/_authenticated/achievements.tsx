@@ -105,26 +105,60 @@ function Achievements() {
           )}
         </div>
 
-        <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
           {MILESTONE_TIERS.map((tier) => {
             const at = earned?.get(tier);
             const style = tierStyle(tier);
+            const copy = TIER_COPY[tier];
+            const isNext = !at && tier === upcoming;
+            const nextPct =
+              isNext && upcoming
+                ? Math.max(0, Math.min(100, (peak / tier) * 100))
+                : 0;
             return (
               <div
                 key={tier}
                 className={cn(
-                  "rounded-lg border p-4 flex flex-col gap-2",
-                  at ? style.className : "border-border bg-card text-muted-foreground opacity-70",
+                  "relative rounded-lg border p-4 flex flex-col gap-1.5",
+                  at
+                    ? style.className
+                    : "border-border bg-card text-muted-foreground grayscale opacity-60",
                   at && style.glow && "shadow-[0_0_20px_-8px_currentColor]",
                 )}
               >
-                <div className="flex items-center justify-between">
-                  {at ? <Gem size={18} /> : <Lock size={16} />}
+                <div className="flex items-center justify-between gap-2">
                   <span className="font-display text-xl font-bold">{tierLabel(tier)}</span>
+                  {at ? (
+                    <Gem size={18} className="shrink-0" />
+                  ) : (
+                    <span className="flex items-center gap-1 text-[10px] uppercase tracking-wide font-mono">
+                      <Lock size={12} /> Locked
+                    </span>
+                  )}
                 </div>
-                <div className="text-[11px] font-mono">
-                  {at ? format(new Date(at), "d MMM yyyy") : `${fmtCredits(tier)} credits`}
+                <div className="text-sm font-semibold text-foreground">{copy.name}</div>
+                <p className="text-xs leading-snug">{copy.description}</p>
+                <div className="text-[11px] font-mono mt-auto pt-1">
+                  {at
+                    ? `Reached ${format(new Date(at), "d MMM yyyy")}`
+                    : `${fmtCredits(tier)} credits`}
                 </div>
+                {isNext && (
+                  <div className="mt-1.5 not-grayscale">
+                    <div className="flex justify-between text-[11px] font-mono mb-1">
+                      <span>
+                        {fmtCredits(peak)} / {tierLabel(tier)}
+                      </span>
+                      <span>{Math.floor(nextPct)}% there</span>
+                    </div>
+                    <div className="h-1.5 rounded-full bg-secondary overflow-hidden">
+                      <div
+                        className="h-full rounded-full bg-primary transition-all"
+                        style={{ width: `${nextPct}%` }}
+                      />
+                    </div>
+                  </div>
+                )}
               </div>
             );
           })}
