@@ -8,10 +8,22 @@ import { Input } from "@/components/ui/input";
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from "@/components/ui/sheet";
 import { useAuth } from "@/lib/auth";
 import { fmtCredits, fmtPct, timeUntil, yesPrice } from "@/lib/format";
-import { LineChart, Line, ResponsiveContainer, YAxis, Tooltip, XAxis } from "recharts";
+import { LineChart, Line, ResponsiveContainer, YAxis, Tooltip, XAxis, ReferenceDot } from "recharts";
 import { toast } from "sonner";
 import { format } from "date-fns";
 import { Loader2 } from "lucide-react";
+
+// Renders the "AI estimate" annotation offset into the chart so it never clips
+// at the left edge (the seed point is always the leftmost x).
+function AiEstimateLabel(props: any) {
+  const { viewBox } = props;
+  if (!viewBox) return null;
+  return (
+    <text x={viewBox.x + 10} y={viewBox.y - 10} fill="var(--primary)" fontSize={10}>
+      AI estimate
+    </text>
+  );
+}
 import { useMarketDetailRealtime } from "@/lib/realtime";
 
 
@@ -111,6 +123,8 @@ function MarketDetail() {
     );
   }
 
+  const aiGenerated = market.created_via === "ai_generated";
+  const hasTrades = (trades?.length ?? 0) > 0 || Number(market.volume) > 0;
   const yesPool = Number(market.yes_pool);
   const noPool = Number(market.no_pool);
   const price = yesPrice(yesPool, noPool);
@@ -251,6 +265,11 @@ function MarketDetail() {
               <div>
                 <div className="text-xs uppercase tracking-wider text-muted-foreground">Current YES price</div>
                 <div className="font-display text-5xl font-bold text-yes tabular-nums mt-1">{fmtPct(price)}</div>
+                {aiGenerated && !hasTrades && (
+                  <div className="mt-2 inline-flex items-center gap-1.5 rounded-md border border-primary/40 bg-primary/10 px-2.5 py-1 text-xs text-primary">
+                    ✦ Starting price set by AI estimate — not yet shaped by trading
+                  </div>
+                )}
               </div>
               <div className="text-right text-sm text-muted-foreground">
                 <div>Volume <span className="font-mono text-foreground">{fmtCredits(market.volume)}</span></div>
@@ -258,7 +277,7 @@ function MarketDetail() {
               </div>
             </div>
             <div className="h-48">
-              {history && history.length > 1 ? (
+              {history && (history.length > 1 || (aiGenerated && history.length > 0)) ? (
                 <ResponsiveContainer width="100%" height="100%">
                   <LineChart data={history}>
                     <XAxis dataKey="t" hide />
@@ -269,6 +288,17 @@ function MarketDetail() {
                       formatter={(v) => [`${(v as number).toFixed(0)}¢`, "YES"]}
                     />
                     <Line type="monotone" dataKey="price" stroke="oklch(0.78 0.20 145)" strokeWidth={2} dot={false} />
+                    {aiGenerated && history.length > 0 && (
+                      <ReferenceDot
+                        x={history[0].t}
+                        y={history[0].price}
+                        r={5}
+                        fill="var(--primary)"
+                        stroke="var(--background)"
+                        strokeWidth={2}
+                        label={<AiEstimateLabel />}
+                      />
+                    )}
                   </LineChart>
                 </ResponsiveContainer>
               ) : (

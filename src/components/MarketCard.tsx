@@ -57,8 +57,8 @@ export function MarketCard({ m }: { m: MarketCardData }) {
             </span>
           )}
           {aiGenerated && (
-            <span className="text-[10px] uppercase tracking-wider px-1.5 py-0.5 rounded border border-border text-muted-foreground/80">
-              AI
+            <span className="text-[10px] uppercase tracking-wider px-1.5 py-0.5 rounded border border-primary/40 bg-primary/10 text-primary">
+              ✦ AI-estimated odds
             </span>
           )}
         </div>
