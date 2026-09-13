@@ -7,6 +7,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { toast } from "sonner";
 import { Mail } from "lucide-react";
+import { setPendingBet } from "@/lib/pending-bet";
 
 export const Route = createFileRoute("/signup")({
   validateSearch: (search: Record<string, unknown>): { ref?: string; bet?: string } => {
@@ -59,6 +60,8 @@ function SignupPage() {
         toast.error(error.message);
         return;
       }
+      // Remember the shared bet so it's redeemed as soon as they're signed in.
+      if (bet && referrer) setPendingBet({ betId: bet, sharer: referrer });
       // If email confirmation is required, session will be null.
       // Make sure no session leaks into this tab either way.
       if (!data.session) {
