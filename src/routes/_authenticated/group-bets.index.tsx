@@ -84,6 +84,26 @@ function GroupBetsList() {
       (invitedIds ?? []).includes(b.id) && !(participatingIds ?? []).includes(b.id),
   );
 
+  const allBets = [...(created ?? []), ...(invitedBets ?? [])];
+  const allIds = Array.from(new Set(allBets.map((b) => b.id))).sort();
+  const { data: splits } = useQuery({
+    queryKey: ["gb-splits", allIds.join(",")],
+    enabled: allIds.length > 0,
+    queryFn: async () => {
+      const { data } = await (supabase as any)
+        .from("group_bet_participants")
+        .select("group_bet_id, side, credits_wagered")
+        .in("group_bet_id", allIds);
+      const map: Record<string, { yes: number; no: number }> = {};
+      for (const row of (data ?? []) as Array<{ group_bet_id: string; side: string; credits_wagered: number }>) {
+        const m = (map[row.group_bet_id] ??= { yes: 0, no: 0 });
+        if (row.side === "yes") m.yes += Number(row.credits_wagered);
+        else m.no += Number(row.credits_wagered);
+      }
+      return map;
+    },
+  });
+
   return (
     <div>
       <Header />
