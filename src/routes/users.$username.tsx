@@ -4,6 +4,7 @@ import { format } from "date-fns";
 import { supabase } from "@/integrations/supabase/client";
 import { Header } from "@/components/Header";
 import { UserAvatar } from "@/components/UserAvatar";
+import { TierBadge } from "@/components/TierBadge";
 import { Button } from "@/components/ui/button";
 import { useAuth } from "@/lib/auth";
 import { toast } from "sonner";
@@ -28,7 +29,7 @@ function PublicProfile() {
     queryFn: async () => {
       const { data } = await (supabase as any)
         .from("public_profiles")
-        .select("id, username, avatar_url, bio, created_at")
+        .select("id, username, avatar_url, bio, peak_net_worth, created_at")
         .eq("username", username)
         .maybeSingle();
       return data as {
@@ -36,6 +37,7 @@ function PublicProfile() {
         username: string;
         avatar_url: string | null;
         bio: string | null;
+        peak_net_worth: number | null;
         created_at: string;
       } | null;
     },
@@ -162,6 +164,7 @@ function PublicProfile() {
           <div className="min-w-0 flex-1">
             <div className="flex items-center gap-3 flex-wrap">
               <h1 className="font-display text-3xl font-bold">@{profile.username}</h1>
+              <TierBadge peakNetWorth={profile.peak_net_worth} size="md" />
               {me && me.id !== profile.id && (
                 <>
                   {!friendship && (

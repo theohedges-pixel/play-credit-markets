@@ -103,7 +103,15 @@ function Portfolio() {
     <div>
       <Header />
       <div className="max-w-5xl mx-auto px-6 py-10">
-        <h1 className="font-display text-4xl font-bold mb-1">Portfolio</h1>
+        <div className="flex items-center justify-between gap-4 mb-1">
+          <h1 className="font-display text-4xl font-bold">Portfolio</h1>
+          <Link
+            to="/achievements"
+            className="text-sm text-primary hover:underline shrink-0"
+          >
+            Achievements
+          </Link>
+        </div>
         <p className="text-muted-foreground text-sm mb-6">
           <Link
             to="/users/$username"

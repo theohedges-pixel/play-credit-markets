@@ -3,6 +3,7 @@ import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Header } from "@/components/Header";
 import { UserAvatar } from "@/components/UserAvatar";
+import { TierBadge } from "@/components/TierBadge";
 import { fmtCredits } from "@/lib/format";
 import { Trophy } from "lucide-react";
 import { useAuth } from "@/lib/auth";
@@ -28,7 +29,7 @@ function Leaderboard() {
     queryFn: async () => {
       const { data } = await (supabase as any)
         .from("leaderboard_net_worth")
-        .select("id, username, avatar_url, credits, position_value, net_worth, created_at")
+        .select("id, username, avatar_url, credits, position_value, net_worth, peak_net_worth, created_at")
         .order("net_worth", { ascending: false })
         .order("created_at", { ascending: true })
         .order("username", { ascending: true })
@@ -72,6 +73,7 @@ function Leaderboard() {
                     <span className={`font-display font-bold w-6 text-right ${i < 3 ? "text-primary" : "text-muted-foreground"}`}>{i + 1}</span>
                     <UserAvatar username={t.username} avatarUrl={t.avatar_url} userId={t.id} size="md" />
                     <span className="font-medium">@{t.username}</span>
+                    <TierBadge peakNetWorth={t.peak_net_worth} />
                     {t.id === user?.id && (
                       <span className="rounded border border-primary/40 bg-primary/10 px-1.5 py-0.5 text-[10px] font-semibold uppercase text-primary">you</span>
                     )}

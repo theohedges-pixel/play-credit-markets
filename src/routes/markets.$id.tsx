@@ -269,6 +269,7 @@ function MarketDetail() {
     qc.invalidateQueries({ queryKey: ["price-history", id] });
     qc.invalidateQueries({ queryKey: ["trades", id] });
     qc.invalidateQueries({ queryKey: ["position", id, user?.id] });
+    qc.invalidateQueries({ queryKey: ["net-worth", user?.id] });
   };
 
   const placeTrade = async () => {

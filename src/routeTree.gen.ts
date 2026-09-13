@@ -25,6 +25,7 @@ import { Route as AuthenticatedPortfolioRouteImport } from './routes/_authentica
 import { Route as AuthenticatedLearnRouteImport } from './routes/_authenticated/learn'
 import { Route as AuthenticatedGroupBetsRouteImport } from './routes/_authenticated/group-bets'
 import { Route as AuthenticatedFriendsRouteImport } from './routes/_authenticated/friends'
+import { Route as AuthenticatedAchievementsRouteImport } from './routes/_authenticated/achievements'
 import { Route as AuthenticatedGroupBetsIndexRouteImport } from './routes/_authenticated/group-bets.index'
 import { Route as AuthenticatedGroupBetsCreateRouteImport } from './routes/_authenticated/group-bets.create'
 import { Route as AuthenticatedGroupBetsIdRouteImport } from './routes/_authenticated/group-bets.$id'
@@ -115,6 +116,12 @@ const AuthenticatedFriendsRoute = AuthenticatedFriendsRouteImport.update({
   path: '/friends',
   getParentRoute: () => AuthenticatedRoute,
 } as any)
+const AuthenticatedAchievementsRoute =
+  AuthenticatedAchievementsRouteImport.update({
+    id: '/achievements',
+    path: '/achievements',
+    getParentRoute: () => AuthenticatedRoute,
+  } as any)
 const AuthenticatedGroupBetsIndexRoute =
   AuthenticatedGroupBetsIndexRouteImport.update({
     id: '/',
@@ -183,6 +190,7 @@ export interface FileRoutesByFullPath {
   '/login': typeof LoginRoute
   '/reset-password': typeof ResetPasswordRoute
   '/signup': typeof SignupRoute
+  '/achievements': typeof AuthenticatedAchievementsRoute
   '/friends': typeof AuthenticatedFriendsRoute
   '/group-bets': typeof AuthenticatedGroupBetsRouteWithChildren
   '/learn': typeof AuthenticatedLearnRoute
@@ -210,6 +218,7 @@ export interface FileRoutesByTo {
   '/login': typeof LoginRoute
   '/reset-password': typeof ResetPasswordRoute
   '/signup': typeof SignupRoute
+  '/achievements': typeof AuthenticatedAchievementsRoute
   '/friends': typeof AuthenticatedFriendsRoute
   '/learn': typeof AuthenticatedLearnRoute
   '/portfolio': typeof AuthenticatedPortfolioRoute
@@ -238,6 +247,7 @@ export interface FileRoutesById {
   '/login': typeof LoginRoute
   '/reset-password': typeof ResetPasswordRoute
   '/signup': typeof SignupRoute
+  '/_authenticated/achievements': typeof AuthenticatedAchievementsRoute
   '/_authenticated/friends': typeof AuthenticatedFriendsRoute
   '/_authenticated/group-bets': typeof AuthenticatedGroupBetsRouteWithChildren
   '/_authenticated/learn': typeof AuthenticatedLearnRoute
@@ -267,6 +277,7 @@ export interface FileRouteTypes {
     | '/login'
     | '/reset-password'
     | '/signup'
+    | '/achievements'
     | '/friends'
     | '/group-bets'
     | '/learn'
@@ -294,6 +305,7 @@ export interface FileRouteTypes {
     | '/login'
     | '/reset-password'
     | '/signup'
+    | '/achievements'
     | '/friends'
     | '/learn'
     | '/portfolio'
@@ -321,6 +333,7 @@ export interface FileRouteTypes {
     | '/login'
     | '/reset-password'
     | '/signup'
+    | '/_authenticated/achievements'
     | '/_authenticated/friends'
     | '/_authenticated/group-bets'
     | '/_authenticated/learn'
@@ -476,6 +489,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedFriendsRouteImport
       parentRoute: typeof AuthenticatedRoute
     }
+    '/_authenticated/achievements': {
+      id: '/_authenticated/achievements'
+      path: '/achievements'
+      fullPath: '/achievements'
+      preLoaderRoute: typeof AuthenticatedAchievementsRouteImport
+      parentRoute: typeof AuthenticatedRoute
+    }
     '/_authenticated/group-bets/': {
       id: '/_authenticated/group-bets/'
       path: '/'
@@ -568,6 +588,7 @@ const AuthenticatedGroupBetsRouteWithChildren =
   )
 
 interface AuthenticatedRouteChildren {
+  AuthenticatedAchievementsRoute: typeof AuthenticatedAchievementsRoute
   AuthenticatedFriendsRoute: typeof AuthenticatedFriendsRoute
   AuthenticatedGroupBetsRoute: typeof AuthenticatedGroupBetsRouteWithChildren
   AuthenticatedLearnRoute: typeof AuthenticatedLearnRoute
@@ -577,6 +598,7 @@ interface AuthenticatedRouteChildren {
 }
 
 const AuthenticatedRouteChildren: AuthenticatedRouteChildren = {
+  AuthenticatedAchievementsRoute: AuthenticatedAchievementsRoute,
   AuthenticatedFriendsRoute: AuthenticatedFriendsRoute,
   AuthenticatedGroupBetsRoute: AuthenticatedGroupBetsRouteWithChildren,
   AuthenticatedLearnRoute: AuthenticatedLearnRoute,
