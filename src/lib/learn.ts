@@ -137,3 +137,8 @@ export function articleState(articleId: string, attempts: LearnAttempt[]): Artic
     attemptsLeft: passed ? 0 : Math.max(0, 2 - mine.length),
   };
 }
+
+/** One-line description shown under each part heading on the Learn index. */
+export const PART_DESCRIPTIONS: Record<number, string> = {
+  1: "Predikt looks like a betting app on purpose. These six articles explain exactly how real gambling is designed to take your money — and why knowing the mechanism is the best protection there is.",
+};
