@@ -105,41 +105,46 @@ async function callAi(apiKey: string): Promise<AiEvent[]> {
   return arr as AiEvent[];
 }
 
-function validateEvent(raw: unknown): AiEvent | null {
-  if (!raw || typeof raw !== "object") return null;
+function validateEvent(raw: unknown): { ev: AiEvent } | { rejected: "malformed" | "round_date" } {
+  const malformed = { rejected: "malformed" as const };
+  if (!raw || typeof raw !== "object") return malformed;
   const r = raw as Record<string, unknown>;
   const title = typeof r.title === "string" ? r.title.trim() : "";
   const description = typeof r.description === "string" ? r.description.trim() : "";
   const category_slug = typeof r.category_slug === "string" ? r.category_slug.toLowerCase().trim() : "";
   const probability_yes = typeof r.probability_yes === "number" ? r.probability_yes : Number(r.probability_yes);
   const closes_at = typeof r.closes_at === "string" ? r.closes_at : "";
-  if (!title || title.length < 8) return null;
-  if (!description) return null;
-  if (!(CATEGORY_SLUGS as readonly string[]).includes(category_slug)) return null;
-  if (!Number.isFinite(probability_yes) || probability_yes <= 0 || probability_yes >= 1) return null;
+  if (!title || title.length < 8) return malformed;
+  if (!description) return malformed;
+  if (!(CATEGORY_SLUGS as readonly string[]).includes(category_slug)) return malformed;
+  if (!Number.isFinite(probability_yes) || probability_yes <= 0 || probability_yes >= 1) return malformed;
   const ts = new Date(closes_at).getTime();
   const now = Date.now();
-  if (!Number.isFinite(ts)) return null;
-  if (ts < now + 24 * 60 * 60 * 1000) return null;
-  if (ts > now + 180 * 24 * 60 * 60 * 1000) return null;
-  warnIfSuspiciouslyRound(title, category_slug, new Date(ts));
-  return { title, description, category_slug, probability_yes, closes_at: new Date(ts).toISOString() };
+  if (!Number.isFinite(ts)) return malformed;
+  if (ts < now + 24 * 60 * 60 * 1000) return malformed;
+  if (ts > now + 180 * 24 * 60 * 60 * 1000) return malformed;
+  if (isSuspiciouslyRound(category_slug, new Date(ts))) {
+    console.warn(
+      `[generate-ai-markets] discarded round-date candidate (${new Date(ts).toISOString()}) for ${category_slug} market: "${title}" — likely a guessed date, not the real event date`,
+    );
+    return { rejected: "round_date" };
+  }
+  return { ev: { title, description, category_slug, probability_yes, closes_at: new Date(ts).toISOString() } };
 }
 
 /**
- * Non-blocking signal that the model probably guessed the date: real events in
- * these categories rarely land exactly on the last day of a month.
+ * Hard rejection signal: the model probably guessed the date. Real events in
+ * these categories rarely land exactly on the first or last day of a month,
+ * so such a closes_at almost always means the date was invented rather than
+ * search-verified. Categories with genuinely dateless questions (e.g. price
+ * targets) are exempt.
  */
-function warnIfSuspiciouslyRound(title: string, category: string, d: Date): void {
+function isSuspiciouslyRound(category: string, d: Date): boolean {
   const lastOfMonth = new Date(Date.UTC(d.getUTCFullYear(), d.getUTCMonth() + 1, 0)).getUTCDate();
   const isLastDay = d.getUTCDate() === lastOfMonth;
   const isFirstDay = d.getUTCDate() === 1;
   const datedCategories = ["tech", "politics", "sports", "pop-culture"];
-  if ((isLastDay || isFirstDay) && datedCategories.includes(category)) {
-    console.warn(
-      `[generate-ai-markets] suspiciously round closes_at (${d.toISOString()}) for ${category} market: "${title}" — likely a guessed date, not the real event date`,
-    );
-  }
+  return (isLastDay || isFirstDay) && datedCategories.includes(category);
 }
 
 function normalize(s: string): string {
@@ -271,21 +276,24 @@ export async function runGenerate() {
   const raw = await callAi(apiKey);
   const valid: AiEvent[] = [];
   let malformed = 0;
+  let roundDate = 0;
   for (const r of raw) {
     const v = validateEvent(r);
-    if (v) valid.push(v);
+    if ("ev" in v) valid.push(v.ev);
+    else if (v.rejected === "round_date") roundDate++;
     else malformed++;
   }
   if (malformed) console.warn(`[generate-ai-markets] skipped ${malformed} malformed events`);
+  if (roundDate) console.warn(`[generate-ai-markets] discarded ${roundDate} candidates with suspiciously round closes_at`);
   if (valid.length === 0) {
     await supabaseAdmin
       .from("app_settings")
       .upsert({
         key: "last_ai_market_run",
-        value: { at: new Date().toISOString(), inserted: 0, reason: "no valid events" },
+        value: { at: new Date().toISOString(), inserted: 0, reason: "no valid events", round_date: roundDate },
         updated_at: new Date().toISOString(),
       });
-    return { inserted: 0, scanned: raw.length, malformed };
+    return { inserted: 0, scanned: raw.length, malformed, round_date: roundDate };
   }
 
   // Existing titles for dedup
@@ -341,10 +349,11 @@ export async function runGenerate() {
         reason: stale > 0 ? "all candidates duplicate or already settled" : "all duplicates",
         duplicates,
         stale,
+        round_date: roundDate,
       },
       updated_at: new Date().toISOString(),
     });
-    return { inserted: 0, scanned: raw.length, malformed, duplicates, stale };
+    return { inserted: 0, scanned: raw.length, malformed, duplicates, stale, round_date: roundDate };
   }
 
 
@@ -390,11 +399,11 @@ export async function runGenerate() {
 
   const nowIso = new Date().toISOString();
   await supabaseAdmin.from("app_settings").upsert([
-    { key: "last_ai_market_run", value: { at: nowIso, inserted: inserted?.length ?? 0, duplicates, stale }, updated_at: nowIso },
+    { key: "last_ai_market_run", value: { at: nowIso, inserted: inserted?.length ?? 0, duplicates, stale, round_date: roundDate }, updated_at: nowIso },
     { key: "last_ai_market_count", value: { count: inserted?.length ?? 0, at: nowIso }, updated_at: nowIso },
   ]);
 
-  return { inserted: inserted?.length ?? 0, scanned: raw.length, malformed, duplicates, stale };
+  return { inserted: inserted?.length ?? 0, scanned: raw.length, malformed, duplicates, stale, round_date: roundDate };
 }
 
 export const Route = createFileRoute("/api/public/hooks/generate-ai-markets")({
