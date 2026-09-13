@@ -75,7 +75,7 @@ function CreateGroupBet() {
     navigate({
       to: "/group-bets/$id",
       params: { id: data as string },
-      search: { new: "1" },
+      search: { new: 1 },
     });
   };
 
