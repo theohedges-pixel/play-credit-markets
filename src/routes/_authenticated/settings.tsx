@@ -9,6 +9,7 @@ import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { toast } from "sonner";
 import { Loader2, Upload } from "lucide-react";
+import { Switch } from "@/components/ui/switch";
 
 export const Route = createFileRoute("/_authenticated/settings")({
   head: () => ({ meta: [{ title: "Settings — Predikt" }] }),
@@ -23,11 +24,34 @@ function Settings() {
   const [bio, setBio] = useState(profile?.bio ?? "");
   const [savingBio, setSavingBio] = useState(false);
   const [uploading, setUploading] = useState(false);
+  const [historyPublic, setHistoryPublic] = useState<boolean>(
+    (profile as any)?.trading_history_public ?? true,
+  );
   const fileRef = useRef<HTMLInputElement | null>(null);
 
   useEffect(() => {
     setBio(profile?.bio ?? "");
   }, [profile?.bio]);
+
+  useEffect(() => {
+    setHistoryPublic((profile as any)?.trading_history_public ?? true);
+  }, [(profile as any)?.trading_history_public]);
+
+  // Persists the moment it's flipped; reverts the switch if the write fails.
+  const toggleHistory = async (next: boolean) => {
+    if (!user) return;
+    setHistoryPublic(next);
+    const { error } = await (supabase as any)
+      .from("profiles")
+      .update({ trading_history_public: next })
+      .eq("id", user.id);
+    if (error) {
+      setHistoryPublic(!next);
+      return toast.error(error.message);
+    }
+    toast.success(next ? "Trading history is public" : "Trading history is private");
+    refreshProfile();
+  };
 
   const { data: friendCount } = useQuery({
     queryKey: ["friend-count", user?.id],
@@ -187,6 +211,30 @@ function Settings() {
           >
             {savingBio ? "Saving…" : "Save"}
           </Button>
+        </section>
+
+        <section className="rounded-lg border border-border bg-card p-5">
+          <h2 className="font-display text-lg font-semibold mb-4">Privacy</h2>
+          <div className="flex items-start justify-between gap-5">
+            <div>
+              <label htmlFor="history-public" className="text-sm font-medium">
+                Make my trading history public
+              </label>
+              <p className="text-xs text-muted-foreground mt-1.5 max-w-md">
+                When this is on, any signed-in user can see your full trade history —
+                what you wagered, when, on which markets and at what price, plus how
+                those markets turned out — along with your current open positions, on
+                your profile and in each market's activity feed. Turn it off and only
+                you can see them. Your rank and net worth stay on the leaderboard
+                either way.
+              </p>
+            </div>
+            <Switch
+              id="history-public"
+              checked={historyPublic}
+              onCheckedChange={toggleHistory}
+            />
+          </div>
         </section>
 
         <section className="rounded-lg border border-border bg-card p-5">
