@@ -121,6 +121,28 @@ export function NotificationsBell() {
         </Link>
       );
     }
+    if (n.kind === "market_resolution_proposed" || n.kind === "market_resolved") {
+      const proposed = n.kind === "market_resolution_proposed";
+      return (
+        <Link
+          to="/markets/$id"
+          params={{ id: n.payload.market_id }}
+          onClick={() => setOpen(false)}
+          className="block px-4 py-3 hover:bg-secondary/50 text-sm"
+        >
+          <div>
+            {proposed ? "Proposed outcome" : "Market resolved"}{" "}
+            {String(n.payload.resolution).toUpperCase()}: {n.payload.title}
+          </div>
+          {proposed && (
+            <div className="text-xs text-muted-foreground">
+              You have 24 hours to flag this before payout
+            </div>
+          )}
+          <div className="text-xs text-muted-foreground">{ts}</div>
+        </Link>
+      );
+    }
     if (n.kind === "admin_granted" || n.kind === "admin_revoked") {
       const granted = n.kind === "admin_granted";
       return (

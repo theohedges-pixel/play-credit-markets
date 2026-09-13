@@ -34,7 +34,12 @@ Return STRICT JSON ONLY (no prose, no markdown fences):
 
 Rules:
 - probability_yes is YOUR best estimate, decimal strictly between 0.01 and 0.99 (never 0.5 by default).
-- closes_at must be 1-180 days from today and reflect a real event date (election day, game date, deadline).
+- closes_at: SEARCH THE WEB for the specific, officially announced date of the real event
+  (keynote date, election day, kickoff, court date, deadline) and use THAT exact date, in UTC,
+  shortly after the outcome becomes publicly knowable. Never round to the end of a month,
+  quarter or year, and never substitute a generic "30 days out" placeholder. If you cannot
+  establish a real dated event, drop the question instead of inventing a date.
+- closes_at must still fall 1-180 days from today.
 - No duplicates, no already-resolved topics, no PII, no offensive content.`;
 
 function stripFences(s: string): string {
@@ -54,6 +59,9 @@ async function callAi(apiKey: string): Promise<AiEvent[]> {
     },
     body: JSON.stringify({
       model: "google/gemini-3-flash-preview",
+      // Search grounding so closes_at comes from the announced event date
+      // rather than the model's guess.
+      tools: [{ google_search: {} }],
       messages: [
         { role: "system", content: SYSTEM },
         {
@@ -104,7 +112,24 @@ function validateEvent(raw: unknown): AiEvent | null {
   if (!Number.isFinite(ts)) return null;
   if (ts < now + 24 * 60 * 60 * 1000) return null;
   if (ts > now + 180 * 24 * 60 * 60 * 1000) return null;
+  warnIfSuspiciouslyRound(title, category_slug, new Date(ts));
   return { title, description, category_slug, probability_yes, closes_at: new Date(ts).toISOString() };
+}
+
+/**
+ * Non-blocking signal that the model probably guessed the date: real events in
+ * these categories rarely land exactly on the last day of a month.
+ */
+function warnIfSuspiciouslyRound(title: string, category: string, d: Date): void {
+  const lastOfMonth = new Date(Date.UTC(d.getUTCFullYear(), d.getUTCMonth() + 1, 0)).getUTCDate();
+  const isLastDay = d.getUTCDate() === lastOfMonth;
+  const isFirstDay = d.getUTCDate() === 1;
+  const datedCategories = ["tech", "politics", "sports", "pop-culture"];
+  if ((isLastDay || isFirstDay) && datedCategories.includes(category)) {
+    console.warn(
+      `[generate-ai-markets] suspiciously round closes_at (${d.toISOString()}) for ${category} market: "${title}" — likely a guessed date, not the real event date`,
+    );
+  }
 }
 
 function normalize(s: string): string {

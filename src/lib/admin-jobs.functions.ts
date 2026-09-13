@@ -32,3 +32,11 @@ export const discoverTrendingNow = createServerFn({ method: "POST" })
     const { runDiscover } = await import("@/routes/api/public/hooks/discover-trending-markets");
     return runDiscover();
   });
+
+export const resolveAiMarketsNow = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .handler(async ({ context }) => {
+    await requireAdmin(context.supabase, context.userId);
+    const { runResolveAiMarkets } = await import("@/routes/api/public/hooks/resolve-ai-markets");
+    return runResolveAiMarkets();
+  });

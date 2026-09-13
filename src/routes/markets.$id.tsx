@@ -139,6 +139,8 @@ function MarketDetail() {
   const validAmount = Number.isFinite(sharesNum) && sharesNum > 0;
   const balance = profile ? Number(profile.credits) : 0;
 
+  const holdsPosition =
+    !!position && (Number(position.yes_shares) > 0 || Number(position.no_shares) > 0);
   const heldYes = position ? Number(position.yes_shares) : 0;
   const heldNo = position ? Number(position.no_shares) : 0;
   const heldForSide = side === "yes" ? heldYes : heldNo;
@@ -234,6 +236,13 @@ function MarketDetail() {
 
 
 
+  const flagResolution = async () => {
+    const { error } = await (supabase.rpc as any)("flag_market_resolution", { _market_id: id });
+    if (error) { toast.error(error.message); return; }
+    toast.success("Flagged — this market will be reviewed manually before any payout");
+    qc.invalidateQueries({ queryKey: ["market", id] });
+  };
+
   const resolveMarket = async (resolution: "yes" | "no" | "invalid") => {
     if (!confirm(`Resolve this market as ${resolution.toUpperCase()}? This pays out winners and cannot be undone.`)) return;
     const { error } = await supabase.rpc("resolve_market", {
@@ -258,6 +267,41 @@ function MarketDetail() {
               <span>by @{(market as any).creator?.username ?? "anon"}</span>
             </div>
             <h1 className="font-display text-3xl md:text-4xl font-bold leading-tight">{market.title}</h1>
+
+            {(market as any).proposed_resolution && !isResolved && (
+              <div className="mt-4 rounded-lg border border-primary/40 bg-primary/10 p-4">
+                <div className="text-sm font-medium">
+                  Proposed outcome: {String((market as any).proposed_resolution).toUpperCase()}
+                </div>
+                {(market as any).resolution_reason && (
+                  <p className="text-sm text-muted-foreground mt-1">{(market as any).resolution_reason}</p>
+                )}
+                {(market as any).auto_resolution_deadline && (
+                  <p className="text-xs text-muted-foreground mt-2">
+                    Payout runs in {timeUntil((market as any).auto_resolution_deadline)} unless a position
+                    holder flags it.
+                  </p>
+                )}
+                {holdsPosition && (
+                  <Button size="sm" variant="outline" className="mt-3" onClick={flagResolution}>
+                    This looks wrong — flag it
+                  </Button>
+                )}
+              </div>
+            )}
+
+            {(market as any).needs_manual_resolution && !isResolved && (
+              <div className="mt-4 rounded-lg border border-border bg-secondary/40 p-4 text-sm text-muted-foreground">
+                Awaiting manual review — the outcome couldn't be confirmed automatically, so an admin will
+                settle this market.
+              </div>
+            )}
+
+            {isResolved && (market as any).resolution_reason && (
+              <p className="mt-3 text-sm text-muted-foreground">
+                Resolved {String(market.resolution).toUpperCase()} — {(market as any).resolution_reason}
+              </p>
+            )}
             {market.description && (
               <p className="text-muted-foreground mt-3 whitespace-pre-line">{market.description}</p>
             )}
@@ -283,8 +327,16 @@ function MarketDetail() {
               {history && (history.length > 1 || (aiGenerated && history.length > 0)) ? (
                 <ResponsiveContainer width="100%" height="100%">
                   <LineChart data={history}>
-                    <XAxis dataKey="t" hide />
-                    <YAxis domain={[0, 100]} hide />
+                    {/* Real elapsed time on X, padded auto-range on Y so small
+                        moves are visible instead of squashed against 0-100. */}
+                    <XAxis dataKey="t" type="number" scale="time" domain={["dataMin", "dataMax"]} hide />
+                    <YAxis
+                      domain={[
+                        (min: number) => Math.max(0, Math.floor(min - 5)),
+                        (max: number) => Math.min(100, Math.ceil(max + 5)),
+                      ]}
+                      hide
+                    />
                     <Tooltip
                       contentStyle={{ background: "var(--card)", border: "1px solid var(--border)", borderRadius: 6 }}
                       labelFormatter={(t) => format(new Date(t as number), "MMM d, HH:mm")}

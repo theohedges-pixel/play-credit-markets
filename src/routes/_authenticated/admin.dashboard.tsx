@@ -32,7 +32,11 @@ import {
 import { UserAvatar } from "@/components/UserAvatar";
 import { fmtCredits } from "@/lib/format";
 import { sendPasswordReset } from "@/lib/admin.functions";
-import { syncPolymarketNow, discoverTrendingNow } from "@/lib/admin-jobs.functions";
+import {
+  syncPolymarketNow,
+  discoverTrendingNow,
+  resolveAiMarketsNow,
+} from "@/lib/admin-jobs.functions";
 import { toast } from "sonner";
 import {
   ShieldCheck,
@@ -41,6 +45,7 @@ import {
   RefreshCw,
   Trash2,
   KeyRound,
+  Gavel,
   Check,
   X,
   Pencil,
@@ -605,6 +610,8 @@ function MarketsTab() {
         </Button>
       </section>
 
+      <NeedsResolutionSection />
+
       <section>
         <div className="flex items-center justify-between gap-3 flex-wrap mb-3">
           <div>
@@ -665,6 +672,126 @@ function MarketsTab() {
         )}
       </section>
     </div>
+  );
+}
+
+interface PendingMarket {
+  id: string;
+  title: string;
+  closes_at: string;
+  created_via: string;
+  volume: number;
+  waiting_hours: number;
+  needs_manual_resolution: boolean;
+  proposed_resolution: string | null;
+  resolution_reason: string | null;
+  auto_resolution_deadline: string | null;
+  holders: number;
+}
+
+function NeedsResolutionSection() {
+  const qc = useQueryClient();
+  const runResolveAi = useServerFn(resolveAiMarketsNow);
+  const [checking, setChecking] = useState(false);
+
+  const { data, isLoading } = useQuery({
+    queryKey: ["admin-needs-resolution"],
+    queryFn: async () => {
+      const { data, error } = await rpc("admin_markets_needing_resolution");
+      if (error) throw error;
+      return (data ?? []) as PendingMarket[];
+    },
+  });
+
+  const onCheckNow = async () => {
+    setChecking(true);
+    try {
+      const body: any = await runResolveAi();
+      toast.success(
+        `Checked ${body.checked}: ${body.proposed} proposed, ${body.inconclusive} need manual review`,
+      );
+      qc.invalidateQueries({ queryKey: ["admin-needs-resolution"] });
+    } catch (e) {
+      toast.error(e instanceof Error ? e.message : "Outcome check failed");
+    } finally {
+      setChecking(false);
+    }
+  };
+
+  const resolveNow = async (m: PendingMarket, resolution: "yes" | "no" | "invalid") => {
+    if (!window.confirm(`Resolve "${m.title}" as ${resolution.toUpperCase()}? This pays out holders.`))
+      return;
+    const { error } = await rpc("resolve_market", { _market_id: m.id, _resolution: resolution });
+    if (error) return toast.error(error.message);
+    toast.success("Market resolved");
+    qc.invalidateQueries({ queryKey: ["admin-needs-resolution"] });
+    qc.invalidateQueries({ queryKey: ["markets"] });
+  };
+
+  const list = data ?? [];
+
+  return (
+    <section>
+      <div className="flex items-center justify-between gap-3 flex-wrap mb-3">
+        <div>
+          <h2 className="font-display text-lg font-semibold flex items-center gap-2">
+            <Gavel size={16} className="text-primary" />
+            Needs resolution ({list.length})
+          </h2>
+          <p className="text-xs text-muted-foreground">
+            Closed markets with no outcome yet, longest wait first.
+          </p>
+        </div>
+        <Button size="sm" variant="outline" className="gap-2" onClick={onCheckNow} disabled={checking}>
+          {checking ? <Loader2 size={14} className="animate-spin" /> : <Sparkles size={14} />}
+          Run outcome check
+        </Button>
+      </div>
+
+      {isLoading ? (
+        <div className="h-28 rounded-lg border border-border bg-card animate-pulse" />
+      ) : list.length === 0 ? (
+        <div className="text-center text-muted-foreground py-8 rounded-lg border border-dashed border-border text-sm">
+          Nothing waiting — every closed market has an outcome.
+        </div>
+      ) : (
+        <div className="rounded-lg border border-border bg-card divide-y divide-border max-h-[30rem] overflow-y-auto">
+          {list.map((m) => (
+            <div key={m.id} className="p-3">
+              <div className="text-sm line-clamp-2">{m.title}</div>
+              <div className="text-xs text-muted-foreground mt-1 flex flex-wrap gap-x-3">
+                <span>Waiting {Math.round(Number(m.waiting_hours))}h</span>
+                <span>{Number(m.holders)} holder{Number(m.holders) === 1 ? "" : "s"}</span>
+                <span>{m.created_via}</span>
+                {m.proposed_resolution && (
+                  <span className="text-primary">
+                    AI proposes {m.proposed_resolution.toUpperCase()}
+                    {m.auto_resolution_deadline
+                      ? ` · pays ${formatDistanceToNow(new Date(m.auto_resolution_deadline), { addSuffix: true })}`
+                      : ""}
+                  </span>
+                )}
+                {m.needs_manual_resolution && <span className="text-no">Flagged / inconclusive</span>}
+              </div>
+              {m.resolution_reason && (
+                <p className="text-xs text-muted-foreground/80 italic mt-1">{m.resolution_reason}</p>
+              )}
+              <div className="flex gap-2 mt-2">
+                <Button size="sm" variant="outline" onClick={() => resolveNow(m, "yes")}>
+                  Resolve YES
+                </Button>
+                <Button size="sm" variant="outline" onClick={() => resolveNow(m, "no")}>
+                  Resolve NO
+                </Button>
+                <Button size="sm" variant="ghost" onClick={() => resolveNow(m, "invalid")}>
+                  Invalid (refund)
+                </Button>
+              </div>
+            </div>
+          ))}
+        </div>
+      )}
+    </section>
   );
 }
 
