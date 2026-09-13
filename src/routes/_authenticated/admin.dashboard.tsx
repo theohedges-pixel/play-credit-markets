@@ -608,6 +608,24 @@ function MarketsTab() {
     }
   };
 
+  // One-time job: pulls each untraded Polymarket import's real price history
+  // from before it was mirrored into Predikt. Slow by design (throttled).
+  const onBackfillHistory = async () => {
+    setBackfilling(true);
+    try {
+      const body: any = await runBackfill({ data: {} });
+      toast.success(
+        `Backfilled ${body.points} price point${body.points === 1 ? "" : "s"} across ${body.backfilled} of ${body.scanned} market${body.scanned === 1 ? "" : "s"}${body.sparse ? ` (${body.sparse} only had coarse upstream data)` : ""}`,
+        { duration: 8000 },
+      );
+      qc.invalidateQueries({ queryKey: ["markets"] });
+    } catch (e) {
+      toast.error(e instanceof Error ? e.message : "History backfill failed");
+    } finally {
+      setBackfilling(false);
+    }
+  };
+
   const onPrune = async () => {
     setPruning(true);
     const { data, error } = await rpc("admin_prune_markets", { _ids: pickedIds });
