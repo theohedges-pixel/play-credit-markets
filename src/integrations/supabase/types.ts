@@ -567,6 +567,9 @@ export type Database = {
       }
       markets: {
         Row: {
+          auto_checked_at: string | null
+          auto_resolution_deadline: string | null
+          auto_resolved: boolean
           category_id: string | null
           closes_at: string
           created_at: string
@@ -574,9 +577,15 @@ export type Database = {
           creator_id: string | null
           description: string | null
           id: string
+          needs_manual_resolution: boolean
           no_pool: number
           polymarket_id: string | null
+          proposed_resolution:
+            | Database["public"]["Enums"]["market_resolution"]
+            | null
           resolution: Database["public"]["Enums"]["market_resolution"] | null
+          resolution_method: string | null
+          resolution_reason: string | null
           resolved_at: string | null
           source: string | null
           status: Database["public"]["Enums"]["market_status"]
@@ -585,6 +594,9 @@ export type Database = {
           yes_pool: number
         }
         Insert: {
+          auto_checked_at?: string | null
+          auto_resolution_deadline?: string | null
+          auto_resolved?: boolean
           category_id?: string | null
           closes_at: string
           created_at?: string
@@ -592,9 +604,15 @@ export type Database = {
           creator_id?: string | null
           description?: string | null
           id?: string
+          needs_manual_resolution?: boolean
           no_pool?: number
           polymarket_id?: string | null
+          proposed_resolution?:
+            | Database["public"]["Enums"]["market_resolution"]
+            | null
           resolution?: Database["public"]["Enums"]["market_resolution"] | null
+          resolution_method?: string | null
+          resolution_reason?: string | null
           resolved_at?: string | null
           source?: string | null
           status?: Database["public"]["Enums"]["market_status"]
@@ -603,6 +621,9 @@ export type Database = {
           yes_pool?: number
         }
         Update: {
+          auto_checked_at?: string | null
+          auto_resolution_deadline?: string | null
+          auto_resolved?: boolean
           category_id?: string | null
           closes_at?: string
           created_at?: string
@@ -610,9 +631,15 @@ export type Database = {
           creator_id?: string | null
           description?: string | null
           id?: string
+          needs_manual_resolution?: boolean
           no_pool?: number
           polymarket_id?: string | null
+          proposed_resolution?:
+            | Database["public"]["Enums"]["market_resolution"]
+            | null
           resolution?: Database["public"]["Enums"]["market_resolution"] | null
+          resolution_method?: string | null
+          resolution_reason?: string | null
           resolved_at?: string | null
           source?: string | null
           status?: Database["public"]["Enums"]["market_status"]
@@ -1058,6 +1085,22 @@ export type Database = {
           username: string
         }[]
       }
+      admin_markets_needing_resolution: {
+        Args: never
+        Returns: {
+          auto_resolution_deadline: string
+          closes_at: string
+          created_via: string
+          holders: number
+          id: string
+          needs_manual_resolution: boolean
+          proposed_resolution: string
+          resolution_reason: string
+          title: string
+          volume: number
+          waiting_hours: number
+        }[]
+      }
       admin_prunable_markets: {
         Args: never
         Returns: {
@@ -1146,9 +1189,24 @@ export type Database = {
         Returns: undefined
       }
       finalize_group_bet_voting_deadlines: { Args: never; Returns: number }
+      finalize_market_resolution: {
+        Args: {
+          _auto: boolean
+          _market_id: string
+          _method: string
+          _reason: string
+          _resolution: Database["public"]["Enums"]["market_resolution"]
+        }
+        Returns: undefined
+      }
       finalize_pending_auto_resolutions: { Args: never; Returns: number }
+      finalize_pending_market_resolutions: { Args: never; Returns: number }
       flag_auto_resolution: {
         Args: { _group_bet_id: string }
+        Returns: undefined
+      }
+      flag_market_resolution: {
+        Args: { _market_id: string }
         Returns: undefined
       }
       get_public_group_bet_preview: {

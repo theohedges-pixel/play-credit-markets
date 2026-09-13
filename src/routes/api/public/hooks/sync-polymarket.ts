@@ -226,11 +226,71 @@ export async function runSync() {
     }
   }
 
+  // Mirror upstream settlements: any closed Predikt import whose Polymarket
+  // twin has settled is resolved to the SAME outcome. Polymarket is the ground
+  // truth here, so no AI guess and no review window are involved.
+  const mirrored = await mirrorResolutions(supabaseAdmin);
+
   await supabaseAdmin
     .from("app_settings")
     .upsert({ key: "last_polymarket_sync", value: { at: new Date().toISOString() }, updated_at: new Date().toISOString() });
 
-  return { inserted, closed, refreshed, scanned: items.length };
+  return { inserted, closed, refreshed, mirrored, scanned: items.length };
+}
+
+/**
+ * Resolve closed Polymarket imports from Gamma's settled outcome.
+ * A settled binary market reports outcomePrices of exactly ["1","0"] (YES) or
+ * ["0","1"] (NO); anything in between is still trading or disputed, so we leave
+ * it for the admin queue rather than guessing.
+ */
+async function mirrorResolutions(supabaseAdmin: any): Promise<number> {
+  const { data: pending } = await supabaseAdmin
+    .from("markets")
+    .select("id, title, polymarket_id")
+    .eq("status", "closed")
+    .is("resolution", null)
+    .eq("created_via", "polymarket_import")
+    .not("polymarket_id", "is", null)
+    .limit(25);
+
+  let mirrored = 0;
+  for (const m of pending ?? []) {
+    let upstream: (PolyMarket & { umaResolutionStatus?: string }) | null = null;
+    try {
+      const r = await fetch(`https://gamma-api.polymarket.com/markets/${m.polymarket_id}`, {
+        headers: { accept: "application/json" },
+      });
+      if (!r.ok) continue;
+      const body = await r.json();
+      upstream = Array.isArray(body) ? body[0] : body;
+    } catch (e) {
+      console.error("[sync-polymarket] gamma fetch failed", m.polymarket_id, (e as Error).message);
+      continue;
+    }
+    if (!upstream || !upstream.closed) continue;
+
+    const prob = parseYesProbability(upstream);
+    if (prob === null) continue;
+    let resolution: "yes" | "no" | null = null;
+    if (prob >= 0.99) resolution = "yes";
+    else if (prob <= 0.01) resolution = "no";
+    if (!resolution) continue; // settled price not decisive — leave for admins
+
+    const { error } = await supabaseAdmin.rpc("finalize_market_resolution", {
+      _market_id: m.id,
+      _resolution: resolution,
+      _reason: `Mirrored from Polymarket, which settled this market ${resolution.toUpperCase()}.`,
+      _method: "polymarket_mirror",
+      _auto: true,
+    });
+    if (error) {
+      console.error("[sync-polymarket] mirror resolve failed", m.id, error.message);
+      continue;
+    }
+    mirrored++;
+  }
+  return mirrored;
 }
 
 export const Route = createFileRoute("/api/public/hooks/sync-polymarket")({
