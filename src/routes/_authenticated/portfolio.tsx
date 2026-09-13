@@ -11,6 +11,7 @@ import { toast } from "sonner";
 import { Coins, Gift, TrendingUp, WalletCards } from "lucide-react";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { TradeLedger, type LedgerTrade } from "@/components/TradeRow";
+import { fireCelebration } from "@/components/MilestoneCelebration";
 
 
 export const Route = createFileRoute("/_authenticated/portfolio")({
@@ -62,14 +63,27 @@ function Portfolio() {
   });
 
   const claimDaily = async () => {
-    const { error } = await supabase.rpc("claim_daily_credits");
+    const { data, error } = await supabase.rpc("claim_daily_credits");
     if (error) { toast.error(error.message); return; }
-    toast.success("+100 credits claimed!");
+    const res = (data ?? {}) as { claimed?: number; bonus?: number; streak?: number; bonus_granted?: boolean };
+    if (res.bonus_granted) {
+      fireCelebration();
+      toast.success(`+${res.claimed ?? 5} credits, plus a ${res.bonus ?? 50}-credit streak bonus!`, {
+        description: `${res.streak}-day streak — the bonus repeats every 30 days.`,
+        duration: 8000,
+      });
+    } else {
+      toast.success(`+${res.claimed ?? 5} credits claimed!`, {
+        description: res.streak ? `🔥 ${res.streak}-day streak` : undefined,
+      });
+    }
     refreshProfile();
   };
 
   const today = new Date().toISOString().slice(0, 10);
   const claimed = profile?.last_daily_claim === today;
+  const streak = Number(profile?.claim_streak ?? 0);
+  const daysToBonus = 30 - (streak % 30);
 
   // Value a position the same way the leaderboard's net worth does: only
   // markets still trading carry position value. A resolved market has already
@@ -216,17 +230,29 @@ function Portfolio() {
         )}
 
 
-        <div className="my-8 rounded-lg border border-border bg-card p-5 flex items-center justify-between gap-5">
+        <div className="my-8 rounded-lg border border-border bg-card p-5 flex items-center justify-between gap-5 flex-wrap">
           <div>
             <div className="font-display font-semibold flex items-center gap-2"><Gift size={16} className="text-primary" /> Daily reward</div>
-            <p className="text-sm text-muted-foreground mt-1">Claim 100 free credits every day. Resets at 00:00 UTC.</p>
+            <p className="text-sm text-muted-foreground mt-1">Claim 5 free credits every day. Resets at 00:00 UTC.</p>
+            <p className="text-xs text-muted-foreground mt-2">
+              {streak > 0
+                ? `${daysToBonus} ${daysToBonus === 1 ? "day" : "days"} until your next 50-credit bonus`
+                : "Claim 30 days in a row for a 50-credit bonus"}
+            </p>
           </div>
-          <TooltipProvider>
-            <Tooltip>
-              <TooltipTrigger asChild><span tabIndex={0}><Button onClick={claimDaily} disabled={claimed}>{claimed ? "Claimed today" : "Claim +100"}</Button></span></TooltipTrigger>
-              {claimed && <TooltipContent>Come back tomorrow</TooltipContent>}
-            </Tooltip>
-          </TooltipProvider>
+          <div className="flex items-center gap-3">
+            {streak > 0 && (
+              <span className="rounded-full border border-primary/40 bg-primary/10 px-3 py-1 text-sm font-medium text-primary tabular-nums">
+                🔥 {streak}-day streak
+              </span>
+            )}
+            <TooltipProvider>
+              <Tooltip>
+                <TooltipTrigger asChild><span tabIndex={0}><Button onClick={claimDaily} disabled={claimed}>{claimed ? "Claimed today" : "Claim +5"}</Button></span></TooltipTrigger>
+                {claimed && <TooltipContent>Come back tomorrow</TooltipContent>}
+              </Tooltip>
+            </TooltipProvider>
+          </div>
         </div>
 
         <section className="border-t border-border pt-8">

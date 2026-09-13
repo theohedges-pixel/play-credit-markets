@@ -122,8 +122,8 @@ function SignupPage() {
         <h1 className="font-display text-3xl font-bold mb-2">Create your account</h1>
         <p className="text-muted-foreground mb-8 text-sm">
           {referrer
-            ? `Invited by @${referrer} — start with 1,250 free credits. Claim 100 more every day.`
-            : "Start with 1,000 free credits. Claim 100 more every day."}
+            ? `Invited by @${referrer} — start with 1,250 free credits. Claim 5 more every day.`
+            : "Start with 1,000 free credits. Claim 5 more every day."}
         </p>
         <form onSubmit={onSubmit} className="space-y-4">
           <div>

@@ -63,7 +63,7 @@ function Index() {
 
           <div className="mt-16 grid grid-cols-1 sm:grid-cols-3 gap-6 max-w-3xl">
             <Stat icon={<Zap size={18} />} label="Starting bankroll" value="1,000 credits" />
-            <Stat icon={<Sparkles size={18} />} label="Daily refill" value="+100 / day" />
+            <Stat icon={<Sparkles size={18} />} label="Daily refill" value="+5 / day" />
             <Stat icon={<Trophy size={18} />} label="Compete on the" value="Leaderboard" />
           </div>
         </div>

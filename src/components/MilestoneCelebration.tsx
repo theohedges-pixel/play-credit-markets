@@ -74,8 +74,8 @@ export function MilestoneCelebration() {
   return null;
 }
 
-function celebrate(tier: number, netWorth: number) {
-  const style = tierStyle(tier);
+/** The shared celebration burst, reused by any "you earned something" moment. */
+export function fireCelebration() {
   const colors = ["#63f06f", "#bdf7c2", "#8b8b8b", "#ffffff"];
   const burst = (ratio: number, opts: confetti.Options) =>
     confetti({
@@ -91,6 +91,12 @@ function celebrate(tier: number, netWorth: number) {
   burst(0.2, { spread: 60 });
   burst(0.35, { spread: 100, decay: 0.91, scalar: 0.8 });
   burst(0.1, { spread: 120, startVelocity: 25, decay: 0.92, scalar: 1.2 });
+}
+
+function celebrate(tier: number, netWorth: number) {
+  const style = tierStyle(tier);
+  fireCelebration();
+
 
   toast.custom(
     () => (
