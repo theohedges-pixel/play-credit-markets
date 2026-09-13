@@ -31,8 +31,15 @@ function GroupBetDetail() {
   const search = useSearch({ strict: false }) as { new?: number };
   const justCreated = search.new === 1;
 
+  const [, setTick] = useState(0);
+
   useEffect(() => {
     if (typeof window !== "undefined") setOrigin(window.location.origin);
+  }, []);
+
+  useEffect(() => {
+    const t = setInterval(() => setTick((n) => n + 1), 60_000);
+    return () => clearInterval(t);
   }, []);
 
   const { data: bet, isLoading } = useQuery({
