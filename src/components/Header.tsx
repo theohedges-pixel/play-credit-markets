@@ -22,11 +22,14 @@ import {
 } from "lucide-react";
 import { UserAvatar } from "@/components/UserAvatar";
 import { NotificationsBell } from "@/components/NotificationsBell";
+import { TierBadge } from "@/components/TierBadge";
+import { useNetWorth } from "@/lib/use-net-worth";
 
 export function Header() {
   const { user, profile, signOut } = useAuth();
   const navigate = useNavigate();
   const [moreOpen, setMoreOpen] = useState(false);
+  const { data: standing } = useNetWorth();
 
   const { data: isAdmin } = useQuery({
     queryKey: ["is-admin", user?.id],
@@ -97,10 +100,21 @@ export function Header() {
                 <NotificationsBell />
                 {profile ? (
                   <>
-                    <div className="flex items-center gap-1.5 px-2 sm:px-3 py-1.5 rounded-md bg-secondary text-sm font-mono">
-                      <Coins size={14} className="text-primary" />
-                      <span>{fmtCredits(profile.credits)}</span>
-                    </div>
+                    {/* Net worth is the headline figure (same view the
+                        leaderboard ranks on); cash sits underneath it. */}
+                    <Link
+                      to="/achievements"
+                      title={`${fmtCredits(standing?.net_worth ?? profile.credits)} net worth · ${fmtCredits(standing?.credits ?? profile.credits)} cash`}
+                      className="flex flex-col items-end leading-tight px-2 sm:px-3 py-1 rounded-md bg-secondary font-mono hover:bg-secondary/70"
+                    >
+                      <span className="flex items-center gap-1.5 text-sm">
+                        <Coins size={14} className="text-primary" />
+                        {fmtCredits(standing?.net_worth ?? profile.credits)}
+                      </span>
+                      <span className="text-[10px] text-muted-foreground">
+                        {fmtCredits(standing?.credits ?? profile.credits)} cash
+                      </span>
+                    </Link>
                     <Link
                       to="/settings"
                       className="text-sm text-muted-foreground hover:text-foreground flex items-center gap-2"
@@ -112,6 +126,7 @@ export function Header() {
                         size="sm"
                       />
                       <span className="hidden sm:inline">@{profile.username}</span>
+                      <TierBadge peakNetWorth={standing?.peak_net_worth ?? (profile as any).peak_net_worth} />
                     </Link>
                   </>
                 ) : (
