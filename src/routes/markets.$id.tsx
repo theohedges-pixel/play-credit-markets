@@ -265,7 +265,7 @@ function MarketDetail() {
               </div>
             </div>
             <div className="h-48">
-              {history && history.length > 1 ? (
+              {history && (history.length > 1 || (aiGenerated && history.length > 0)) ? (
                 <ResponsiveContainer width="100%" height="100%">
                   <LineChart data={history}>
                     <XAxis dataKey="t" hide />
