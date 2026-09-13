@@ -38,6 +38,7 @@ import {
   generateAiMarketsNow,
   discoverTrendingNow,
   resolveAiMarketsNow,
+  approveSuggestionChecked,
 } from "@/lib/admin-jobs.functions";
 import { toast } from "sonner";
 import {
@@ -1038,9 +1039,11 @@ interface Suggestion {
 function SuggestionsTab() {
   const qc = useQueryClient();
   const [discovering, setDiscovering] = useState(false);
+  const [approving, setApproving] = useState<string | null>(null);
   const [editing, setEditing] = useState<string | null>(null);
   const [draft, setDraft] = useState<Partial<Suggestion>>({});
   const runDiscoverNow = useServerFn(discoverTrendingNow);
+  const runApprove = useServerFn(approveSuggestionChecked);
 
   const { data: categories } = useQuery({
     queryKey: ["categories"],
@@ -1088,19 +1091,29 @@ function SuggestionsTab() {
     const payload =
       editing === s.id
         ? {
-            _suggestion_id: s.id,
-            _title: draft.title ?? s.title,
-            _description: draft.description ?? s.description,
-            _category_id: draft.category_id ?? s.category_id,
-            _closes_at: draft.suggested_closes_at ?? s.suggested_closes_at,
+            suggestionId: s.id,
+            title: draft.title ?? s.title,
+            description: draft.description ?? s.description ?? "",
+            categoryId: draft.category_id ?? s.category_id,
+            closesAt: draft.suggested_closes_at ?? s.suggested_closes_at,
           }
-        : { _suggestion_id: s.id };
-    const { error } = await rpc("approve_market_suggestion", payload);
-    if (error) return toast.error(error.message);
-    toast.success("Market created");
-    setEditing(null);
-    qc.invalidateQueries({ queryKey: ["market-suggestions"] });
-    qc.invalidateQueries({ queryKey: ["markets"] });
+        : { suggestionId: s.id };
+    setApproving(s.id);
+    try {
+      const res: any = await runApprove({ data: payload });
+      if (!res.approved) {
+        toast.error(res.reason, { duration: 10000 });
+        return;
+      }
+      toast.success("Market created");
+      setEditing(null);
+      qc.invalidateQueries({ queryKey: ["market-suggestions"] });
+      qc.invalidateQueries({ queryKey: ["markets"] });
+    } catch (e) {
+      toast.error(e instanceof Error ? e.message : "Approval failed");
+    } finally {
+      setApproving(null);
+    }
   };
 
   const onReject = async (s: Suggestion) => {
@@ -1193,8 +1206,9 @@ function SuggestionsTab() {
                 )}
 
                 <div className="flex gap-2 mt-4 flex-wrap">
-                  <Button size="sm" onClick={() => onApprove(s)} className="gap-1.5">
-                    <Check size={14} /> Approve
+                  <Button size="sm" onClick={() => onApprove(s)} disabled={approving === s.id} className="gap-1.5">
+                    {approving === s.id ? <Loader2 size={14} className="animate-spin" /> : <Check size={14} />}
+                    {approving === s.id ? "Checking…" : "Approve"}
                   </Button>
                   {!isEditing && (
                     <Button size="sm" variant="outline" onClick={() => startEdit(s)} className="gap-1.5">
