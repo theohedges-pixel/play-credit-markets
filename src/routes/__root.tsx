@@ -12,6 +12,7 @@ import appCss from "../styles.css?url";
 import { AuthProvider } from "@/lib/auth";
 import { PresenceProvider } from "@/lib/presence";
 import { Toaster } from "@/components/ui/sonner";
+import { MilestoneCelebration } from "@/components/MilestoneCelebration";
 import { PendingBetJoin } from "@/components/PendingBetJoin";
 
 function NotFoundComponent() {
@@ -117,6 +118,7 @@ function RootComponent() {
         <PresenceProvider>
           <Outlet />
           <PendingBetJoin />
+          <MilestoneCelebration />
           <Toaster theme="dark" />
         </PresenceProvider>
       </AuthProvider>
