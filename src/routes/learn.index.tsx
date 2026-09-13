@@ -126,6 +126,16 @@ function LearnIndex() {
 
   const parts = [...new Set(articles.map((a) => a.part))].sort((a, b) => a - b);
 
+  const [expanded, setExpanded] = useState<Set<number>>(() => new Set([FEATURED_PART]));
+  const togglePart = (part: number) => {
+    setExpanded((prev) => {
+      const next = new Set(prev);
+      if (next.has(part)) next.delete(part);
+      else next.add(part);
+      return next;
+    });
+  };
+
   return (
     <div>
       <Header />
