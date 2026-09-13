@@ -295,23 +295,58 @@ export async function runGenerate() {
     .limit(2000);
   const existingTitles = (existing ?? []).map((m) => m.title);
 
-  // Dedup within batch + against DB
-  const accepted: AiEvent[] = [];
+  // Open + recently resolved markets are what the semantic pass compares against.
+  const sixtyDaysAgo = new Date(Date.now() - 60 * 24 * 3600 * 1000).toISOString();
+  const { data: recent } = await supabaseAdmin
+    .from("markets")
+    .select("title, status, resolved_at")
+    .or(`status.eq.open,resolved_at.gte.${sixtyDaysAgo}`)
+    .order("created_at", { ascending: false })
+    .limit(200);
+  const compareTitles = (recent ?? []).map((m) => m.title);
+
+  // Pass 1: literal dedup within batch + against DB
+  const shortlist: AiEvent[] = [];
   for (const ev of valid) {
     if (existingTitles.some((t) => isCloseMatch(t, ev.title))) continue;
-    if (accepted.some((a) => isCloseMatch(a.title, ev.title))) continue;
-    accepted.push(ev);
-    if (accepted.length >= MAX_INSERT) break;
+    if (shortlist.some((a) => isCloseMatch(a.title, ev.title))) continue;
+    shortlist.push(ev);
   }
+
+  // Pass 2: topic-level dedup against open + recently resolved markets
+  const semanticDupes = await findSemanticDuplicates(apiKey, shortlist, compareTitles);
+  const unique = shortlist.filter((_, i) => !semanticDupes.has(i));
+
+  // Pass 3: grounded staleness gate — discard anything already publicly settled
+  const verdicts = await Promise.all(unique.map((ev) => verifyUnsettled(apiKey, ev)));
+  const accepted: AiEvent[] = [];
+  let stale = 0;
+  unique.forEach((ev, i) => {
+    if (verdicts[i].stale) {
+      stale++;
+      console.warn(`[generate-ai-markets] discarded settled topic: "${ev.title}" — ${verdicts[i].reasoning}`);
+      return;
+    }
+    if (accepted.length < MAX_INSERT) accepted.push(ev);
+  });
+
+  const duplicates = valid.length - unique.length;
 
   if (accepted.length === 0) {
     await supabaseAdmin.from("app_settings").upsert({
       key: "last_ai_market_run",
-      value: { at: new Date().toISOString(), inserted: 0, reason: "all duplicates" },
+      value: {
+        at: new Date().toISOString(),
+        inserted: 0,
+        reason: stale > 0 ? "all candidates duplicate or already settled" : "all duplicates",
+        duplicates,
+        stale,
+      },
       updated_at: new Date().toISOString(),
     });
-    return { inserted: 0, scanned: raw.length, malformed, duplicates: valid.length };
+    return { inserted: 0, scanned: raw.length, malformed, duplicates, stale };
   }
+
 
   // Look up categories
   const { data: cats } = await supabaseAdmin.from("categories").select("id, slug");
