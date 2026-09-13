@@ -35,6 +35,7 @@ import { fmtCredits } from "@/lib/format";
 import { sendPasswordReset } from "@/lib/admin.functions";
 import {
   syncPolymarketNow,
+  generateAiMarketsNow,
   discoverTrendingNow,
   resolveAiMarketsNow,
 } from "@/lib/admin-jobs.functions";
@@ -44,6 +45,7 @@ import {
   Sparkles,
   Loader2,
   RefreshCw,
+  Brain,
   Trash2,
   KeyRound,
   Gavel,
@@ -555,7 +557,9 @@ function Empty({ children }: { children: React.ReactNode }) {
 function MarketsTab() {
   const qc = useQueryClient();
   const runSync = useServerFn(syncPolymarketNow);
+  const runGenerateNow = useServerFn(generateAiMarketsNow);
   const [syncing, setSyncing] = useState(false);
+  const [genAi, setGenAi] = useState(false);
   const [picked, setPicked] = useState<Record<string, boolean>>({});
   const [pruning, setPruning] = useState(false);
 
@@ -586,6 +590,19 @@ function MarketsTab() {
     }
   };
 
+  const onGenerateAi = async () => {
+    setGenAi(true);
+    try {
+      const body: any = await runGenerateNow();
+      toast.success(`Created ${body.inserted} new AI market${body.inserted === 1 ? "" : "s"}`);
+      qc.invalidateQueries({ queryKey: ["markets"] });
+    } catch (e) {
+      toast.error(e instanceof Error ? e.message : "AI generation failed");
+    } finally {
+      setGenAi(false);
+    }
+  };
+
   const onPrune = async () => {
     setPruning(true);
     const { data, error } = await rpc("admin_prune_markets", { _ids: pickedIds });
@@ -604,11 +621,17 @@ function MarketsTab() {
   return (
     <div className="space-y-8">
       <section>
-        <h2 className="font-display text-lg font-semibold mb-3">Polymarket sync</h2>
-        <Button variant="outline" className="gap-2" onClick={onSync} disabled={syncing}>
-          {syncing ? <Loader2 size={14} className="animate-spin" /> : <RefreshCw size={14} />}
-          Sync Polymarket now
-        </Button>
+        <h2 className="font-display text-lg font-semibold mb-3">Market ingestion</h2>
+        <div className="flex items-center gap-3 flex-wrap">
+          <Button variant="outline" className="gap-2" onClick={onSync} disabled={syncing}>
+            {syncing ? <Loader2 size={14} className="animate-spin" /> : <RefreshCw size={14} />}
+            Sync Polymarket now
+          </Button>
+          <Button variant="outline" className="gap-2" onClick={onGenerateAi} disabled={genAi}>
+            {genAi ? <Loader2 size={14} className="animate-spin" /> : <Brain size={14} />}
+            {genAi ? "Generating…" : "Generate AI markets"}
+          </Button>
+        </div>
       </section>
 
       <NeedsResolutionSection />

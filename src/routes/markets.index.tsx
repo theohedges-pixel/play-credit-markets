@@ -1,17 +1,12 @@
-import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
-import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { useServerFn } from "@tanstack/react-start";
+import { createFileRoute, useNavigate } from "@tanstack/react-router";
+import { useQuery } from "@tanstack/react-query";
 import { useState } from "react";
 import { formatDistanceToNow } from "date-fns";
 import { supabase } from "@/integrations/supabase/client";
-import { useAuth } from "@/lib/auth";
 import { Header } from "@/components/Header";
 import { MarketCard } from "@/components/MarketCard";
 import { Input } from "@/components/ui/input";
-import { Button } from "@/components/ui/button";
-import { Search, Sparkles, Loader2, RefreshCw, Brain } from "lucide-react";
-import { toast } from "sonner";
-import { syncPolymarketNow, generateAiMarketsNow } from "@/lib/admin-jobs.functions";
+import { Search } from "lucide-react";
 import { useMarketListRealtime } from "@/lib/realtime";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { zodValidator, fallback } from "@tanstack/zod-adapter";
@@ -45,28 +40,8 @@ function MarketsPage() {
   const sortKey = SORTS[sort] ? sort : "active";
   const [q, setQ] = useState("");
   const [cat, setCat] = useState<string | null>(null);
-  const [syncing, setSyncing] = useState(false);
-  const [genAi, setGenAi] = useState(false);
-  const { user } = useAuth();
-  const qc = useQueryClient();
-  const runSyncNow = useServerFn(syncPolymarketNow);
-  const runGenerateNow = useServerFn(generateAiMarketsNow);
 
-  const { data: isAdmin } = useQuery({
-    queryKey: ["is-admin", user?.id],
-    enabled: !!user?.id,
-    queryFn: async () => {
-      const { data } = await supabase
-        .from("user_roles")
-        .select("role")
-        .eq("user_id", user!.id)
-        .eq("role", "admin")
-        .maybeSingle();
-      return !!data;
-    },
-  });
-
-  const { data: lastSync, refetch: refetchSync } = useQuery({
+  const { data: lastSync } = useQuery({
     queryKey: ["last-polymarket-sync"],
     queryFn: async () => {
       const { data } = await supabase
@@ -79,33 +54,6 @@ function MarketsPage() {
     },
     refetchInterval: 60_000,
   });
-
-  const onSyncNow = async () => {
-    setSyncing(true);
-    try {
-      const body = await runSyncNow();
-      toast.success(`Synced: ${body.inserted} added, ${body.refreshed ?? 0} refreshed, ${body.closed} closed`);
-      qc.invalidateQueries({ queryKey: ["markets"] });
-      refetchSync();
-    } catch (e: unknown) {
-      toast.error(e instanceof Error ? e.message : "Sync failed");
-    } finally {
-      setSyncing(false);
-    }
-  };
-
-  const onGenerateAi = async () => {
-    setGenAi(true);
-    try {
-      const body = await runGenerateNow();
-      toast.success(`Created ${body.inserted} new AI market${body.inserted === 1 ? "" : "s"}`);
-      qc.invalidateQueries({ queryKey: ["markets"] });
-    } catch (e: unknown) {
-      toast.error(e instanceof Error ? e.message : "AI generation failed");
-    } finally {
-      setGenAi(false);
-    }
-  };
 
   const { data: categories } = useQuery({
     queryKey: ["categories"],
@@ -146,39 +94,11 @@ function MarketsPage() {
             <h1 className="font-display text-4xl font-bold mb-2">All markets</h1>
             <p className="text-muted-foreground">Pick a question, take a side.</p>
           </div>
-          <div className="flex items-center gap-3 flex-wrap justify-end">
-            {lastSync && (
-              <span className="text-xs text-muted-foreground">
-                Last synced {formatDistanceToNow(new Date(lastSync), { addSuffix: true })}
-              </span>
-            )}
-            {isAdmin && (
-              <>
-                <Link to="/admin/dashboard">
-                  <Button variant="outline" size="sm" className="gap-2">
-                    <Sparkles size={14} className="text-primary" />
-                    Suggestions
-                  </Button>
-                </Link>
-                <Button onClick={onSyncNow} disabled={syncing} variant="outline" size="sm" className="gap-2">
-                  {syncing ? (
-                    <Loader2 size={14} className="animate-spin" />
-                  ) : (
-                    <RefreshCw size={14} />
-                  )}
-                  {syncing ? "Syncing…" : "Sync now"}
-                </Button>
-                <Button onClick={onGenerateAi} disabled={genAi} variant="outline" size="sm" className="gap-2">
-                  {genAi ? (
-                    <Loader2 size={14} className="animate-spin" />
-                  ) : (
-                    <Brain size={14} />
-                  )}
-                  {genAi ? "Generating…" : "Generate AI markets"}
-                </Button>
-              </>
-            )}
-          </div>
+          {lastSync && (
+            <span className="text-xs text-muted-foreground">
+              Last synced {formatDistanceToNow(new Date(lastSync), { addSuffix: true })}
+            </span>
+          )}
         </div>
 
         <div className="flex flex-col md:flex-row gap-3 mb-6">
