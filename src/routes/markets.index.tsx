@@ -154,7 +154,7 @@ function MarketsPage() {
             )}
             {isAdmin && (
               <>
-                <Link to="/admin/suggestions">
+                <Link to="/admin/dashboard">
                   <Button variant="outline" size="sm" className="gap-2">
                     <Sparkles size={14} className="text-primary" />
                     Suggestions
