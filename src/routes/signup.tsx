@@ -7,11 +7,13 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { toast } from "sonner";
 import { Mail } from "lucide-react";
+import { setPendingBet } from "@/lib/pending-bet";
 
 export const Route = createFileRoute("/signup")({
-  validateSearch: (search: Record<string, unknown>): { ref?: string } => {
+  validateSearch: (search: Record<string, unknown>): { ref?: string; bet?: string } => {
     const r = typeof search.ref === "string" ? search.ref.slice(0, 40) : undefined;
-    return r ? { ref: r } : {};
+    const b = typeof search.bet === "string" ? search.bet : undefined;
+    return { ...(r ? { ref: r } : {}), ...(b ? { bet: b } : {}) };
   },
   head: () => ({
     meta: [
@@ -34,7 +36,7 @@ export const Route = createFileRoute("/signup")({
 
 function SignupPage() {
   const navigate = useNavigate();
-  const { ref: referrer } = Route.useSearch();
+  const { ref: referrer, bet } = Route.useSearch();
   const [email, setEmail] = useState("");
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
@@ -58,6 +60,8 @@ function SignupPage() {
         toast.error(error.message);
         return;
       }
+      // Remember the shared bet so it's redeemed as soon as they're signed in.
+      if (bet && referrer) setPendingBet({ betId: bet, sharer: referrer });
       // If email confirmation is required, session will be null.
       // Make sure no session leaks into this tab either way.
       if (!data.session) {

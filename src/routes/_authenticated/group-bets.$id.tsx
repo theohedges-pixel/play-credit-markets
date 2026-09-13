@@ -1,5 +1,6 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
-import { useState } from "react";
+import { useEffect, useState } from "react";
+import { Share2 } from "lucide-react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/lib/auth";
@@ -18,11 +19,16 @@ export const Route = createFileRoute("/_authenticated/group-bets/$id")({
 
 function GroupBetDetail() {
   const { id } = Route.useParams();
-  const { user, refreshProfile } = useAuth();
+  const { user, profile, refreshProfile } = useAuth();
   const qc = useQueryClient();
   const [side, setSide] = useState<"yes" | "no">("yes");
   const [amount, setAmount] = useState("");
   const [submitting, setSubmitting] = useState(false);
+  const [origin, setOrigin] = useState("");
+
+  useEffect(() => {
+    if (typeof window !== "undefined") setOrigin(window.location.origin);
+  }, []);
 
   const { data: bet, isLoading } = useQuery({
     queryKey: ["gb-detail", id],
@@ -77,6 +83,28 @@ function GroupBetDetail() {
   const isCreator = bet.creator_id === user?.id;
   const closed = new Date(bet.closes_at) <= new Date();
   const myPart = (participants ?? []).find((p) => p.user_id === user?.id);
+
+  // Anyone taking part (creator included) can share their own chain link.
+  const canShare = (isCreator || !!myPart) && bet.status === "open" && !closed && !!profile?.username;
+  const shareUrl = profile?.username ? `${origin}/join/${profile.username}?bet=${bet.id}` : "";
+
+  const share = async () => {
+    const text = `Join me on Predikt — free prediction markets, no real money. Bet with me on: ${bet.title}`;
+    if (typeof navigator !== "undefined" && navigator.share) {
+      try {
+        await navigator.share({ title: "Predikt group bet", text, url: shareUrl });
+        return;
+      } catch {
+        /* dismissed — fall through to copy */
+      }
+    }
+    try {
+      await navigator.clipboard.writeText(shareUrl);
+      toast.success("Link copied!");
+    } catch {
+      toast.error("Could not copy the link");
+    }
+  };
 
   const totals = (participants ?? []).reduce(
     (acc, p) => {
@@ -142,6 +170,23 @@ function GroupBetDetail() {
             )}
           </div>
         </div>
+
+        {canShare && (
+          <div className="rounded-lg border border-border bg-card p-5">
+            <div className="flex items-center justify-between gap-4">
+              <div className="min-w-0">
+                <h2 className="font-display font-semibold">Share this bet</h2>
+                <p className="text-xs text-muted-foreground mt-1">
+                  Anyone with your link can join — even if they're not on Predikt yet.
+                </p>
+              </div>
+              <Button size="sm" onClick={share}>
+                <Share2 size={14} /> Share
+              </Button>
+            </div>
+            <Input readOnly value={shareUrl} onFocus={(e) => e.currentTarget.select()} className="mt-3 text-xs" />
+          </div>
+        )}
 
         <div className="grid grid-cols-3 gap-3">
           <Stat label="Pot" value={`${fmtCredits(totals.total)}c`} />

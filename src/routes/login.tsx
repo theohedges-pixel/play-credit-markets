@@ -7,8 +7,14 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Checkbox } from "@/components/ui/checkbox";
 import { toast } from "sonner";
+import { setPendingBet } from "@/lib/pending-bet";
 
 export const Route = createFileRoute("/login")({
+  validateSearch: (search: Record<string, unknown>): { bet?: string; sharer?: string } => {
+    const b = typeof search.bet === "string" ? search.bet : undefined;
+    const s = typeof search.sharer === "string" ? search.sharer.slice(0, 40) : undefined;
+    return { ...(b ? { bet: b } : {}), ...(s ? { sharer: s } : {}) };
+  },
   head: () => ({ meta: [{ title: "Sign in — Predikt" }] }),
   component: LoginPage,
 });
@@ -51,6 +57,7 @@ function clearSessionOnlyFlag() {
 
 function LoginPage() {
   const navigate = useNavigate();
+  const { bet, sharer } = Route.useSearch();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [remember, setRemember] = useState(true);
@@ -73,6 +80,11 @@ function LoginPage() {
       else markSessionOnly();
 
       toast.success("Welcome back");
+      if (bet && sharer) {
+        // Redeemed by <PendingBetJoin />, which then lands them on the bet page.
+        setPendingBet({ betId: bet, sharer });
+        return;
+      }
       await navigate({ to: "/markets" });
     } catch (err) {
       const msg = err instanceof Error ? err.message : "Could not connect. Check your internet connection.";
