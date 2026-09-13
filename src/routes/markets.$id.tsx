@@ -26,6 +26,15 @@ function AiEstimateLabel(props: any) {
 }
 import { useMarketDetailRealtime } from "@/lib/realtime";
 
+type RangeKey = "today" | "7d" | "30d" | "max";
+const RANGES: { key: RangeKey; label: string }[] = [
+  { key: "today", label: "Today" },
+  { key: "7d", label: "7D" },
+  { key: "30d", label: "30D" },
+  { key: "max", label: "Max" },
+];
+
+
 
 export const Route = createFileRoute("/markets/$id")({
   component: MarketDetail,
@@ -39,6 +48,8 @@ function MarketDetail() {
   const [mode, setMode] = useState<"buy" | "sell">("buy");
   const [amount, setAmount] = useState("10");
   const [submitting, setSubmitting] = useState(false);
+  const [range, setRange] = useState<RangeKey>("max");
+
 
   const { data: market } = useQuery({
     queryKey: ["market", id],
@@ -134,6 +145,39 @@ function MarketDetail() {
   const isResolved = market.status === "resolved";
   const isClosed = isResolved || market.status !== "open" || new Date(market.closes_at) <= new Date();
   const canResolve = user && (user.id === market.creator_id);
+
+  // --- Chart series -------------------------------------------------------
+  // price_history only records points when something happens, so a sparse
+  // market would otherwise render as a lone dot (or an empty window). We
+  // carry the last known price forward into the window start and always
+  // extend the line to "now" with the current live price.
+  const points = history ?? [];
+  const chartNow = Date.now();
+  const windowStart =
+    range === "today"
+      ? new Date(new Date().setHours(0, 0, 0, 0)).getTime()
+      : range === "7d"
+        ? chartNow - 7 * 86_400_000
+        : range === "30d"
+          ? chartNow - 30 * 86_400_000
+          : (points[0]?.t ?? chartNow);
+
+  const inWindow = points.filter((p) => p.t >= windowStart);
+  const carried = [...points].reverse().find((p) => p.t < windowStart);
+
+  const chartData: { t: number; price: number }[] = [];
+  if (points.length > 0) {
+    if (carried && (inWindow.length === 0 || inWindow[0]!.t > windowStart)) {
+      chartData.push({ t: windowStart, price: carried.price });
+    }
+    chartData.push(...inWindow);
+    const last = chartData[chartData.length - 1];
+    if (!last || last.t < chartNow) chartData.push({ t: chartNow, price: price * 100 });
+  }
+
+  // Only annotate the AI seed when the real first point falls inside the window.
+  const seedVisible = points.length > 0 && points[0]!.t >= windowStart;
+
 
   const sharesNum = Number(amount);
   const validAmount = Number.isFinite(sharesNum) && sharesNum > 0;
@@ -323,10 +367,23 @@ function MarketDetail() {
                 <div className="mt-1">{isResolved ? `Resolved ${market!.resolution?.toUpperCase()}` : timeUntil(market.closes_at)}</div>
               </div>
             </div>
+            <div className="flex items-center gap-1.5 mb-3">
+              {RANGES.map((r) => (
+                <Button
+                  key={r.key}
+                  size="sm"
+                  variant={r.key === range ? "default" : "outline"}
+                  className="h-7 px-2.5 text-xs"
+                  onClick={() => setRange(r.key)}
+                >
+                  {r.label}
+                </Button>
+              ))}
+            </div>
             <div className="h-48">
-              {history && (history.length > 1 || (aiGenerated && history.length > 0)) ? (
+              {chartData.length > 1 ? (
                 <ResponsiveContainer width="100%" height="100%">
-                  <LineChart data={history}>
+                  <LineChart data={chartData}>
                     {/* Real elapsed time on X, padded auto-range on Y so small
                         moves are visible instead of squashed against 0-100. */}
                     <XAxis dataKey="t" type="number" scale="time" domain={["dataMin", "dataMax"]} hide />
@@ -343,10 +400,10 @@ function MarketDetail() {
                       formatter={(v) => [`${(v as number).toFixed(0)}¢`, "YES"]}
                     />
                     <Line type="monotone" dataKey="price" stroke="oklch(0.78 0.20 145)" strokeWidth={2} dot={false} />
-                    {aiGenerated && history.length > 0 && (
+                    {aiGenerated && seedVisible && (
                       <ReferenceDot
-                        x={history[0].t}
-                        y={history[0].price}
+                        x={history![0].t}
+                        y={history![0].price}
                         r={5}
                         fill="var(--primary)"
                         stroke="var(--background)"
@@ -362,6 +419,7 @@ function MarketDetail() {
                 </div>
               )}
             </div>
+
           </div>
 
           {/* Recent trades */}
