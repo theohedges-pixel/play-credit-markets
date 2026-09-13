@@ -187,51 +187,18 @@ function PublicProfile() {
           </div>
         </div>
 
-        <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 mb-8">
-          <Stat label="Net worth" value={`${fmtCredits(netWorth)}c`} />
-          <Stat
-            label="Win rate"
-            value={winRate === null ? "—" : `${winRate.toFixed(0)}%`}
-            hint={resolvedTotal > 0 ? `${resolvedWins}/${resolvedTotal}` : "No resolved"}
-          />
+        <div className="grid grid-cols-2 gap-3 mb-8">
           <Stat label="Markets created" value={String(marketsCreated ?? 0)} />
           <Stat label="Friends" value={String(friendCount ?? 0)} />
         </div>
 
-        <h2 className="font-display text-xl font-semibold mb-4">Recent activity</h2>
-        <div className="rounded-lg border border-border bg-card divide-y divide-border">
-          {trades && trades.length > 0 ? (
-            trades.map((t: any) => (
-              <Link
-                key={t.id}
-                to="/markets/$id"
-                params={{ id: t.market?.id ?? "" }}
-                className="block px-5 py-3 hover:bg-secondary/30 transition"
-              >
-                <div className="flex items-center justify-between gap-4">
-                  <div className="min-w-0">
-                    <div className="text-sm truncate">{t.market?.title ?? "—"}</div>
-                    <div className="text-xs text-muted-foreground mt-0.5">
-                      {formatDistanceToNow(new Date(t.created_at), { addSuffix: true })}
-                    </div>
-                  </div>
-                  <div className="text-right shrink-0">
-                    <div className={`text-xs font-mono uppercase ${t.side === "yes" ? "text-yes" : "text-no"}`}>
-                      {t.side}
-                    </div>
-                    <div className="text-xs font-mono text-muted-foreground">
-                      {fmtCredits(Number(t.credits))}c
-                    </div>
-                  </div>
-                </div>
-              </Link>
-            ))
-          ) : (
-            <div className="px-5 py-8 text-center text-sm text-muted-foreground">
-              No trades yet.
-            </div>
-          )}
-        </div>
+        <p className="text-xs text-muted-foreground">
+          Holdings and trade history are private — check the{" "}
+          <Link to="/leaderboard" className="text-primary hover:underline">
+            leaderboard
+          </Link>{" "}
+          for public rankings.
+        </p>
       </div>
     </div>
   );
