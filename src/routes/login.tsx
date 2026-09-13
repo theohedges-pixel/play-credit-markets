@@ -80,6 +80,11 @@ function LoginPage() {
       else markSessionOnly();
 
       toast.success("Welcome back");
+      if (bet && sharer) {
+        // Redeemed by <PendingBetJoin />, which then lands them on the bet page.
+        setPendingBet({ betId: bet, sharer });
+        return;
+      }
       await navigate({ to: "/markets" });
     } catch (err) {
       const msg = err instanceof Error ? err.message : "Could not connect. Check your internet connection.";
