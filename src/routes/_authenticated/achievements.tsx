@@ -144,7 +144,7 @@ function Achievements() {
                     : `${fmtCredits(tier)} credits`}
                 </div>
                 {isNext && (
-                  <div className="mt-1.5 not-grayscale">
+                  <div className="mt-1.5">
                     <div className="flex justify-between text-[11px] font-mono mb-1">
                       <span>
                         {fmtCredits(peak)} / {tierLabel(tier)}
