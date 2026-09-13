@@ -58,11 +58,18 @@ function clearSessionOnlyFlag() {
 
 function LoginPage() {
   const navigate = useNavigate();
+  const { user, loading: authLoading } = useAuth();
   const { bet, sharer } = Route.useSearch();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [remember, setRemember] = useState(true);
   const [loading, setLoading] = useState(false);
+
+  useEffect(() => {
+    if (!authLoading && user) {
+      navigate({ to: "/markets", replace: true });
+    }
+  }, [authLoading, user, navigate]);
 
   const onSubmit = async (e: FormEvent) => {
     e.preventDefault();
