@@ -9,6 +9,7 @@ interface Profile {
   avatar_url: string | null;
   bio: string | null;
   last_daily_claim: string | null;
+  claim_streak?: number | null;
 }
 
 interface AuthContextValue {
@@ -44,7 +45,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     }
     const { data } = await (supabase as any)
       .from("profiles")
-      .select("id, username, credits, avatar_url, bio, last_daily_claim, peak_net_worth, trading_history_public")
+      .select("id, username, credits, avatar_url, bio, last_daily_claim, claim_streak, peak_net_worth, trading_history_public")
       .eq("id", uid)
       .maybeSingle();
     setProfile(data ? { ...data, credits: Number(data.credits) } : null);
