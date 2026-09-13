@@ -43,9 +43,13 @@ const POLY_CRITERIA = /(^|\n)[^\n]*(primary resolution source|consensus of credi
 
 function outcomeClause(description: string, outcome: string): string | null {
   const esc = outcome.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
-  const re = new RegExp(`resolve[sd]?\\s+to\\s+["“]${esc}["”]\\s+if\\s+([^.\\n]+)`, "i");
+  // Capture to end of line, not to the first period — team names such as
+  // "St. Louis Cardinals" contain periods.
+  const re = new RegExp(`resolve[sd]?\\s+to\\s+["“]${esc}["”]\\s+if\\s+([^\\n]+)`, "i");
   const m = description.match(re);
-  return m?.[1]?.trim() || null;
+  const clause = m?.[1]?.trim().replace(/[.\s]+$/, "") ?? "";
+  if (!clause || clause.length > 160) return null;
+  return clause;
 }
 
 /**
