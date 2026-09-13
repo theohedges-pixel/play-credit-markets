@@ -40,6 +40,14 @@ function MarketsPage() {
   const sortKey = SORTS[sort] ? sort : "active";
   const [q, setQ] = useState("");
   const [cat, setCat] = useState<string | null>(null);
+  // Sub-theme chips only exist inside a chosen category, so the selection is
+  // cleared whenever the category changes.
+  const [themeIds, setThemeIds] = useState<string[]>([]);
+
+  const pickCategory = (id: string | null) => {
+    setCat(id);
+    setThemeIds([]);
+  };
 
   const { data: lastSync } = useQuery({
     queryKey: ["last-polymarket-sync"],
