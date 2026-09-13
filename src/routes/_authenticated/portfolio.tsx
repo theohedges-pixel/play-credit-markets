@@ -69,13 +69,29 @@ function Portfolio() {
   const today = new Date().toISOString().slice(0, 10);
   const claimed = profile?.last_daily_claim === today;
 
-  // compute portfolio value + P&L
+  // Value a position the same way the leaderboard's net worth does: only
+  // markets still trading carry position value. A resolved market has already
+  // paid its credits into the cash balance, so counting its stale
+  // pre-resolution price here would double-count those credits.
+  const settlementPayout = (p: any) => {
+    const res = p.market?.resolution;
+    if (res === "yes") return Number(p.yes_shares);
+    if (res === "no") return Number(p.no_shares);
+    return Number(p.credits_spent); // invalid — stake returned
+  };
+
   let posValue = 0;
   let unrealizedPnl = 0;
   let realizedPnl = 0;
   positions?.forEach((p: any) => {
     realizedPnl += Number(p.realized_pnl ?? 0);
     if (!p.market) return;
+    if (p.market.status === "resolved") {
+      // Fully realized: payout is already in cash, so it only affects P&L.
+      realizedPnl += settlementPayout(p) - Number(p.credits_spent);
+      return;
+    }
+    if (p.market.status !== "open") return; // closed, awaiting resolution
     const price = yesPrice(Number(p.market.yes_pool), Number(p.market.no_pool));
     const value = Number(p.yes_shares) * price + Number(p.no_shares) * (1 - price);
     posValue += value;
@@ -88,13 +104,18 @@ function Portfolio() {
   const positionRows = (positions ?? [])
     .filter((position: any) => position.market)
     .map((position: any) => {
+      const resolved = position.market.status === "resolved";
       const price = yesPrice(Number(position.market.yes_pool), Number(position.market.no_pool));
-      const value = Number(position.yes_shares) * price + Number(position.no_shares) * (1 - price);
+      const value = resolved
+        ? settlementPayout(position)
+        : Number(position.yes_shares) * price + Number(position.no_shares) * (1 - price);
+      const pnl = value - Number(position.credits_spent);
       return {
         position,
         value,
-        pnl: value - Number(position.credits_spent),
-        realized: Number(position.realized_pnl ?? 0),
+        resolved,
+        pnl: resolved ? 0 : pnl,
+        realized: Number(position.realized_pnl ?? 0) + (resolved ? pnl : 0),
       };
     })
     .sort((a, b) => b.value - a.value || a.position.market.title.localeCompare(b.position.market.title));
@@ -175,7 +196,7 @@ function Portfolio() {
                 </div>
               </div>
             ))
-          ) : positionRows.length > 0 ? positionRows.map(({ position: p, value, pnl, realized }) => {
+          ) : positionRows.length > 0 ? positionRows.map(({ position: p, value, pnl, realized, resolved }) => {
             return (
               <Link key={p.id} to="/markets/$id" params={{ id: p.market.id }} className="block px-5 py-4 hover:bg-secondary/30 transition">
                 <div className="flex items-center justify-between gap-4">
@@ -189,12 +210,14 @@ function Portfolio() {
                   </div>
                   <div className="text-right shrink-0">
                     <div className="font-mono font-semibold">{fmtCredits(value)}c</div>
-                    <div className={`text-xs font-mono ${valueClass(pnl)}`}>
-                      Unrealized {signed(pnl)}c
-                    </div>
+                    {!resolved && (
+                      <div className={`text-xs font-mono ${valueClass(pnl)}`}>
+                        Unrealized {signed(pnl)}c
+                      </div>
+                    )}
                     {realized !== 0 && (
                       <div className={`text-xs font-mono ${valueClass(realized)}`}>
-                        Realized {signed(realized)}c
+                        {resolved ? "Settled" : "Realized"} {signed(realized)}c
                       </div>
                     )}
                     <div className={`text-xs font-mono ${valueClass(pnl + realized)}`}>
