@@ -892,6 +892,7 @@ export type Database = {
           id: string
           last_daily_claim: string | null
           peak_net_worth: number
+          trading_history_public: boolean
           username: string
         }
         Insert: {
@@ -902,6 +903,7 @@ export type Database = {
           id: string
           last_daily_claim?: string | null
           peak_net_worth?: number
+          trading_history_public?: boolean
           username: string
         }
         Update: {
@@ -912,6 +914,7 @@ export type Database = {
           id?: string
           last_daily_claim?: string | null
           peak_net_worth?: number
+          trading_history_public?: boolean
           username?: string
         }
         Relationships: []
@@ -1134,6 +1137,7 @@ export type Database = {
           created_at: string | null
           id: string | null
           peak_net_worth: number | null
+          trading_history_public: boolean | null
           username: string | null
         }
         Insert: {
@@ -1142,6 +1146,7 @@ export type Database = {
           created_at?: string | null
           id?: string | null
           peak_net_worth?: number | null
+          trading_history_public?: boolean | null
           username?: string | null
         }
         Update: {
@@ -1150,6 +1155,7 @@ export type Database = {
           created_at?: string | null
           id?: string | null
           peak_net_worth?: number | null
+          trading_history_public?: boolean | null
           username?: string | null
         }
         Relationships: []
@@ -1328,6 +1334,21 @@ export type Database = {
         Args: { _market_id: string }
         Returns: undefined
       }
+      get_market_activity: {
+        Args: { _limit?: number; _market_id: string }
+        Returns: {
+          action: Database["public"]["Enums"]["trade_action"]
+          avatar_url: string
+          created_at: string
+          credits: number
+          id: string
+          price: number
+          shares: number
+          side: Database["public"]["Enums"]["trade_side"]
+          user_id: string
+          username: string
+        }[]
+      }
       get_public_group_bet_preview: {
         Args: { _group_bet_id: string }
         Returns: {
@@ -1338,6 +1359,7 @@ export type Database = {
           title: string
         }[]
       }
+      get_public_trading_history: { Args: { _user_id: string }; Returns: Json }
       has_role: {
         Args: {
           _role: Database["public"]["Enums"]["app_role"]
