@@ -12,6 +12,7 @@ import { LineChart, Line, ResponsiveContainer, YAxis, Tooltip, XAxis, ReferenceD
 import { toast } from "sonner";
 import { format } from "date-fns";
 import { Loader2 } from "lucide-react";
+import { HowTradingWorksDialog } from "@/components/HowTradingWorksDialog";
 
 // Renders the "AI estimate" annotation offset into the chart so it never clips
 // at the left edge (the seed point is always the leftmost x).
