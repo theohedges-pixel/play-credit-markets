@@ -127,6 +127,37 @@ function MarketsPage() {
       : (markets ?? []);
   const visible = [...filtered].sort(SORTS[sortKey].order);
 
+  // Markets that share a Polymarket event are rendered as one card. Grouping
+  // uses only the identifiers Polymarket supplies — never title matching — and
+  // a group of one falls back to the ordinary card. Each group takes the list
+  // position of its highest-ranked member.
+  type Entry =
+    | { kind: "single"; key: string; market: (typeof visible)[number] }
+    | { kind: "group"; key: string; title: string; markets: typeof visible };
+
+  const entries: Entry[] = [];
+  const seenEvents = new Set<string>();
+  for (const m of visible) {
+    const eid = m.polymarket_event_id;
+    if (!eid) {
+      entries.push({ kind: "single", key: m.id, market: m });
+      continue;
+    }
+    if (seenEvents.has(eid)) continue;
+    seenEvents.add(eid);
+    const members = visible.filter((x) => x.polymarket_event_id === eid);
+    if (members.length === 1) {
+      entries.push({ kind: "single", key: m.id, market: m });
+    } else {
+      entries.push({
+        kind: "group",
+        key: `event-${eid}`,
+        title: m.polymarket_event_title ?? m.title,
+        markets: members,
+      });
+    }
+  }
+
   return (
     <div className="min-h-screen">
       <Header />
