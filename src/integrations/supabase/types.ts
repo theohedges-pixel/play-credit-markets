@@ -438,6 +438,210 @@ export type Database = {
           },
         ]
       }
+      learn_achievement_awards: {
+        Row: {
+          achievement_key: string
+          credits_awarded: number
+          earned_at: string
+          id: string
+          user_id: string
+        }
+        Insert: {
+          achievement_key: string
+          credits_awarded?: number
+          earned_at?: string
+          id?: string
+          user_id: string
+        }
+        Update: {
+          achievement_key?: string
+          credits_awarded?: number
+          earned_at?: string
+          id?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "learn_achievement_awards_achievement_key_fkey"
+            columns: ["achievement_key"]
+            isOneToOne: false
+            referencedRelation: "learn_achievements"
+            referencedColumns: ["key"]
+          },
+        ]
+      }
+      learn_achievements: {
+        Row: {
+          category: string
+          credits: number
+          key: string
+          name: string
+          requirement: string
+          sort_order: number
+        }
+        Insert: {
+          category: string
+          credits?: number
+          key: string
+          name: string
+          requirement: string
+          sort_order?: number
+        }
+        Update: {
+          category?: string
+          credits?: number
+          key?: string
+          name?: string
+          requirement?: string
+          sort_order?: number
+        }
+        Relationships: []
+      }
+      learn_articles: {
+        Row: {
+          body: string
+          created_at: string
+          id: string
+          level: string
+          part: number
+          part_name: string
+          read_minutes: number
+          reward: number
+          slug: string
+          sort_order: number
+          status: string
+          summary: string
+          title: string
+          updated_at: string
+        }
+        Insert: {
+          body?: string
+          created_at?: string
+          id?: string
+          level: string
+          part: number
+          part_name: string
+          read_minutes?: number
+          reward?: number
+          slug: string
+          sort_order?: number
+          status?: string
+          summary?: string
+          title: string
+          updated_at?: string
+        }
+        Update: {
+          body?: string
+          created_at?: string
+          id?: string
+          level?: string
+          part?: number
+          part_name?: string
+          read_minutes?: number
+          reward?: number
+          slug?: string
+          sort_order?: number
+          status?: string
+          summary?: string
+          title?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      learn_attempts: {
+        Row: {
+          article_id: string
+          attempt_number: number
+          created_at: string
+          credits_awarded: number
+          id: string
+          passed: boolean
+          question_set: string
+          score: number
+          total: number
+          user_id: string
+        }
+        Insert: {
+          article_id: string
+          attempt_number: number
+          created_at?: string
+          credits_awarded?: number
+          id?: string
+          passed?: boolean
+          question_set: string
+          score?: number
+          total?: number
+          user_id: string
+        }
+        Update: {
+          article_id?: string
+          attempt_number?: number
+          created_at?: string
+          credits_awarded?: number
+          id?: string
+          passed?: boolean
+          question_set?: string
+          score?: number
+          total?: number
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "learn_attempts_article_id_fkey"
+            columns: ["article_id"]
+            isOneToOne: false
+            referencedRelation: "learn_articles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      learn_questions: {
+        Row: {
+          article_id: string
+          correct_option_id: string
+          created_at: string
+          explanation: string
+          id: string
+          options: Json
+          prompt: string
+          question_set: string
+          sort_order: number
+          updated_at: string
+        }
+        Insert: {
+          article_id: string
+          correct_option_id: string
+          created_at?: string
+          explanation?: string
+          id?: string
+          options?: Json
+          prompt: string
+          question_set: string
+          sort_order?: number
+          updated_at?: string
+        }
+        Update: {
+          article_id?: string
+          correct_option_id?: string
+          created_at?: string
+          explanation?: string
+          id?: string
+          options?: Json
+          prompt?: string
+          question_set?: string
+          sort_order?: number
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "learn_questions_article_id_fkey"
+            columns: ["article_id"]
+            isOneToOne: false
+            referencedRelation: "learn_articles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       learning_completions: {
         Row: {
           completed_at: string
@@ -885,38 +1089,47 @@ export type Database = {
       }
       profiles: {
         Row: {
+          articles_passed: number
           avatar_url: string | null
           bio: string | null
           claim_streak: number
           created_at: string
           credits: number
+          first_attempt_passes: number
           id: string
           last_daily_claim: string | null
           peak_net_worth: number
+          perfect_quizzes: number
           trading_history_public: boolean
           username: string
         }
         Insert: {
+          articles_passed?: number
           avatar_url?: string | null
           bio?: string | null
           claim_streak?: number
           created_at?: string
           credits?: number
+          first_attempt_passes?: number
           id: string
           last_daily_claim?: string | null
           peak_net_worth?: number
+          perfect_quizzes?: number
           trading_history_public?: boolean
           username: string
         }
         Update: {
+          articles_passed?: number
           avatar_url?: string | null
           bio?: string | null
           claim_streak?: number
           created_at?: string
           credits?: number
+          first_attempt_passes?: number
           id?: string
           last_daily_claim?: string | null
           peak_net_worth?: number
+          perfect_quizzes?: number
           trading_history_public?: boolean
           username?: string
         }
@@ -1193,6 +1406,26 @@ export type Database = {
         }[]
       }
       admin_grant_admin: { Args: { _target_id: string }; Returns: undefined }
+      admin_learn_articles: {
+        Args: never
+        Returns: {
+          id: string
+          level: string
+          part: number
+          part_name: string
+          passes: number
+          questions_a: number
+          questions_b: number
+          read_minutes: number
+          reward: number
+          slug: string
+          sort_order: number
+          status: string
+          summary: string
+          title: string
+          updated_at: string
+        }[]
+      }
       admin_list_admins: {
         Args: never
         Returns: {
@@ -1214,6 +1447,10 @@ export type Database = {
           total_count: number
           username: string
         }[]
+      }
+      admin_log_learn_action: {
+        Args: { _action: string; _article_id: string; _details: Json }
+        Returns: undefined
       }
       admin_markets_needing_resolution: {
         Args: never
@@ -1289,6 +1526,7 @@ export type Database = {
         }
         Returns: Json
       }
+      check_learn_achievements: { Args: { _user_id: string }; Returns: Json }
       claim_daily_credits: { Args: never; Returns: Json }
       claim_learning_reward: {
         Args: { _module_id: string; _score: number }
@@ -1437,6 +1675,11 @@ export type Database = {
         Returns: Json
       }
       send_friend_request: { Args: { _addressee_id: string }; Returns: string }
+      start_learn_attempt: { Args: { _article_id: string }; Returns: Json }
+      submit_learn_attempt: {
+        Args: { _answers: Json; _article_id: string }
+        Returns: Json
+      }
       sync_all_peak_net_worth: { Args: never; Returns: number }
       sync_peak_net_worth: { Args: { _user_id: string }; Returns: Json }
     }

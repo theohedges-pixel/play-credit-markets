@@ -17,12 +17,13 @@ import { Route as ForgotPasswordRouteImport } from './routes/forgot-password'
 import { Route as AuthenticatedRouteImport } from './routes/_authenticated'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as MarketsIndexRouteImport } from './routes/markets.index'
+import { Route as LearnIndexRouteImport } from './routes/learn.index'
 import { Route as UsersUsernameRouteImport } from './routes/users.$username'
 import { Route as MarketsIdRouteImport } from './routes/markets.$id'
+import { Route as LearnSlugRouteImport } from './routes/learn.$slug'
 import { Route as JoinUsernameRouteImport } from './routes/join.$username'
 import { Route as AuthenticatedSettingsRouteImport } from './routes/_authenticated/settings'
 import { Route as AuthenticatedPortfolioRouteImport } from './routes/_authenticated/portfolio'
-import { Route as AuthenticatedLearnRouteImport } from './routes/_authenticated/learn'
 import { Route as AuthenticatedGroupBetsRouteImport } from './routes/_authenticated/group-bets'
 import { Route as AuthenticatedFriendsRouteImport } from './routes/_authenticated/friends'
 import { Route as AuthenticatedAchievementsRouteImport } from './routes/_authenticated/achievements'
@@ -76,6 +77,11 @@ const MarketsIndexRoute = MarketsIndexRouteImport.update({
   path: '/markets/',
   getParentRoute: () => rootRouteImport,
 } as any)
+const LearnIndexRoute = LearnIndexRouteImport.update({
+  id: '/learn/',
+  path: '/learn/',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const UsersUsernameRoute = UsersUsernameRouteImport.update({
   id: '/users/$username',
   path: '/users/$username',
@@ -84,6 +90,11 @@ const UsersUsernameRoute = UsersUsernameRouteImport.update({
 const MarketsIdRoute = MarketsIdRouteImport.update({
   id: '/markets/$id',
   path: '/markets/$id',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const LearnSlugRoute = LearnSlugRouteImport.update({
+  id: '/learn/$slug',
+  path: '/learn/$slug',
   getParentRoute: () => rootRouteImport,
 } as any)
 const JoinUsernameRoute = JoinUsernameRouteImport.update({
@@ -99,11 +110,6 @@ const AuthenticatedSettingsRoute = AuthenticatedSettingsRouteImport.update({
 const AuthenticatedPortfolioRoute = AuthenticatedPortfolioRouteImport.update({
   id: '/portfolio',
   path: '/portfolio',
-  getParentRoute: () => AuthenticatedRoute,
-} as any)
-const AuthenticatedLearnRoute = AuthenticatedLearnRouteImport.update({
-  id: '/learn',
-  path: '/learn',
   getParentRoute: () => AuthenticatedRoute,
 } as any)
 const AuthenticatedGroupBetsRoute = AuthenticatedGroupBetsRouteImport.update({
@@ -193,12 +199,13 @@ export interface FileRoutesByFullPath {
   '/achievements': typeof AuthenticatedAchievementsRoute
   '/friends': typeof AuthenticatedFriendsRoute
   '/group-bets': typeof AuthenticatedGroupBetsRouteWithChildren
-  '/learn': typeof AuthenticatedLearnRoute
   '/portfolio': typeof AuthenticatedPortfolioRoute
   '/settings': typeof AuthenticatedSettingsRoute
   '/join/$username': typeof JoinUsernameRoute
+  '/learn/$slug': typeof LearnSlugRoute
   '/markets/$id': typeof MarketsIdRoute
   '/users/$username': typeof UsersUsernameRoute
+  '/learn/': typeof LearnIndexRoute
   '/markets/': typeof MarketsIndexRoute
   '/admin/dashboard': typeof AuthenticatedAdminDashboardRoute
   '/group-bets/$id': typeof AuthenticatedGroupBetsIdRoute
@@ -220,12 +227,13 @@ export interface FileRoutesByTo {
   '/signup': typeof SignupRoute
   '/achievements': typeof AuthenticatedAchievementsRoute
   '/friends': typeof AuthenticatedFriendsRoute
-  '/learn': typeof AuthenticatedLearnRoute
   '/portfolio': typeof AuthenticatedPortfolioRoute
   '/settings': typeof AuthenticatedSettingsRoute
   '/join/$username': typeof JoinUsernameRoute
+  '/learn/$slug': typeof LearnSlugRoute
   '/markets/$id': typeof MarketsIdRoute
   '/users/$username': typeof UsersUsernameRoute
+  '/learn': typeof LearnIndexRoute
   '/markets': typeof MarketsIndexRoute
   '/admin/dashboard': typeof AuthenticatedAdminDashboardRoute
   '/group-bets/$id': typeof AuthenticatedGroupBetsIdRoute
@@ -250,12 +258,13 @@ export interface FileRoutesById {
   '/_authenticated/achievements': typeof AuthenticatedAchievementsRoute
   '/_authenticated/friends': typeof AuthenticatedFriendsRoute
   '/_authenticated/group-bets': typeof AuthenticatedGroupBetsRouteWithChildren
-  '/_authenticated/learn': typeof AuthenticatedLearnRoute
   '/_authenticated/portfolio': typeof AuthenticatedPortfolioRoute
   '/_authenticated/settings': typeof AuthenticatedSettingsRoute
   '/join/$username': typeof JoinUsernameRoute
+  '/learn/$slug': typeof LearnSlugRoute
   '/markets/$id': typeof MarketsIdRoute
   '/users/$username': typeof UsersUsernameRoute
+  '/learn/': typeof LearnIndexRoute
   '/markets/': typeof MarketsIndexRoute
   '/_authenticated/admin/dashboard': typeof AuthenticatedAdminDashboardRoute
   '/_authenticated/group-bets/$id': typeof AuthenticatedGroupBetsIdRoute
@@ -280,12 +289,13 @@ export interface FileRouteTypes {
     | '/achievements'
     | '/friends'
     | '/group-bets'
-    | '/learn'
     | '/portfolio'
     | '/settings'
     | '/join/$username'
+    | '/learn/$slug'
     | '/markets/$id'
     | '/users/$username'
+    | '/learn/'
     | '/markets/'
     | '/admin/dashboard'
     | '/group-bets/$id'
@@ -307,12 +317,13 @@ export interface FileRouteTypes {
     | '/signup'
     | '/achievements'
     | '/friends'
-    | '/learn'
     | '/portfolio'
     | '/settings'
     | '/join/$username'
+    | '/learn/$slug'
     | '/markets/$id'
     | '/users/$username'
+    | '/learn'
     | '/markets'
     | '/admin/dashboard'
     | '/group-bets/$id'
@@ -336,12 +347,13 @@ export interface FileRouteTypes {
     | '/_authenticated/achievements'
     | '/_authenticated/friends'
     | '/_authenticated/group-bets'
-    | '/_authenticated/learn'
     | '/_authenticated/portfolio'
     | '/_authenticated/settings'
     | '/join/$username'
+    | '/learn/$slug'
     | '/markets/$id'
     | '/users/$username'
+    | '/learn/'
     | '/markets/'
     | '/_authenticated/admin/dashboard'
     | '/_authenticated/group-bets/$id'
@@ -364,8 +376,10 @@ export interface RootRouteChildren {
   ResetPasswordRoute: typeof ResetPasswordRoute
   SignupRoute: typeof SignupRoute
   JoinUsernameRoute: typeof JoinUsernameRoute
+  LearnSlugRoute: typeof LearnSlugRoute
   MarketsIdRoute: typeof MarketsIdRoute
   UsersUsernameRoute: typeof UsersUsernameRoute
+  LearnIndexRoute: typeof LearnIndexRoute
   MarketsIndexRoute: typeof MarketsIndexRoute
   ApiPublicHooksCheckGroupBetOutcomesRoute: typeof ApiPublicHooksCheckGroupBetOutcomesRoute
   ApiPublicHooksDiscoverTrendingMarketsRoute: typeof ApiPublicHooksDiscoverTrendingMarketsRoute
@@ -433,6 +447,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof MarketsIndexRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/learn/': {
+      id: '/learn/'
+      path: '/learn'
+      fullPath: '/learn/'
+      preLoaderRoute: typeof LearnIndexRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/users/$username': {
       id: '/users/$username'
       path: '/users/$username'
@@ -445,6 +466,13 @@ declare module '@tanstack/react-router' {
       path: '/markets/$id'
       fullPath: '/markets/$id'
       preLoaderRoute: typeof MarketsIdRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/learn/$slug': {
+      id: '/learn/$slug'
+      path: '/learn/$slug'
+      fullPath: '/learn/$slug'
+      preLoaderRoute: typeof LearnSlugRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/join/$username': {
@@ -466,13 +494,6 @@ declare module '@tanstack/react-router' {
       path: '/portfolio'
       fullPath: '/portfolio'
       preLoaderRoute: typeof AuthenticatedPortfolioRouteImport
-      parentRoute: typeof AuthenticatedRoute
-    }
-    '/_authenticated/learn': {
-      id: '/_authenticated/learn'
-      path: '/learn'
-      fullPath: '/learn'
-      preLoaderRoute: typeof AuthenticatedLearnRouteImport
       parentRoute: typeof AuthenticatedRoute
     }
     '/_authenticated/group-bets': {
@@ -591,7 +612,6 @@ interface AuthenticatedRouteChildren {
   AuthenticatedAchievementsRoute: typeof AuthenticatedAchievementsRoute
   AuthenticatedFriendsRoute: typeof AuthenticatedFriendsRoute
   AuthenticatedGroupBetsRoute: typeof AuthenticatedGroupBetsRouteWithChildren
-  AuthenticatedLearnRoute: typeof AuthenticatedLearnRoute
   AuthenticatedPortfolioRoute: typeof AuthenticatedPortfolioRoute
   AuthenticatedSettingsRoute: typeof AuthenticatedSettingsRoute
   AuthenticatedAdminDashboardRoute: typeof AuthenticatedAdminDashboardRoute
@@ -601,7 +621,6 @@ const AuthenticatedRouteChildren: AuthenticatedRouteChildren = {
   AuthenticatedAchievementsRoute: AuthenticatedAchievementsRoute,
   AuthenticatedFriendsRoute: AuthenticatedFriendsRoute,
   AuthenticatedGroupBetsRoute: AuthenticatedGroupBetsRouteWithChildren,
-  AuthenticatedLearnRoute: AuthenticatedLearnRoute,
   AuthenticatedPortfolioRoute: AuthenticatedPortfolioRoute,
   AuthenticatedSettingsRoute: AuthenticatedSettingsRoute,
   AuthenticatedAdminDashboardRoute: AuthenticatedAdminDashboardRoute,
@@ -620,8 +639,10 @@ const rootRouteChildren: RootRouteChildren = {
   ResetPasswordRoute: ResetPasswordRoute,
   SignupRoute: SignupRoute,
   JoinUsernameRoute: JoinUsernameRoute,
+  LearnSlugRoute: LearnSlugRoute,
   MarketsIdRoute: MarketsIdRoute,
   UsersUsernameRoute: UsersUsernameRoute,
+  LearnIndexRoute: LearnIndexRoute,
   MarketsIndexRoute: MarketsIndexRoute,
   ApiPublicHooksCheckGroupBetOutcomesRoute:
     ApiPublicHooksCheckGroupBetOutcomesRoute,
