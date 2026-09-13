@@ -1,0 +1,2 @@
+ALTER TABLE public.markets ADD COLUMN IF NOT EXISTS polymarket_clob_token_id text;
+CREATE INDEX IF NOT EXISTS markets_polymarket_clob_token_id_idx ON public.markets (polymarket_clob_token_id) WHERE polymarket_clob_token_id IS NOT NULL;

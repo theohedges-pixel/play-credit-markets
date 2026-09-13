@@ -579,6 +579,7 @@ export type Database = {
           id: string
           needs_manual_resolution: boolean
           no_pool: number
+          polymarket_clob_token_id: string | null
           polymarket_id: string | null
           proposed_resolution:
             | Database["public"]["Enums"]["market_resolution"]
@@ -606,6 +607,7 @@ export type Database = {
           id?: string
           needs_manual_resolution?: boolean
           no_pool?: number
+          polymarket_clob_token_id?: string | null
           polymarket_id?: string | null
           proposed_resolution?:
             | Database["public"]["Enums"]["market_resolution"]
@@ -633,6 +635,7 @@ export type Database = {
           id?: string
           needs_manual_resolution?: boolean
           no_pool?: number
+          polymarket_clob_token_id?: string | null
           polymarket_id?: string | null
           proposed_resolution?:
             | Database["public"]["Enums"]["market_resolution"]
