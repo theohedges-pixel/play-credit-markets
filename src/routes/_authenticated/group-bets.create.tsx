@@ -10,6 +10,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Checkbox } from "@/components/ui/checkbox";
 import { UserAvatar } from "@/components/UserAvatar";
 import { toast } from "sonner";
+import { Users } from "lucide-react";
 
 export const Route = createFileRoute("/_authenticated/group-bets/create")({
   head: () => ({ meta: [{ title: "New group bet — Predikt" }] }),
@@ -71,7 +72,11 @@ function CreateGroupBet() {
     setSubmitting(false);
     if (error) return toast.error(error.message);
     toast.success("Group bet created");
-    navigate({ to: "/group-bets/$id", params: { id: data as string } });
+    navigate({
+      to: "/group-bets/$id",
+      params: { id: data as string },
+      search: { new: 1 },
+    });
   };
 
   return (
@@ -149,6 +154,18 @@ function CreateGroupBet() {
                 </label>
               ))
             )}
+          </div>
+        </div>
+
+        <div className="rounded-lg border border-dashed border-border bg-card/50 p-4 flex items-start gap-3">
+          <Users className="shrink-0 text-muted-foreground mt-0.5" size={18} />
+          <div>
+            <p className="text-sm font-medium text-foreground">
+              Invite someone who's not on here yet
+            </p>
+            <p className="text-xs text-muted-foreground mt-0.5">
+              You can also send an invite link once your bet is created.
+            </p>
           </div>
         </div>
 
