@@ -51,7 +51,7 @@ function SignupPage() {
         password,
         options: {
           emailRedirectTo: redirectUrl,
-          data: { username },
+          data: referrer ? { username, referrer_username: referrer } : { username },
         },
       });
       if (error) {
@@ -108,7 +108,11 @@ function SignupPage() {
       <Header />
       <div className="max-w-md mx-auto px-6 py-20">
         <h1 className="font-display text-3xl font-bold mb-2">Create your account</h1>
-        <p className="text-muted-foreground mb-8 text-sm">Start with 1,000 free credits. Claim 100 more every day.</p>
+        <p className="text-muted-foreground mb-8 text-sm">
+          {referrer
+            ? `Invited by @${referrer} — start with 1,250 free credits. Claim 100 more every day.`
+            : "Start with 1,000 free credits. Claim 100 more every day."}
+        </p>
         <form onSubmit={onSubmit} className="space-y-4">
           <div>
             <Label>Username</Label>
