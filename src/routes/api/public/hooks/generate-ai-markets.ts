@@ -390,11 +390,11 @@ export async function runGenerate() {
 
   const nowIso = new Date().toISOString();
   await supabaseAdmin.from("app_settings").upsert([
-    { key: "last_ai_market_run", value: { at: nowIso, inserted: inserted?.length ?? 0 }, updated_at: nowIso },
+    { key: "last_ai_market_run", value: { at: nowIso, inserted: inserted?.length ?? 0, duplicates, stale }, updated_at: nowIso },
     { key: "last_ai_market_count", value: { count: inserted?.length ?? 0, at: nowIso }, updated_at: nowIso },
   ]);
 
-  return { inserted: inserted?.length ?? 0, scanned: raw.length, malformed };
+  return { inserted: inserted?.length ?? 0, scanned: raw.length, malformed, duplicates, stale };
 }
 
 export const Route = createFileRoute("/api/public/hooks/generate-ai-markets")({
