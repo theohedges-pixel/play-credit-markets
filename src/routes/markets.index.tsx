@@ -139,7 +139,7 @@ function MarketsPage() {
       let query = supabase
         .from("markets")
         .select(
-          "id, title, closes_at, yes_pool, no_pool, volume, status, resolution, source, created_via, category:categories(name)",
+          "id, title, closes_at, created_at, yes_pool, no_pool, volume, status, resolution, source, created_via, category:categories(name)",
         )
         .eq("status", "open")
         .gt("closes_at", new Date().toISOString())
@@ -219,7 +219,23 @@ function MarketsPage() {
           </div>
         </div>
 
-        <div className="flex flex-wrap gap-2 mb-8">
+        <div className="flex flex-wrap items-center gap-2 mb-8">
+          <Select
+            value={sortKey}
+            onValueChange={(v) =>
+              navigate({ search: (prev) => ({ ...prev, sort: v }), replace: true })
+            }
+          >
+            <SelectTrigger className="w-[170px] h-8 text-sm">
+              <ArrowUpDown size={14} className="text-muted-foreground shrink-0" />
+              <SelectValue placeholder="Sort" />
+            </SelectTrigger>
+            <SelectContent>
+              {Object.entries(SORTS).map(([key, s]) => (
+                <SelectItem key={key} value={key}>{s.label}</SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
           <button
             onClick={() => setCat(null)}
             className={`px-3 py-1.5 rounded-full text-sm border ${!cat ? "bg-primary text-primary-foreground border-primary" : "border-border text-muted-foreground hover:text-foreground"}`}
