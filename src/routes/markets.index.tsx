@@ -94,39 +94,11 @@ function MarketsPage() {
             <h1 className="font-display text-4xl font-bold mb-2">All markets</h1>
             <p className="text-muted-foreground">Pick a question, take a side.</p>
           </div>
-          <div className="flex items-center gap-3 flex-wrap justify-end">
-            {lastSync && (
-              <span className="text-xs text-muted-foreground">
-                Last synced {formatDistanceToNow(new Date(lastSync), { addSuffix: true })}
-              </span>
-            )}
-            {isAdmin && (
-              <>
-                <Link to="/admin/dashboard">
-                  <Button variant="outline" size="sm" className="gap-2">
-                    <Sparkles size={14} className="text-primary" />
-                    Suggestions
-                  </Button>
-                </Link>
-                <Button onClick={onSyncNow} disabled={syncing} variant="outline" size="sm" className="gap-2">
-                  {syncing ? (
-                    <Loader2 size={14} className="animate-spin" />
-                  ) : (
-                    <RefreshCw size={14} />
-                  )}
-                  {syncing ? "Syncing…" : "Sync now"}
-                </Button>
-                <Button onClick={onGenerateAi} disabled={genAi} variant="outline" size="sm" className="gap-2">
-                  {genAi ? (
-                    <Loader2 size={14} className="animate-spin" />
-                  ) : (
-                    <Brain size={14} />
-                  )}
-                  {genAi ? "Generating…" : "Generate AI markets"}
-                </Button>
-              </>
-            )}
-          </div>
+          {lastSync && (
+            <span className="text-xs text-muted-foreground">
+              Last synced {formatDistanceToNow(new Date(lastSync), { addSuffix: true })}
+            </span>
+          )}
         </div>
 
         <div className="flex flex-col md:flex-row gap-3 mb-6">
