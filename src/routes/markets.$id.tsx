@@ -84,21 +84,21 @@ function MarketDetail() {
     },
   });
 
-  // Trades are private (owner-only RLS): this is the viewer's own activity.
+  // Activity from every trader who keeps their history public (plus the
+  // viewer's own trades). The opt-out is enforced inside get_market_activity.
   const { data: trades } = useQuery({
-    queryKey: ["trades", id, user?.id],
+    queryKey: ["market-activity", id, user?.id],
     enabled: !!user,
     queryFn: async () => {
-      const { data } = await supabase
-        .from("trades")
-        .select("id, side, action, shares, credits, price, created_at")
-        .eq("market_id", id)
-        .eq("user_id", user!.id)
-        .order("created_at", { ascending: false })
-        .limit(20);
-      return data ?? [];
+      const { data, error } = await (supabase as any).rpc("get_market_activity", {
+        _market_id: id,
+        _limit: 40,
+      });
+      if (error) throw error;
+      return (data ?? []) as any[];
     },
   });
+
 
   const { data: position } = useQuery({
     queryKey: ["position", id, user?.id],
