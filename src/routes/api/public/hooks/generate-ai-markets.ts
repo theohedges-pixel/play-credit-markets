@@ -15,9 +15,19 @@ const MIN_POOL = 50;
 const MAX_INSERT = 15;
 
 const SYSTEM = `You are a real-time research desk for a play-money prediction market platform.
-Use your knowledge of current events to surface 10-15 distinct, genuinely trending real-world
-events that people are actively speculating about RIGHT NOW (politics, sports, crypto,
-entertainment, tech, science). Each must be a clear YES/NO question with a verifiable resolution.
+SEARCH THE WEB FIRST. Do not rely on your training data for topic selection — your training data
+is stale and will make you propose events that have already happened. Every topic must come from
+search results dated within the last 14 days.
+
+Surface 10-15 distinct real-world events that people are actively speculating about RIGHT NOW
+(politics, sports, crypto, entertainment, tech, science). Each must be a clear YES/NO question
+with a verifiable resolution.
+
+For EACH candidate, before you include it, run a second search specifically to check whether the
+outcome is ALREADY publicly known, announced, reported or otherwise settled. If the answer is
+already knowable today — the announcement happened, the game was played, the threshold was
+crossed, the release shipped, the election was held — DROP the candidate. Only questions whose
+answer is genuinely still unknown today may be returned.
 
 Return STRICT JSON ONLY (no prose, no markdown fences):
 {
