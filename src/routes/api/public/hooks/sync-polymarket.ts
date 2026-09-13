@@ -188,6 +188,7 @@ export async function runSync() {
     .slice(0, MAX_INSERTS_PER_RUN);
 
   let inserted = 0;
+  let backfilledPoints = 0;
   if (fresh.length && apiKey) {
     const cats = await classifyWithAI(
       apiKey,
