@@ -153,24 +153,6 @@ function PublicProfile() {
     );
   }
 
-  // Compute net worth
-  let posValue = 0;
-  let resolvedTotal = 0;
-  let resolvedWins = 0;
-  (positions ?? []).forEach((p: any) => {
-    if (!p.market) return;
-    const price = yesPrice(Number(p.market.yes_pool), Number(p.market.no_pool));
-    posValue += Number(p.yes_shares) * price + Number(p.no_shares) * (1 - price);
-    if (p.market.status === "resolved") {
-      resolvedTotal++;
-      const won =
-        (p.market.resolution === "yes" && Number(p.yes_shares) > 0) ||
-        (p.market.resolution === "no" && Number(p.no_shares) > 0);
-      if (won) resolvedWins++;
-    }
-  });
-  const netWorth = Number(profile.credits) + posValue;
-  const winRate = resolvedTotal > 0 ? (resolvedWins / resolvedTotal) * 100 : null;
 
   return (
     <div>
