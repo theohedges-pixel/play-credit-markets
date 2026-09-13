@@ -1089,7 +1089,7 @@ function AuditTab() {
   );
 }
 
-/* ------------------------------- AI Suggestions ------------------------------ */
+/* --------------------------------- Suggestions -------------------------------- */
 
 interface Suggestion {
   id: string;
@@ -1100,6 +1100,9 @@ interface Suggestion {
   source_summary: string | null;
   status: "pending" | "approved" | "rejected";
   created_at: string;
+  suggested_by: string | null;
+  user_text: string | null;
+  suggester?: { username: string } | null;
 }
 
 function SuggestionsTab() {
