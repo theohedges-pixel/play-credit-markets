@@ -1,90 +1,205 @@
 import { Link, useNavigate } from "@tanstack/react-router";
+import { useState } from "react";
 import { useAuth } from "@/lib/auth";
 import { Button } from "@/components/ui/button";
+import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sheet";
 import { fmtCredits } from "@/lib/format";
-import { Coins, TrendingUp } from "lucide-react";
+import {
+  Coins,
+  TrendingUp,
+  BarChart3,
+  Trophy,
+  Wallet,
+  Users,
+  Menu,
+  GraduationCap,
+  UsersRound,
+  Settings,
+  LogOut,
+} from "lucide-react";
 import { UserAvatar } from "@/components/UserAvatar";
 import { NotificationsBell } from "@/components/NotificationsBell";
 
 export function Header() {
   const { user, profile, signOut } = useAuth();
   const navigate = useNavigate();
+  const [moreOpen, setMoreOpen] = useState(false);
+
+  const doSignOut = () => {
+    setMoreOpen(false);
+    signOut().then(() => navigate({ to: "/" }));
+  };
 
   return (
-    <header className="border-b border-border bg-background/80 backdrop-blur sticky top-0 z-40">
-      <div className="max-w-7xl mx-auto px-6 h-16 flex items-center justify-between">
-        <div className="flex items-center gap-8">
-          <Link to="/" className="flex items-center gap-2 font-display font-bold text-xl">
-            <TrendingUp className="text-primary" size={22} />
-            <span>Predikt</span>
-          </Link>
-          <nav className="hidden md:flex items-center gap-6 text-sm text-muted-foreground">
-            <Link to="/markets" className="hover:text-foreground" activeProps={{ className: "text-foreground" }}>
-              Markets
+    <>
+      <header className="border-b border-border bg-background/80 backdrop-blur sticky top-0 z-40">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 h-16 flex items-center justify-between gap-2">
+          <div className="flex items-center gap-8 min-w-0">
+            <Link to="/" className="flex items-center gap-2 font-display font-bold text-xl shrink-0">
+              <TrendingUp className="text-primary" size={22} />
+              <span>Predikt</span>
             </Link>
-            <Link to="/leaderboard" className="hover:text-foreground" activeProps={{ className: "text-foreground" }}>
-              Leaderboard
-            </Link>
-            {user && (
+            <nav className="hidden md:flex items-center gap-6 text-sm text-muted-foreground">
+              <Link to="/markets" className="hover:text-foreground" activeProps={{ className: "text-foreground" }}>
+                Markets
+              </Link>
+              <Link to="/leaderboard" className="hover:text-foreground" activeProps={{ className: "text-foreground" }}>
+                Leaderboard
+              </Link>
+              {user && (
+                <>
+                  <Link to="/portfolio" className="hover:text-foreground" activeProps={{ className: "text-foreground" }}>
+                    Portfolio
+                  </Link>
+                  <Link to="/learn" className="hover:text-foreground" activeProps={{ className: "text-foreground" }}>
+                    Learn
+                  </Link>
+                  <Link to="/friends" className="hover:text-foreground" activeProps={{ className: "text-foreground" }}>
+                    Friends
+                  </Link>
+                  <Link to="/group-bets" className="hover:text-foreground" activeProps={{ className: "text-foreground" }}>
+                    Group bets
+                  </Link>
+                </>
+              )}
+            </nav>
+          </div>
+          <div className="flex items-center gap-2 sm:gap-3 shrink-0">
+            {user ? (
               <>
-                <Link to="/portfolio" className="hover:text-foreground" activeProps={{ className: "text-foreground" }}>
-                  Portfolio
+                <NotificationsBell />
+                {profile ? (
+                  <>
+                    <div className="flex items-center gap-1.5 px-2 sm:px-3 py-1.5 rounded-md bg-secondary text-sm font-mono">
+                      <Coins size={14} className="text-primary" />
+                      <span>{fmtCredits(profile.credits)}</span>
+                    </div>
+                    <Link
+                      to="/settings"
+                      className="text-sm text-muted-foreground hover:text-foreground flex items-center gap-2"
+                    >
+                      <UserAvatar
+                        username={profile.username}
+                        avatarUrl={profile.avatar_url}
+                        userId={user.id}
+                        size="sm"
+                      />
+                      <span className="hidden sm:inline">@{profile.username}</span>
+                    </Link>
+                  </>
+                ) : (
+                  <div className="h-8 w-16 sm:w-28 animate-pulse rounded-md bg-secondary" aria-label="Loading account" />
+                )}
+                <Button
+                  size="sm"
+                  variant="ghost"
+                  className="hidden sm:inline-flex"
+                  onClick={doSignOut}
+                >
+                  Sign out
+                </Button>
+              </>
+            ) : (
+              <>
+                <Link to="/login">
+                  <Button size="sm" variant="ghost">Sign in</Button>
                 </Link>
-                <Link to="/learn" className="hover:text-foreground" activeProps={{ className: "text-foreground" }}>
-                  Learn
-                </Link>
-                <Link to="/friends" className="hover:text-foreground" activeProps={{ className: "text-foreground" }}>
-                  Friends
-                </Link>
-                <Link to="/group-bets" className="hover:text-foreground" activeProps={{ className: "text-foreground" }}>
-                  Group bets
+                <Link to="/signup">
+                  <Button size="sm">Get started</Button>
                 </Link>
               </>
             )}
-          </nav>
+          </div>
         </div>
-        <div className="flex items-center gap-3">
-          {user ? (
-            <>
-              <NotificationsBell />
-              {profile ? (
-                <>
-                  <div className="hidden sm:flex items-center gap-1.5 px-3 py-1.5 rounded-md bg-secondary text-sm font-mono">
-                    <Coins size={14} className="text-primary" />
-                    <span>{fmtCredits(profile.credits)}</span>
-                  </div>
-                  <Link
-                    to="/settings"
-                    className="text-sm text-muted-foreground hover:text-foreground flex items-center gap-2"
-                  >
-                    <UserAvatar
-                      username={profile.username}
-                      avatarUrl={profile.avatar_url}
-                      userId={user.id}
-                      size="sm"
-                    />
-                    @{profile.username}
-                  </Link>
-                </>
-              ) : (
-                <div className="hidden sm:block h-8 w-28 animate-pulse rounded-md bg-secondary" aria-label="Loading account" />
-              )}
-              <Button size="sm" variant="ghost" onClick={() => signOut().then(() => navigate({ to: "/" }))}>
-                Sign out
-              </Button>
-            </>
-          ) : (
-            <>
-              <Link to="/login">
-                <Button size="sm" variant="ghost">Sign in</Button>
-              </Link>
-              <Link to="/signup">
-                <Button size="sm">Get started</Button>
-              </Link>
-            </>
-          )}
-        </div>
-      </div>
-    </header>
+      </header>
+
+      {/* Mobile bottom tab bar */}
+      {user && (
+        <nav className="md:hidden fixed bottom-0 inset-x-0 z-40 border-t border-border bg-background/95 backdrop-blur">
+          <div className="grid grid-cols-5 h-16">
+            <TabLink to="/markets" icon={<BarChart3 size={20} />} label="Markets" />
+            <TabLink to="/leaderboard" icon={<Trophy size={20} />} label="Ranks" />
+            <TabLink to="/portfolio" icon={<Wallet size={20} />} label="Portfolio" />
+            <TabLink to="/friends" icon={<Users size={20} />} label="Friends" />
+            <button
+              type="button"
+              onClick={() => setMoreOpen(true)}
+              className="flex flex-col items-center justify-center gap-0.5 text-[11px] text-muted-foreground hover:text-foreground"
+            >
+              <Menu size={20} />
+              More
+            </button>
+          </div>
+        </nav>
+      )}
+
+      {/* Spacer so the fixed bottom bar never covers page content on mobile */}
+      {user && <div className="h-16 md:hidden" aria-hidden />}
+
+      <Sheet open={moreOpen} onOpenChange={setMoreOpen}>
+        <SheetContent side="bottom" className="md:hidden">
+          <SheetHeader>
+            <SheetTitle>More</SheetTitle>
+          </SheetHeader>
+          <div className="flex flex-col py-2">
+            <MoreLink to="/learn" icon={<GraduationCap size={18} className="text-muted-foreground" />} label="Learn" onNavigate={() => setMoreOpen(false)} />
+            <MoreLink to="/group-bets" icon={<UsersRound size={18} className="text-muted-foreground" />} label="Group bets" onNavigate={() => setMoreOpen(false)} />
+            <MoreLink to="/settings" icon={<Settings size={18} className="text-muted-foreground" />} label="Settings" onNavigate={() => setMoreOpen(false)} />
+            <button
+              type="button"
+              onClick={doSignOut}
+              className="flex items-center gap-3 px-2 py-3 rounded-md text-sm hover:bg-secondary/50 text-left"
+            >
+              <LogOut size={18} className="text-muted-foreground" />
+              Sign out
+            </button>
+          </div>
+        </SheetContent>
+      </Sheet>
+    </>
+  );
+}
+
+function TabLink({
+  to,
+  icon,
+  label,
+}: {
+  to: string;
+  icon: React.ReactNode;
+  label: string;
+}) {
+  return (
+    <Link
+      to={to}
+      className="flex flex-col items-center justify-center gap-0.5 text-[11px] text-muted-foreground hover:text-foreground"
+      activeProps={{ className: "text-primary" }}
+    >
+      {icon}
+      {label}
+    </Link>
+  );
+}
+
+function MoreLink({
+  to,
+  icon,
+  label,
+  onNavigate,
+}: {
+  to: string;
+  icon: React.ReactNode;
+  label: string;
+  onNavigate: () => void;
+}) {
+  return (
+    <Link
+      to={to}
+      onClick={onNavigate}
+      className="flex items-center gap-3 px-2 py-3 rounded-md text-sm hover:bg-secondary/50"
+    >
+      {icon}
+      {label}
+    </Link>
   );
 }
