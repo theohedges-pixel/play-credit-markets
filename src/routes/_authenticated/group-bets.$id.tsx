@@ -47,7 +47,7 @@ function GroupBetDetail() {
     queryFn: async () => {
       const { data } = await supabase
         .from("group_bets" as any)
-        .select("*, creator:profiles!group_bets_creator_id_fkey(id, username, avatar_url)")
+        .select("*, creator:public_profiles!group_bets_creator_id_fkey(id, username, avatar_url)")
         .eq("id", id)
         .maybeSingle();
       return data as any;
@@ -60,7 +60,7 @@ function GroupBetDetail() {
       const { data } = await supabase
         .from("group_bet_participants" as any)
         .select(
-          "id, user_id, side, credits_wagered, payout, user:profiles!group_bet_participants_user_id_fkey(id, username, avatar_url)",
+          "id, user_id, side, credits_wagered, payout, user:public_profiles!group_bet_participants_user_id_fkey(id, username, avatar_url)",
         )
         .eq("group_bet_id", id);
       return (data ?? []) as any[];
@@ -73,7 +73,7 @@ function GroupBetDetail() {
       const { data } = await supabase
         .from("group_bet_resolution_votes" as any)
         .select(
-          "id, voter_id, proposed_resolution, reason, voter:profiles!group_bet_resolution_votes_voter_id_fkey(id, username, avatar_url)",
+          "id, voter_id, proposed_resolution, reason, voter:public_profiles!group_bet_resolution_votes_voter_id_fkey(id, username, avatar_url)",
         )
         .eq("group_bet_id", id);
       return (data ?? []) as any[];

@@ -27,14 +27,13 @@ function PublicProfile() {
     queryKey: ["public-profile", username],
     queryFn: async () => {
       const { data } = await (supabase as any)
-        .from("profiles")
-        .select("id, username, credits, avatar_url, bio, created_at")
+        .from("public_profiles")
+        .select("id, username, avatar_url, bio, created_at")
         .eq("username", username)
         .maybeSingle();
       return data as {
         id: string;
         username: string;
-        credits: number;
         avatar_url: string | null;
         bio: string | null;
         created_at: string;
