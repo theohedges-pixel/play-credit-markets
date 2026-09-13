@@ -270,7 +270,7 @@ function MarketsPage() {
           </div>
         ) : markets && markets.length > 0 ? (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-            {markets.map((m) => <MarketCard key={m.id} m={m} />)}
+            {[...markets].sort(SORTS[sortKey].order).map((m) => <MarketCard key={m.id} m={m} />)}
           </div>
         ) : (
           <div className="text-muted-foreground py-12 text-center">No markets match.</div>
