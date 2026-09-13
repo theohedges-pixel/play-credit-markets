@@ -6,6 +6,7 @@ import { format, formatDistanceToNow } from "date-fns";
 import {
   LineChart,
   Line,
+  Legend,
   XAxis,
   YAxis,
   Tooltip as RTooltip,
