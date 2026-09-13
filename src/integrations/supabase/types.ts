@@ -806,6 +806,16 @@ export type Database = {
         }
         Returns: string
       }
+      get_public_group_bet_preview: {
+        Args: { _group_bet_id: string }
+        Returns: {
+          closes_at: string
+          creator_username: string
+          description: string
+          id: string
+          title: string
+        }[]
+      }
       has_role: {
         Args: {
           _role: Database["public"]["Enums"]["app_role"]
@@ -823,6 +833,10 @@ export type Database = {
           _group_bet_id: string
           _side: Database["public"]["Enums"]["trade_side"]
         }
+        Returns: undefined
+      }
+      join_group_bet_via_link: {
+        Args: { _group_bet_id: string; _sharer_username: string }
         Returns: undefined
       }
       mark_all_notifications_read: { Args: never; Returns: undefined }
