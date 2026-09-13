@@ -203,21 +203,26 @@ export async function runSync() {
         created_via: "polymarket_import" as const,
       };
     });
-    // upsert+ignore duplicates: the partial unique index on polymarket_id makes
-    // a concurrent duplicate insert impossible
-    const { data, error } = await supabaseAdmin
-      .from("markets")
-      .upsert(rows, { onConflict: "polymarket_id", ignoreDuplicates: true })
-      .select("id, yes_pool, no_pool");
-    if (error) throw new Error(error.message);
-    inserted = data?.length ?? 0;
-    if (data && data.length > 0) {
-      await supabaseAdmin.from("price_history").insert(
-        data.map((m) => ({
-          market_id: m.id,
-          yes_price: Number(m.no_pool) / (Number(m.yes_pool) + Number(m.no_pool)),
-        })),
-      );
+    // Insert row-by-row so a rare concurrent duplicate (blocked by the unique
+    // index on polymarket_id) skips just that row instead of failing the run.
+    for (const row of rows) {
+      const { data, error } = await supabaseAdmin
+        .from("markets")
+        .insert(row)
+        .select("id, yes_pool, no_pool");
+      if (error) {
+        if (error.code === "23505") continue; // duplicate polymarket_id
+        throw new Error(error.message);
+      }
+      inserted++;
+      if (data && data.length > 0) {
+        await supabaseAdmin.from("price_history").insert(
+          data.map((m) => ({
+            market_id: m.id,
+            yes_price: Number(m.no_pool) / (Number(m.yes_pool) + Number(m.no_pool)),
+          })),
+        );
+      }
     }
   }
 
