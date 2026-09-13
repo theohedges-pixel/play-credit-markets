@@ -130,18 +130,18 @@ function MarketsPage() {
   ).sort();
   const unfiltered = !q && themeIds.length === 0;
   const { data: siblings } = useQuery({
-    queryKey: ["market-group-siblings", pageEventIds],
+    queryKey: ["market-group-siblings", cat, pageEventIds],
     enabled: unfiltered && pageEventIds.length > 0,
     queryFn: async () => {
       const { data } = await supabase
         .from("markets")
         .select(
-          "id, title, closes_at, created_at, yes_pool, no_pool, volume, status, resolution, source, created_via, polymarket_event_id, polymarket_event_title, group_item_title, category:categories(name)",
+          "id, title, closes_at, created_at, yes_pool, no_pool, volume, status, resolution, source, created_via, category_id, polymarket_event_id, polymarket_event_title, group_item_title, category:categories(name)",
         )
         .eq("status", "open")
         .gt("closes_at", new Date().toISOString())
         .in("polymarket_event_id", pageEventIds);
-      return data ?? [];
+      return (data ?? []).filter((m) => !cat || (m as { category_id?: string }).category_id === cat);
     },
   });
 
