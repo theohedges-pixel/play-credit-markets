@@ -111,6 +111,8 @@ function MarketDetail() {
     );
   }
 
+  const aiGenerated = market.created_via === "ai_generated";
+  const hasTrades = (trades?.length ?? 0) > 0 || Number(market.volume) > 0;
   const yesPool = Number(market.yes_pool);
   const noPool = Number(market.no_pool);
   const price = yesPrice(yesPool, noPool);
@@ -251,6 +253,11 @@ function MarketDetail() {
               <div>
                 <div className="text-xs uppercase tracking-wider text-muted-foreground">Current YES price</div>
                 <div className="font-display text-5xl font-bold text-yes tabular-nums mt-1">{fmtPct(price)}</div>
+                {aiGenerated && !hasTrades && (
+                  <div className="mt-2 inline-flex items-center gap-1.5 rounded-md border border-primary/40 bg-primary/10 px-2.5 py-1 text-xs text-primary">
+                    ✦ Starting price set by AI estimate — not yet shaped by trading
+                  </div>
+                )}
               </div>
               <div className="text-right text-sm text-muted-foreground">
                 <div>Volume <span className="font-mono text-foreground">{fmtCredits(market.volume)}</span></div>
