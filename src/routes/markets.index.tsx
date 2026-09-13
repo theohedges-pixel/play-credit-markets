@@ -40,28 +40,8 @@ function MarketsPage() {
   const sortKey = SORTS[sort] ? sort : "active";
   const [q, setQ] = useState("");
   const [cat, setCat] = useState<string | null>(null);
-  const [syncing, setSyncing] = useState(false);
-  const [genAi, setGenAi] = useState(false);
-  const { user } = useAuth();
-  const qc = useQueryClient();
-  const runSyncNow = useServerFn(syncPolymarketNow);
-  const runGenerateNow = useServerFn(generateAiMarketsNow);
 
-  const { data: isAdmin } = useQuery({
-    queryKey: ["is-admin", user?.id],
-    enabled: !!user?.id,
-    queryFn: async () => {
-      const { data } = await supabase
-        .from("user_roles")
-        .select("role")
-        .eq("user_id", user!.id)
-        .eq("role", "admin")
-        .maybeSingle();
-      return !!data;
-    },
-  });
-
-  const { data: lastSync, refetch: refetchSync } = useQuery({
+  const { data: lastSync } = useQuery({
     queryKey: ["last-polymarket-sync"],
     queryFn: async () => {
       const { data } = await supabase
@@ -74,33 +54,6 @@ function MarketsPage() {
     },
     refetchInterval: 60_000,
   });
-
-  const onSyncNow = async () => {
-    setSyncing(true);
-    try {
-      const body = await runSyncNow();
-      toast.success(`Synced: ${body.inserted} added, ${body.refreshed ?? 0} refreshed, ${body.closed} closed`);
-      qc.invalidateQueries({ queryKey: ["markets"] });
-      refetchSync();
-    } catch (e: unknown) {
-      toast.error(e instanceof Error ? e.message : "Sync failed");
-    } finally {
-      setSyncing(false);
-    }
-  };
-
-  const onGenerateAi = async () => {
-    setGenAi(true);
-    try {
-      const body = await runGenerateNow();
-      toast.success(`Created ${body.inserted} new AI market${body.inserted === 1 ? "" : "s"}`);
-      qc.invalidateQueries({ queryKey: ["markets"] });
-    } catch (e: unknown) {
-      toast.error(e instanceof Error ? e.message : "AI generation failed");
-    } finally {
-      setGenAi(false);
-    }
-  };
 
   const { data: categories } = useQuery({
     queryKey: ["categories"],
