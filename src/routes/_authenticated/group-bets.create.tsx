@@ -108,6 +108,22 @@ function CreateGroupBet() {
             className="mt-1"
           />
         </div>
+        <div>
+          <label className="text-xs uppercase tracking-wider text-muted-foreground">
+            How can this be verified? (optional)
+          </label>
+          <Textarea
+            value={resolutionSource}
+            onChange={(e) => setResolutionSource(e.target.value)}
+            placeholder="e.g. The official NBA box score for the Lakers vs Suns game on Friday"
+            className="mt-1"
+            rows={2}
+          />
+          <p className="text-xs text-muted-foreground mt-1">
+            If you add this, we'll try to work out the outcome automatically when the bet closes —
+            everyone gets 24 hours to flag it before credits move.
+          </p>
+        </div>
 
         <div>
           <label className="text-xs uppercase tracking-wider text-muted-foreground mb-2 block">
