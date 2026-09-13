@@ -139,7 +139,7 @@ function MarketsPage() {
       const { data } = await supabase
         .from("markets")
         .select(
-          "id, title, closes_at, created_at, yes_pool, no_pool, volume, status, resolution, source, created_via, category_id, polymarket_event_id, polymarket_event_title, group_item_title, category:categories(name)",
+          "id, title, closes_at, created_at, yes_pool, no_pool, volume, status, resolution, source, created_via, category_id, suggested_by, polymarket_event_id, polymarket_event_title, group_item_title, category:categories(name)",
         )
         .eq("status", "open")
         .gt("closes_at", new Date().toISOString())
