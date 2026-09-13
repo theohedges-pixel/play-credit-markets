@@ -164,6 +164,7 @@ function PublicProfile() {
           <div className="min-w-0 flex-1">
             <div className="flex items-center gap-3 flex-wrap">
               <h1 className="font-display text-3xl font-bold">@{profile.username}</h1>
+              <TierBadge peakNetWorth={profile.peak_net_worth} size="md" />
               {me && me.id !== profile.id && (
                 <>
                   {!friendship && (
