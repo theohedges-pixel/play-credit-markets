@@ -884,7 +884,16 @@ function Chart({
           <LineChart data={data} margin={{ top: 4, right: 8, left: -20, bottom: 0 }}>
             <CartesianGrid strokeDasharray="3 3" stroke="var(--border)" />
             <XAxis dataKey="day" tick={{ fontSize: 10 }} stroke="var(--muted-foreground)" minTickGap={24} />
-            <YAxis tick={{ fontSize: 10 }} stroke="var(--muted-foreground)" allowDecimals={false} />
+            <YAxis yAxisId="left" tick={{ fontSize: 10 }} stroke="var(--muted-foreground)" allowDecimals={false} />
+            {keys.length > 1 && (
+              <YAxis
+                yAxisId="right"
+                orientation="right"
+                tick={{ fontSize: 10 }}
+                stroke="var(--muted-foreground)"
+                allowDecimals={false}
+              />
+            )}
             <RTooltip
               contentStyle={{
                 background: "var(--card)",
