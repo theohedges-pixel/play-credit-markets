@@ -8,7 +8,7 @@ import { Input } from "@/components/ui/input";
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from "@/components/ui/sheet";
 import { useAuth } from "@/lib/auth";
 import { fmtCredits, fmtPct, timeUntil, yesPrice } from "@/lib/format";
-import { LineChart, Line, ResponsiveContainer, YAxis, Tooltip, XAxis } from "recharts";
+import { LineChart, Line, ResponsiveContainer, YAxis, Tooltip, XAxis, ReferenceDot } from "recharts";
 import { toast } from "sonner";
 import { format } from "date-fns";
 import { Loader2 } from "lucide-react";
