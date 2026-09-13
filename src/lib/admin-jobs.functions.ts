@@ -1,5 +1,6 @@
 import { createServerFn } from "@tanstack/react-start";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
+import { z } from "zod";
 
 async function requireAdmin(supabase: any, userId: string) {
   const { data: isAdmin } = await supabase.rpc("has_role", {
