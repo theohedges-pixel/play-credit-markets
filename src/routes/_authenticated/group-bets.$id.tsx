@@ -324,7 +324,7 @@ function GroupBetDetail() {
             </h2>
             <p className="text-sm text-muted-foreground mt-2">{bet.resolution_reason}</p>
             <p className="text-[10px] uppercase tracking-wider text-muted-foreground mt-3">
-              {bet.auto_resolved ? "Settled by automatic check" : "Settled by group vote"}
+              {methodNote}
             </p>
           </div>
         )}
@@ -346,6 +346,18 @@ function GroupBetDetail() {
                 This looks wrong — flag it
               </Button>
             )}
+          </div>
+        )}
+
+        {bet.status === "voting" && fallbackAt && (
+          <div className="rounded-lg border border-border bg-secondary/30 p-4">
+            <p className="text-sm">
+              Unanimous agreement needed to settle immediately — falls back to majority vote in{" "}
+              <span className="font-mono">{timeLeft}</span>.
+            </p>
+            <p className="text-xs text-muted-foreground mt-1">
+              {(votes ?? []).length} of {eligibleCount} votes in.
+            </p>
           </div>
         )}
 
