@@ -565,6 +565,71 @@ export type Database = {
           },
         ]
       }
+      market_theme_tags: {
+        Row: {
+          created_at: string
+          id: string
+          market_id: string
+          theme_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          market_id: string
+          theme_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          market_id?: string
+          theme_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "market_theme_tags_market_id_fkey"
+            columns: ["market_id"]
+            isOneToOne: false
+            referencedRelation: "markets"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "market_theme_tags_theme_id_fkey"
+            columns: ["theme_id"]
+            isOneToOne: false
+            referencedRelation: "market_themes"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      market_themes: {
+        Row: {
+          category_id: string
+          created_at: string
+          id: string
+          name: string
+        }
+        Insert: {
+          category_id: string
+          created_at?: string
+          id?: string
+          name: string
+        }
+        Update: {
+          category_id?: string
+          created_at?: string
+          id?: string
+          name?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "market_themes_category_id_fkey"
+            columns: ["category_id"]
+            isOneToOne: false
+            referencedRelation: "categories"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       markets: {
         Row: {
           auto_checked_at: string | null
