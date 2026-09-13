@@ -140,6 +140,17 @@ export async function runSync() {
       if (traded.has(m.id)) continue; // real Predikt trades exist — never touch pools
       const upstream = remoteByPid.get(m.polymarket_id!);
       if (!upstream) continue;
+      // Older imports predate the CLOB token column — capture it opportunistically
+      // so the history backfill can run on them.
+      if (!(m as { polymarket_clob_token_id?: string | null }).polymarket_clob_token_id) {
+        const token = yesClobTokenId(upstream);
+        if (token) {
+          await supabaseAdmin
+            .from("markets")
+            .update({ polymarket_clob_token_id: token } as never)
+            .eq("id", m.id);
+        }
+      }
       const prob = parseYesProbability(upstream);
       if (prob === null) continue;
       const pools = seedPools(prob);
