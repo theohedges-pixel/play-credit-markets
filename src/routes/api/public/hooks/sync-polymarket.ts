@@ -20,6 +20,8 @@ interface PolyMarket {
   lastTradePrice?: number | string | null;
   bestBid?: number | string | null;
   bestAsk?: number | string | null;
+  /** Gamma returns a JSON string array of [YES token, NO token]. */
+  clobTokenIds?: string | string[] | null;
 }
 
 const CATEGORY_NAMES = ["Politics", "Crypto", "Sports", "Tech", "Pop Culture", "Science"] as const;
