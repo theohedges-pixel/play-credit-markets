@@ -178,9 +178,6 @@ function MarketsPage() {
                 </Button>
               </>
             )}
-                            {importing ? "Importing…" : "Import from Polymarket"}
-              </Button>
-            )}
           </div>
         </div>
 
