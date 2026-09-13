@@ -171,6 +171,23 @@ function GroupBetDetail() {
           </div>
         </div>
 
+        {canShare && (
+          <div className="rounded-lg border border-border bg-card p-5">
+            <div className="flex items-center justify-between gap-4">
+              <div className="min-w-0">
+                <h2 className="font-display font-semibold">Share this bet</h2>
+                <p className="text-xs text-muted-foreground mt-1">
+                  Anyone with your link can join — even if they're not on Predikt yet.
+                </p>
+              </div>
+              <Button size="sm" onClick={share}>
+                <Share2 size={14} /> Share
+              </Button>
+            </div>
+            <Input readOnly value={shareUrl} onFocus={(e) => e.currentTarget.select()} className="mt-3 text-xs" />
+          </div>
+        )}
+
         <div className="grid grid-cols-3 gap-3">
           <Stat label="Pot" value={`${fmtCredits(totals.total)}c`} />
           <Stat label="YES" value={`${fmtCredits(totals.yes)}c`} tone="yes" />
