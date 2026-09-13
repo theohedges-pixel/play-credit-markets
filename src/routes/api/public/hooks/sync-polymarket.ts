@@ -154,7 +154,6 @@ export async function runSync() {
         yes_price: pools.no_pool / (pools.yes_pool + pools.no_pool),
       });
       refreshed++;
-      void price;
     }
   }
 
