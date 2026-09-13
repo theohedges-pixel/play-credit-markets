@@ -1,3 +1,4 @@
+import { verifyCronSecret } from "@/lib/cron-auth.server";
 import { createFileRoute } from "@tanstack/react-router";
 
 interface AiSuggestion {
@@ -60,7 +61,7 @@ async function generateSuggestions(apiKey: string): Promise<AiSuggestion[]> {
   );
 }
 
-async function runDiscover() {
+export async function runDiscover() {
   const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
   const apiKey = process.env.LOVABLE_API_KEY;
   if (!apiKey) throw new Error("Missing LOVABLE_API_KEY");
@@ -140,7 +141,9 @@ async function runDiscover() {
 export const Route = createFileRoute("/api/public/hooks/discover-trending-markets")({
   server: {
     handlers: {
-      POST: async () => {
+      POST: async ({ request }) => {
+        const denied = await verifyCronSecret(request);
+        if (denied) return denied;
         try {
           const result = await runDiscover();
           return new Response(JSON.stringify({ ok: true, ...result }), {
