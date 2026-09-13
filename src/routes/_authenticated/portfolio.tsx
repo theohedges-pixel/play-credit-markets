@@ -181,58 +181,24 @@ function Portfolio() {
           </div>
         </section>
 
-        <h2 className="font-display text-xl font-semibold mb-4">Positions</h2>
-        <div className="rounded-lg border border-border bg-card divide-y divide-border">
-          {isLoading ? (
-            Array.from({ length: 4 }).map((_, i) => (
-              <div key={i} className="px-5 py-4 flex items-center justify-between animate-pulse">
-                <div className="flex-1 min-w-0">
-                  <div className="h-4 w-2/3 bg-secondary rounded mb-2" />
-                  <div className="h-3 w-24 bg-secondary rounded" />
-                </div>
-                <div className="text-right shrink-0">
-                  <div className="h-4 w-16 bg-secondary rounded mb-1 ml-auto" />
-                  <div className="h-3 w-12 bg-secondary rounded ml-auto" />
-                </div>
+        <h2 className="font-display text-xl font-semibold mb-1">Trade ledger</h2>
+        <p className="text-xs text-muted-foreground mb-4">Every trade, newest first.</p>
+        {ledgerLoading ? (
+          <div className="rounded-lg border border-border bg-card divide-y divide-border">
+            {Array.from({ length: 4 }).map((_, i) => (
+              <div key={i} className="px-4 py-4 animate-pulse">
+                <div className="h-4 w-2/3 bg-secondary rounded mb-2" />
+                <div className="h-3 w-24 bg-secondary rounded" />
               </div>
-            ))
-          ) : positionRows.length > 0 ? positionRows.map(({ position: p, value, pnl, realized, resolved }) => {
-            return (
-              <Link key={p.id} to="/markets/$id" params={{ id: p.market.id }} className="block px-5 py-4 hover:bg-secondary/30 transition">
-                <div className="flex items-center justify-between gap-4">
-                  <div className="min-w-0">
-                    <div className="font-medium truncate">{p.market.title}</div>
-                    <div className="text-xs text-muted-foreground mt-1 font-mono">
-                      {Number(p.yes_shares) > 0 && <span className="text-yes mr-3">{Number(p.yes_shares).toFixed(2)} YES</span>}
-                      {Number(p.no_shares) > 0 && <span className="text-no">{Number(p.no_shares).toFixed(2)} NO</span>}
-                      {p.market.status === "resolved" && <span className="ml-3 text-muted-foreground">· resolved {p.market.resolution?.toUpperCase()}</span>}
-                    </div>
-                  </div>
-                  <div className="text-right shrink-0">
-                    <div className="font-mono font-semibold">{fmtCredits(value)}c</div>
-                    {!resolved && (
-                      <div className={`text-xs font-mono ${valueClass(pnl)}`}>
-                        Unrealized {signed(pnl)}c
-                      </div>
-                    )}
-                    {realized !== 0 && (
-                      <div className={`text-xs font-mono ${valueClass(realized)}`}>
-                        {resolved ? "Settled" : "Realized"} {signed(realized)}c
-                      </div>
-                    )}
-                    <div className={`text-xs font-mono ${valueClass(pnl + realized)}`}>
-                      Total {signed(pnl + realized)}c
-                    </div>
-                  </div>
-                </div>
-              </Link>
-            );
-          }) : (
-            <div className="px-5 py-8 text-center text-sm text-muted-foreground">
-              No positions yet. <Link to="/markets" className="text-primary hover:underline">Browse markets</Link>
-            </div>
-          )}
-        </div>
+            ))}
+          </div>
+        ) : (
+          <TradeLedger
+            trades={ledgerTrades}
+            empty="No trades yet — browse markets to place your first."
+          />
+        )}
+
 
         <div className="my-8 rounded-lg border border-border bg-card p-5 flex items-center justify-between gap-5">
           <div>
