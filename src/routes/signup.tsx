@@ -9,9 +9,10 @@ import { toast } from "sonner";
 import { Mail } from "lucide-react";
 
 export const Route = createFileRoute("/signup")({
-  validateSearch: (search: Record<string, unknown>): { ref?: string } => {
+  validateSearch: (search: Record<string, unknown>): { ref?: string; bet?: string } => {
     const r = typeof search.ref === "string" ? search.ref.slice(0, 40) : undefined;
-    return r ? { ref: r } : {};
+    const b = typeof search.bet === "string" ? search.bet : undefined;
+    return { ...(r ? { ref: r } : {}), ...(b ? { bet: b } : {}) };
   },
   head: () => ({
     meta: [
@@ -34,7 +35,7 @@ export const Route = createFileRoute("/signup")({
 
 function SignupPage() {
   const navigate = useNavigate();
-  const { ref: referrer } = Route.useSearch();
+  const { ref: referrer, bet } = Route.useSearch();
   const [email, setEmail] = useState("");
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
