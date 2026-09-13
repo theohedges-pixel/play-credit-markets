@@ -71,6 +71,33 @@ function MarketsPage() {
     },
   });
 
+  // AI-generated sub-themes for the selected category (rebuilt daily).
+  const { data: themes } = useQuery({
+    queryKey: ["market-themes", cat],
+    enabled: !!cat,
+    queryFn: async () => {
+      const { data } = await supabase
+        .from("market_themes")
+        .select("id, name")
+        .eq("category_id", cat!)
+        .order("name");
+      return data ?? [];
+    },
+  });
+
+  // Market ids carrying any of the selected themes (OR across themes).
+  const { data: themeMatchIds } = useQuery({
+    queryKey: ["market-theme-tags", themeIds],
+    enabled: themeIds.length > 0,
+    queryFn: async () => {
+      const { data } = await supabase
+        .from("market_theme_tags")
+        .select("market_id")
+        .in("theme_id", themeIds);
+      return Array.from(new Set((data ?? []).map((r) => r.market_id)));
+    },
+  });
+
   const { data: markets, isLoading } = useQuery({
     queryKey: ["markets", q, cat, sortKey],
     queryFn: async () => {
