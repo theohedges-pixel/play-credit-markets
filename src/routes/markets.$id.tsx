@@ -276,6 +276,17 @@ function MarketDetail() {
                       formatter={(v) => [`${(v as number).toFixed(0)}¢`, "YES"]}
                     />
                     <Line type="monotone" dataKey="price" stroke="oklch(0.78 0.20 145)" strokeWidth={2} dot={false} />
+                    {aiGenerated && history.length > 0 && (
+                      <ReferenceDot
+                        x={history[0].t}
+                        y={history[0].price}
+                        r={5}
+                        fill="var(--primary)"
+                        stroke="var(--background)"
+                        strokeWidth={2}
+                        label={{ value: "AI estimate", position: "top", fill: "var(--primary)", fontSize: 10 }}
+                      />
+                    )}
                   </LineChart>
                 </ResponsiveContainer>
               ) : (
