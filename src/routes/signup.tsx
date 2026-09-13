@@ -37,12 +37,19 @@ export const Route = createFileRoute("/signup")({
 
 function SignupPage() {
   const navigate = useNavigate();
+  const { user, loading: authLoading } = useAuth();
   const { ref: referrer, bet } = Route.useSearch();
   const [email, setEmail] = useState("");
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
   const [loading, setLoading] = useState(false);
   const [submittedEmail, setSubmittedEmail] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (!authLoading && user) {
+      navigate({ to: "/markets", replace: true });
+    }
+  }, [authLoading, user, navigate]);
 
   const onSubmit = async (e: FormEvent) => {
     e.preventDefault();
