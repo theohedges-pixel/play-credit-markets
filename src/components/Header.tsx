@@ -1,5 +1,7 @@
 import { Link, useNavigate } from "@tanstack/react-router";
 import { useState } from "react";
+import { useQuery } from "@tanstack/react-query";
+import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/lib/auth";
 import { Button } from "@/components/ui/button";
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sheet";
@@ -16,6 +18,7 @@ import {
   UsersRound,
   Settings,
   LogOut,
+  ShieldCheck,
 } from "lucide-react";
 import { UserAvatar } from "@/components/UserAvatar";
 import { NotificationsBell } from "@/components/NotificationsBell";
@@ -24,6 +27,20 @@ export function Header() {
   const { user, profile, signOut } = useAuth();
   const navigate = useNavigate();
   const [moreOpen, setMoreOpen] = useState(false);
+
+  const { data: isAdmin } = useQuery({
+    queryKey: ["is-admin", user?.id],
+    enabled: !!user?.id,
+    queryFn: async () => {
+      const { data } = await supabase
+        .from("user_roles")
+        .select("role")
+        .eq("user_id", user!.id)
+        .eq("role", "admin")
+        .maybeSingle();
+      return !!data;
+    },
+  });
 
   const doSignOut = () => {
     setMoreOpen(false);
@@ -60,6 +77,16 @@ export function Header() {
                   <Link to="/group-bets" className="hover:text-foreground" activeProps={{ className: "text-foreground" }}>
                     Group bets
                   </Link>
+                  {isAdmin && (
+                    <Link
+                      to="/admin/dashboard"
+                      className="hover:text-foreground flex items-center gap-1"
+                      activeProps={{ className: "text-foreground" }}
+                    >
+                      <ShieldCheck size={14} className="text-primary" />
+                      Admin
+                    </Link>
+                  )}
                 </>
               )}
             </nav>
@@ -144,6 +171,14 @@ export function Header() {
           <div className="flex flex-col py-2">
             <MoreLink to="/learn" icon={<GraduationCap size={18} className="text-muted-foreground" />} label="Learn" onNavigate={() => setMoreOpen(false)} />
             <MoreLink to="/group-bets" icon={<UsersRound size={18} className="text-muted-foreground" />} label="Group bets" onNavigate={() => setMoreOpen(false)} />
+            {isAdmin && (
+              <MoreLink
+                to="/admin/dashboard"
+                icon={<ShieldCheck size={18} className="text-primary" />}
+                label="Admin"
+                onNavigate={() => setMoreOpen(false)}
+              />
+            )}
             <MoreLink to="/settings" icon={<Settings size={18} className="text-muted-foreground" />} label="Settings" onNavigate={() => setMoreOpen(false)} />
             <button
               type="button"

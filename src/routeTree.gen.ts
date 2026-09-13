@@ -28,7 +28,7 @@ import { Route as AuthenticatedFriendsRouteImport } from './routes/_authenticate
 import { Route as AuthenticatedGroupBetsIndexRouteImport } from './routes/_authenticated/group-bets.index'
 import { Route as AuthenticatedGroupBetsCreateRouteImport } from './routes/_authenticated/group-bets.create'
 import { Route as AuthenticatedGroupBetsIdRouteImport } from './routes/_authenticated/group-bets.$id'
-import { Route as AuthenticatedAdminSuggestionsRouteImport } from './routes/_authenticated/admin.suggestions'
+import { Route as AuthenticatedAdminDashboardRouteImport } from './routes/_authenticated/admin.dashboard'
 import { Route as ApiPublicHooksSyncPolymarketRouteImport } from './routes/api/public/hooks/sync-polymarket'
 import { Route as ApiPublicHooksGenerateAiMarketsRouteImport } from './routes/api/public/hooks/generate-ai-markets'
 import { Route as ApiPublicHooksDiscoverTrendingMarketsRouteImport } from './routes/api/public/hooks/discover-trending-markets'
@@ -131,10 +131,10 @@ const AuthenticatedGroupBetsIdRoute =
     path: '/$id',
     getParentRoute: () => AuthenticatedGroupBetsRoute,
   } as any)
-const AuthenticatedAdminSuggestionsRoute =
-  AuthenticatedAdminSuggestionsRouteImport.update({
-    id: '/admin/suggestions',
-    path: '/admin/suggestions',
+const AuthenticatedAdminDashboardRoute =
+  AuthenticatedAdminDashboardRouteImport.update({
+    id: '/admin/dashboard',
+    path: '/admin/dashboard',
     getParentRoute: () => AuthenticatedRoute,
   } as any)
 const ApiPublicHooksSyncPolymarketRoute =
@@ -178,7 +178,7 @@ export interface FileRoutesByFullPath {
   '/markets/$id': typeof MarketsIdRoute
   '/users/$username': typeof UsersUsernameRoute
   '/markets/': typeof MarketsIndexRoute
-  '/admin/suggestions': typeof AuthenticatedAdminSuggestionsRoute
+  '/admin/dashboard': typeof AuthenticatedAdminDashboardRoute
   '/group-bets/$id': typeof AuthenticatedGroupBetsIdRoute
   '/group-bets/create': typeof AuthenticatedGroupBetsCreateRoute
   '/group-bets/': typeof AuthenticatedGroupBetsIndexRoute
@@ -202,7 +202,7 @@ export interface FileRoutesByTo {
   '/markets/$id': typeof MarketsIdRoute
   '/users/$username': typeof UsersUsernameRoute
   '/markets': typeof MarketsIndexRoute
-  '/admin/suggestions': typeof AuthenticatedAdminSuggestionsRoute
+  '/admin/dashboard': typeof AuthenticatedAdminDashboardRoute
   '/group-bets/$id': typeof AuthenticatedGroupBetsIdRoute
   '/group-bets/create': typeof AuthenticatedGroupBetsCreateRoute
   '/group-bets': typeof AuthenticatedGroupBetsIndexRoute
@@ -229,7 +229,7 @@ export interface FileRoutesById {
   '/markets/$id': typeof MarketsIdRoute
   '/users/$username': typeof UsersUsernameRoute
   '/markets/': typeof MarketsIndexRoute
-  '/_authenticated/admin/suggestions': typeof AuthenticatedAdminSuggestionsRoute
+  '/_authenticated/admin/dashboard': typeof AuthenticatedAdminDashboardRoute
   '/_authenticated/group-bets/$id': typeof AuthenticatedGroupBetsIdRoute
   '/_authenticated/group-bets/create': typeof AuthenticatedGroupBetsCreateRoute
   '/_authenticated/group-bets/': typeof AuthenticatedGroupBetsIndexRoute
@@ -256,7 +256,7 @@ export interface FileRouteTypes {
     | '/markets/$id'
     | '/users/$username'
     | '/markets/'
-    | '/admin/suggestions'
+    | '/admin/dashboard'
     | '/group-bets/$id'
     | '/group-bets/create'
     | '/group-bets/'
@@ -280,7 +280,7 @@ export interface FileRouteTypes {
     | '/markets/$id'
     | '/users/$username'
     | '/markets'
-    | '/admin/suggestions'
+    | '/admin/dashboard'
     | '/group-bets/$id'
     | '/group-bets/create'
     | '/group-bets'
@@ -306,7 +306,7 @@ export interface FileRouteTypes {
     | '/markets/$id'
     | '/users/$username'
     | '/markets/'
-    | '/_authenticated/admin/suggestions'
+    | '/_authenticated/admin/dashboard'
     | '/_authenticated/group-bets/$id'
     | '/_authenticated/group-bets/create'
     | '/_authenticated/group-bets/'
@@ -469,11 +469,11 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedGroupBetsIdRouteImport
       parentRoute: typeof AuthenticatedGroupBetsRoute
     }
-    '/_authenticated/admin/suggestions': {
-      id: '/_authenticated/admin/suggestions'
-      path: '/admin/suggestions'
-      fullPath: '/admin/suggestions'
-      preLoaderRoute: typeof AuthenticatedAdminSuggestionsRouteImport
+    '/_authenticated/admin/dashboard': {
+      id: '/_authenticated/admin/dashboard'
+      path: '/admin/dashboard'
+      fullPath: '/admin/dashboard'
+      preLoaderRoute: typeof AuthenticatedAdminDashboardRouteImport
       parentRoute: typeof AuthenticatedRoute
     }
     '/api/public/hooks/sync-polymarket': {
@@ -531,7 +531,7 @@ interface AuthenticatedRouteChildren {
   AuthenticatedLearnRoute: typeof AuthenticatedLearnRoute
   AuthenticatedPortfolioRoute: typeof AuthenticatedPortfolioRoute
   AuthenticatedSettingsRoute: typeof AuthenticatedSettingsRoute
-  AuthenticatedAdminSuggestionsRoute: typeof AuthenticatedAdminSuggestionsRoute
+  AuthenticatedAdminDashboardRoute: typeof AuthenticatedAdminDashboardRoute
 }
 
 const AuthenticatedRouteChildren: AuthenticatedRouteChildren = {
@@ -540,7 +540,7 @@ const AuthenticatedRouteChildren: AuthenticatedRouteChildren = {
   AuthenticatedLearnRoute: AuthenticatedLearnRoute,
   AuthenticatedPortfolioRoute: AuthenticatedPortfolioRoute,
   AuthenticatedSettingsRoute: AuthenticatedSettingsRoute,
-  AuthenticatedAdminSuggestionsRoute: AuthenticatedAdminSuggestionsRoute,
+  AuthenticatedAdminDashboardRoute: AuthenticatedAdminDashboardRoute,
 }
 
 const AuthenticatedRouteWithChildren = AuthenticatedRoute._addFileChildren(
