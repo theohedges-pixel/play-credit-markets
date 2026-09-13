@@ -1,7 +1,13 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
 import { format } from "date-fns";
-import { Gem, Lock } from "lucide-react";
+import { BookOpen, Gem, Lock } from "lucide-react";
+import {
+  buildStats,
+  learnProgress,
+  type LearnAchievement,
+  type LearnAttempt,
+} from "@/lib/learn";
 import { supabase } from "@/integrations/supabase/client";
 import { Header } from "@/components/Header";
 import { useAuth } from "@/lib/auth";
@@ -171,6 +177,123 @@ function Achievements() {
           </Link>
           .
         </p>
+
+        <LearningBadges />
+      </div>
+    </div>
+  );
+}
+
+function LearningBadges() {
+  const { user } = useAuth();
+
+  const { data } = useQuery({
+    queryKey: ["learn-badges-page", user?.id],
+    enabled: !!user?.id,
+    queryFn: async () => {
+      const [defs, awards, articles, attempts, profile] = await Promise.all([
+        (supabase as any).from("learn_achievements").select("*").order("category").order("sort_order"),
+        (supabase as any).from("learn_achievement_awards").select("achievement_key, earned_at"),
+        (supabase as any).from("learn_articles").select("id, part").eq("status", "published"),
+        (supabase as any).from("learn_attempts").select("article_id, attempt_number, score, total, passed, credits_awarded, created_at"),
+        (supabase as any)
+          .from("profiles")
+          .select("articles_passed, perfect_quizzes, first_attempt_passes")
+          .eq("id", user!.id)
+          .maybeSingle(),
+      ]);
+      return {
+        defs: (defs.data ?? []) as LearnAchievement[],
+        awards: new Map<string, string>(
+          ((awards.data ?? []) as any[]).map((a) => [a.achievement_key, a.earned_at]),
+        ),
+        stats: buildStats(
+          (articles.data ?? []) as any[],
+          ((attempts.data ?? []) as unknown) as LearnAttempt[],
+          (profile.data as any) ?? {
+            articles_passed: 0,
+            perfect_quizzes: 0,
+            first_attempt_passes: 0,
+          },
+        ),
+      };
+    },
+  });
+
+  if (!data?.defs.length) return null;
+
+  const locked = data.defs.filter((d) => !data.awards.has(d.key));
+  const nearest = locked
+    .map((d) => ({ key: d.key, ...learnProgress(d.key, data.stats) }))
+    .sort((a, b) => b.current / b.target - a.current / a.target)[0];
+
+  return (
+    <div className="mt-14">
+      <div className="flex items-center gap-3 mb-2">
+        <BookOpen className="text-primary" size={22} />
+        <h2 className="font-display text-2xl font-bold">Learning</h2>
+      </div>
+      <p className="text-muted-foreground text-sm mb-6">
+        Earned by reading{" "}
+        <Link to="/learn" className="text-primary hover:underline">
+          the course
+        </Link>{" "}
+        and passing the quizzes. Each badge pays credits once.
+      </p>
+
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+        {data.defs.map((d) => {
+          const at = data.awards.get(d.key);
+          const p = learnProgress(d.key, data.stats);
+          const isNext = !at && nearest?.key === d.key;
+          const pct = Math.max(0, Math.min(100, (p.current / p.target) * 100));
+          const featured = d.key === "risk_aware";
+          return (
+            <div
+              key={d.key}
+              className={cn(
+                "relative rounded-lg border p-4 flex flex-col gap-1.5",
+                at
+                  ? featured
+                    ? "border-primary bg-primary/10 text-primary shadow-[0_0_24px_-8px_currentColor]"
+                    : "border-primary/40 bg-primary/5 text-primary"
+                  : "border-border bg-card text-muted-foreground grayscale opacity-60",
+                featured && "sm:col-span-2",
+              )}
+            >
+              <div className="flex items-center justify-between gap-2">
+                <span className="font-display text-lg font-bold">{d.name}</span>
+                {at ? (
+                  <BookOpen size={18} className="shrink-0" />
+                ) : (
+                  <span className="flex items-center gap-1 text-[10px] uppercase tracking-wide font-mono">
+                    <Lock size={12} /> Locked
+                  </span>
+                )}
+              </div>
+              <p className="text-xs leading-snug">{d.requirement}</p>
+              <div className="text-[11px] font-mono mt-auto pt-1">
+                {at ? `Earned ${format(new Date(at), "d MMM yyyy")}` : `+${d.credits} credits`}
+              </div>
+              {isNext && (
+                <div className="mt-1.5">
+                  <div className="flex justify-between text-[11px] font-mono mb-1">
+                    <span>
+                      {p.current} / {p.target}
+                    </span>
+                    <span>{Math.floor(pct)}% there</span>
+                  </div>
+                  <div className="h-1.5 rounded-full bg-secondary overflow-hidden">
+                    <div
+                      className="h-full rounded-full bg-primary transition-all"
+                      style={{ width: `${pct}%` }}
+                    />
+                  </div>
+                </div>
+              )}
+            </div>
+          );
+        })}
       </div>
     </div>
   );
