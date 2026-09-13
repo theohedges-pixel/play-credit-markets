@@ -29,6 +29,26 @@ interface PolyMarket {
   acceptingOrders?: boolean | null;
   /** Gamma returns a JSON string array of the two outcome labels, YES first. */
   outcomes?: string | string[] | null;
+  /** Present on the LIST endpoint only: the parent event(s) this market belongs to. */
+  events?: { id?: string | number; slug?: string; title?: string }[] | null;
+  /** Shared across every outcome of a negative-risk (multi-outcome) event. */
+  negRiskMarketID?: string | null;
+  /** Clean per-outcome label, e.g. "0 - 2" or a team name. */
+  groupItemTitle?: string | null;
+}
+
+/**
+ * The three grouping identifiers Polymarket exposes, plus the clean per-outcome
+ * label. All come straight from the API — we never infer grouping from titles.
+ */
+export function groupingFields(m: PolyMarket) {
+  const ev = Array.isArray(m.events) && m.events.length > 0 ? m.events[0] : null;
+  return {
+    polymarket_event_id: ev?.id != null ? String(ev.id) : null,
+    polymarket_event_slug: ev?.slug ?? null,
+    polymarket_neg_risk_id: m.negRiskMarketID ? String(m.negRiskMarketID) : null,
+    group_item_title: m.groupItemTitle?.trim() || null,
+  };
 }
 
 /**
