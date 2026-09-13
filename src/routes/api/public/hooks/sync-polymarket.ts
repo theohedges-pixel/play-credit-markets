@@ -1,4 +1,5 @@
 import { createFileRoute } from "@tanstack/react-router";
+import { verifyCronSecret } from "@/lib/cron-auth.server";
 import { parseYesProbability, seedPools } from "@/lib/polymarket-odds";
 
 interface PolyMarket {
@@ -17,6 +18,7 @@ interface PolyMarket {
 }
 
 const CATEGORY_NAMES = ["Politics", "Crypto", "Sports", "Tech", "Pop Culture", "Science"] as const;
+const MAX_INSERTS_PER_RUN = 25;
 
 async function classifyWithAI(
   apiKey: string,
@@ -60,12 +62,12 @@ ${list}`;
   return fallback();
 }
 
-async function runSync() {
+export async function runSync() {
   const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
   const apiKey = process.env.LOVABLE_API_KEY;
 
   const url =
-    "https://gamma-api.polymarket.com/markets?active=true&closed=false&limit=100&order=volume&ascending=false";
+    "https://gamma-api.polymarket.com/markets?active=true&closed=false&limit=100&order=volume24hr&ascending=false";
   const r = await fetch(url, { headers: { accept: "application/json" } });
   if (!r.ok) throw new Error(`Polymarket fetch failed: ${r.status}`);
   const remote = (await r.json()) as PolyMarket[];
@@ -74,7 +76,6 @@ async function runSync() {
   const items = remote.filter((m) => m.question && (m.endDate || m.end_date_iso));
 
   // Existing markets — match by polymarket_id OR lowercased title
-  const titlesLower = items.map((m) => m.question!.toLowerCase());
   const polyIds = items.map((m) => m.id).filter(Boolean) as string[];
 
   const { data: existingByTitle } = await supabaseAdmin
@@ -106,15 +107,67 @@ async function runSync() {
     }
   }
 
-  // New markets
-  const fresh = items.filter((m) => {
-    if (m.closed) return false;
-    const pidHit = m.id && existingByPidMap.has(m.id);
-    const titleHit = existingByTitleLower.has(m.question!.toLowerCase());
-    if (pidHit || titleHit) return false;
-    const closes = new Date(m.endDate ?? m.end_date_iso ?? "").getTime();
-    return Number.isFinite(closes) && closes > now + 60_000;
-  });
+  // Refresh odds on already-imported markets that have NEVER been traded on
+  // Predikt. The NOT EXISTS check against trades is the hard guarantee: once a
+  // single trade exists, the pools belong to our own CPMM and are never
+  // overwritten by external data again.
+  let refreshed = 0;
+  {
+    const { data: imports } = await supabaseAdmin
+      .from("markets")
+      .select("id, polymarket_id, yes_pool, no_pool")
+      .eq("created_via", "polymarket_import")
+      .eq("status", "open")
+      .not("polymarket_id", "is", null);
+    const importIds = (imports ?? []).map((m) => m.id);
+    const traded = new Set<string>();
+    if (importIds.length) {
+      const { data: tradeRows } = await supabaseAdmin
+        .from("trades")
+        .select("market_id")
+        .in("market_id", importIds);
+      for (const t of tradeRows ?? []) traded.add(t.market_id);
+    }
+    const remoteByPid = new Map(items.filter((m) => m.id).map((m) => [m.id!, m]));
+    for (const m of imports ?? []) {
+      if (traded.has(m.id)) continue; // real Predikt trades exist — never touch pools
+      const upstream = remoteByPid.get(m.polymarket_id!);
+      if (!upstream) continue;
+      const prob = parseYesProbability(upstream);
+      if (prob === null) continue;
+      const pools = seedPools(prob);
+      if (
+        pools.yes_pool === Number(m.yes_pool) &&
+        pools.no_pool === Number(m.no_pool)
+      )
+        continue; // unchanged
+      await supabaseAdmin
+        .from("markets")
+        .update({
+          yes_pool: pools.yes_pool,
+          no_pool: pools.no_pool,
+          volume: Number(upstream.volume ?? 0) || 0,
+        })
+        .eq("id", m.id);
+      await supabaseAdmin.from("price_history").insert({
+        market_id: m.id,
+        yes_price: pools.no_pool / (pools.yes_pool + pools.no_pool),
+      });
+      refreshed++;
+    }
+  }
+
+  // New markets (top of the 24h-volume list first, capped per run)
+  const fresh = items
+    .filter((m) => {
+      if (m.closed) return false;
+      const pidHit = m.id && existingByPidMap.has(m.id);
+      const titleHit = existingByTitleLower.has(m.question!.toLowerCase());
+      if (pidHit || titleHit) return false;
+      const closes = new Date(m.endDate ?? m.end_date_iso ?? "").getTime();
+      return Number.isFinite(closes) && closes > now + 60_000;
+    })
+    .slice(0, MAX_INSERTS_PER_RUN);
 
   let inserted = 0;
   if (fresh.length && apiKey) {
@@ -135,33 +188,41 @@ async function runSync() {
       }
       const pools = seedPools(prob);
       return {
-      creator_id: null,
-      title: m.question!,
-      description:
-        (m.description ?? "Imported from Polymarket.").slice(0, 1000) + "\n\nSource: Polymarket",
-      category_id: catByName.get(cats[i]) ?? null,
-      closes_at: new Date(m.endDate ?? m.end_date_iso!).toISOString(),
-      status: "open" as const,
-      yes_pool: pools.yes_pool,
-      no_pool: pools.no_pool,
-      volume: 0,
-      source: "polymarket",
-      polymarket_id: m.id ?? null,
+        creator_id: null,
+        title: m.question!,
+        description:
+          (m.description ?? "Imported from Polymarket.").slice(0, 1000) + "\n\nSource: Polymarket",
+        category_id: catByName.get(cats[i]) ?? null,
+        closes_at: new Date(m.endDate ?? m.end_date_iso!).toISOString(),
+        status: "open" as const,
+        yes_pool: pools.yes_pool,
+        no_pool: pools.no_pool,
+        volume: 0,
+        source: "polymarket",
+        polymarket_id: m.id ?? null,
+        created_via: "polymarket_import" as const,
       };
     });
-    const { data, error } = await supabaseAdmin
-      .from("markets")
-      .insert(rows)
-      .select("id, yes_pool, no_pool");
-    if (error) throw new Error(error.message);
-    inserted = data?.length ?? 0;
-    if (data && data.length > 0) {
-      await supabaseAdmin.from("price_history").insert(
-        data.map((m) => ({
-          market_id: m.id,
-          yes_price: Number(m.no_pool) / (Number(m.yes_pool) + Number(m.no_pool)),
-        })),
-      );
+    // Insert row-by-row so a rare concurrent duplicate (blocked by the unique
+    // index on polymarket_id) skips just that row instead of failing the run.
+    for (const row of rows) {
+      const { data, error } = await supabaseAdmin
+        .from("markets")
+        .insert(row)
+        .select("id, yes_pool, no_pool");
+      if (error) {
+        if (error.code === "23505") continue; // duplicate polymarket_id
+        throw new Error(error.message);
+      }
+      inserted++;
+      if (data && data.length > 0) {
+        await supabaseAdmin.from("price_history").insert(
+          data.map((m) => ({
+            market_id: m.id,
+            yes_price: Number(m.no_pool) / (Number(m.yes_pool) + Number(m.no_pool)),
+          })),
+        );
+      }
     }
   }
 
@@ -169,13 +230,15 @@ async function runSync() {
     .from("app_settings")
     .upsert({ key: "last_polymarket_sync", value: { at: new Date().toISOString() }, updated_at: new Date().toISOString() });
 
-  return { inserted, closed, scanned: items.length };
+  return { inserted, closed, refreshed, scanned: items.length };
 }
 
 export const Route = createFileRoute("/api/public/hooks/sync-polymarket")({
   server: {
     handlers: {
-      POST: async () => {
+      POST: async ({ request }) => {
+        const denied = await verifyCronSecret(request);
+        if (denied) return denied;
         try {
           const result = await runSync();
           return new Response(JSON.stringify({ ok: true, ...result }), {

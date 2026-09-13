@@ -1,3 +1,4 @@
+import { verifyCronSecret } from "@/lib/cron-auth.server";
 import { createFileRoute } from "@tanstack/react-router";
 
 const REVIEW_WINDOW_HOURS = 24;
@@ -64,7 +65,7 @@ How it can be verified: ${bet.resolution_source}`,
   return { outcome, reasoning };
 }
 
-async function runCheck() {
+export async function runCheck() {
   const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
   const apiKey = process.env.LOVABLE_API_KEY;
   if (!apiKey) throw new Error("Missing LOVABLE_API_KEY");
@@ -145,7 +146,9 @@ async function runCheck() {
 export const Route = createFileRoute("/api/public/hooks/check-group-bet-outcomes")({
   server: {
     handlers: {
-      POST: async () => {
+      POST: async ({ request }) => {
+        const denied = await verifyCronSecret(request);
+        if (denied) return denied;
         try {
           const result = await runCheck();
           return new Response(JSON.stringify({ ok: true, ...result }), {

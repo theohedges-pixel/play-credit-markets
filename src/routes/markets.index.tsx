@@ -11,7 +11,7 @@ import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Search, Sparkles, Loader2, RefreshCw, Brain } from "lucide-react";
 import { toast } from "sonner";
-import { importPolymarketMarkets } from "@/lib/polymarket.functions";
+import { syncPolymarketNow, generateAiMarketsNow } from "@/lib/admin-jobs.functions";
 import { useMarketListRealtime } from "@/lib/realtime";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { zodValidator, fallback } from "@tanstack/zod-adapter";
@@ -45,12 +45,12 @@ function MarketsPage() {
   const sortKey = SORTS[sort] ? sort : "active";
   const [q, setQ] = useState("");
   const [cat, setCat] = useState<string | null>(null);
-  const [importing, setImporting] = useState(false);
   const [syncing, setSyncing] = useState(false);
   const [genAi, setGenAi] = useState(false);
   const { user } = useAuth();
   const qc = useQueryClient();
-  const runImport = useServerFn(importPolymarketMarkets);
+  const runSyncNow = useServerFn(syncPolymarketNow);
+  const runGenerateNow = useServerFn(generateAiMarketsNow);
 
   const { data: isAdmin } = useQuery({
     queryKey: ["is-admin", user?.id],
@@ -80,27 +80,11 @@ function MarketsPage() {
     refetchInterval: 60_000,
   });
 
-  const onImport = async () => {
-    setImporting(true);
-    try {
-      const res = await runImport();
-      toast.success(res.message ?? `Imported ${res.imported} markets`);
-      qc.invalidateQueries({ queryKey: ["markets"] });
-    } catch (e: unknown) {
-      const msg = e instanceof Error ? e.message : "Import failed";
-      toast.error(msg);
-    } finally {
-      setImporting(false);
-    }
-  };
-
   const onSyncNow = async () => {
     setSyncing(true);
     try {
-      const res = await fetch("/api/public/hooks/sync-polymarket", { method: "POST" });
-      const body = await res.json();
-      if (!res.ok || !body.ok) throw new Error(body.error ?? "Sync failed");
-      toast.success(`Synced: ${body.inserted} added, ${body.closed} closed`);
+      const body = await runSyncNow();
+      toast.success(`Synced: ${body.inserted} added, ${body.refreshed ?? 0} refreshed, ${body.closed} closed`);
       qc.invalidateQueries({ queryKey: ["markets"] });
       refetchSync();
     } catch (e: unknown) {
@@ -113,9 +97,7 @@ function MarketsPage() {
   const onGenerateAi = async () => {
     setGenAi(true);
     try {
-      const res = await fetch("/api/public/hooks/generate-ai-markets", { method: "POST" });
-      const body = await res.json();
-      if (!res.ok || !body.ok) throw new Error(body.error ?? "AI generation failed");
+      const body = await runGenerateNow();
       toast.success(`Created ${body.inserted} new AI market${body.inserted === 1 ? "" : "s"}`);
       qc.invalidateQueries({ queryKey: ["markets"] });
     } catch (e: unknown) {
@@ -195,16 +177,6 @@ function MarketsPage() {
                   {genAi ? "Generating…" : "Generate AI markets"}
                 </Button>
               </>
-            )}
-            {user && (
-              <Button onClick={onImport} disabled={importing} variant="outline" className="gap-2">
-                {importing ? (
-                  <Loader2 size={14} className="animate-spin text-primary" />
-                ) : (
-                  <Sparkles size={14} className="text-primary" />
-                )}
-                {importing ? "Importing…" : "Import from Polymarket"}
-              </Button>
             )}
           </div>
         </div>

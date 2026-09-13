@@ -1,0 +1,1 @@
+ALTER VIEW public.leaderboard_net_worth SET (security_invoker = false);

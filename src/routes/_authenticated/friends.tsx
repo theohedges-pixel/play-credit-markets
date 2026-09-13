@@ -34,7 +34,7 @@ function FriendsPage() {
       const { data } = await supabase
         .from("friendships" as any)
         .select(
-          "id, requester_id, addressee_id, status, requester:profiles!friendships_requester_id_fkey(id, username, avatar_url), addressee:profiles!friendships_addressee_id_fkey(id, username, avatar_url)",
+          "id, requester_id, addressee_id, status, requester:public_profiles!friendships_requester_id_fkey(id, username, avatar_url), addressee:public_profiles!friendships_addressee_id_fkey(id, username, avatar_url)",
         );
       return (data as unknown as Row[] | null) ?? [];
     },
