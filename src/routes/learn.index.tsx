@@ -196,94 +196,120 @@ function LearnIndex() {
           </div>
         )}
 
-        <div className="space-y-10">
+        <div className="space-y-4">
           {parts.map((part) => {
             const inPart = articles.filter((a) => a.part === part);
             const featured = part === FEATURED_PART;
+            const isOpen = expanded.has(part);
+            const [passedInPart, totalInPart] = stats.byPart.get(part) ?? [0, inPart.length];
             return (
-              <section key={part}>
-                <div
+              <section
+                key={part}
+                className={cn(
+                  "rounded-lg border border-border bg-card overflow-hidden",
+                  featured && "border-primary/40",
+                )}
+              >
+                <button
+                  type="button"
+                  onClick={() => togglePart(part)}
                   className={cn(
-                    "mb-4",
-                    featured && "rounded-lg border border-primary/40 bg-primary/5 p-4",
+                    "w-full text-left p-4 sm:p-5 flex items-start justify-between gap-4",
+                    featured && "bg-primary/5",
                   )}
                 >
-                  <div className="flex items-center gap-2">
-                    {featured && <ShieldAlert size={16} className="text-primary" />}
-                    <h2 className="font-display text-xl font-bold">
-                      Part {part} · {inPart[0]?.part_name}
-                    </h2>
+                  <div className="min-w-0">
+                    <div className="flex items-center gap-2">
+                      {featured && <ShieldAlert size={16} className="text-primary shrink-0" />}
+                      <h2 className="font-display text-lg sm:text-xl font-bold">
+                        Part {part} · {inPart[0]?.part_name}
+                      </h2>
+                    </div>
+                    {PART_DESCRIPTIONS[part] && (
+                      <p className="text-xs text-muted-foreground mt-1 leading-relaxed">
+                        {PART_DESCRIPTIONS[part]}
+                      </p>
+                    )}
+                    {featured && (
+                      <p className="text-xs text-primary/80 mt-1">
+                        Start here — the most important section on Predikt.
+                      </p>
+                    )}
+                    <div className="mt-2 flex items-center gap-2 text-[11px] font-mono text-muted-foreground">
+                      <span>{inPart.length} article{inPart.length === 1 ? "" : "s"}</span>
+                      <span>·</span>
+                      <span className="text-primary">
+                        {passedInPart} / {totalInPart} passed
+                      </span>
+                    </div>
                   </div>
-                  {PART_DESCRIPTIONS[part] && (
-                    <p className="text-xs text-muted-foreground mt-1">
-                      {PART_DESCRIPTIONS[part]}
-                    </p>
-                  )}
-                  {featured && (
-                    <p className="text-xs text-primary/80 mt-1">
-                      Start here — the most important section on Predikt.
-                    </p>
-                  )}
-                </div>
+                  <div className="shrink-0 mt-0.5 text-muted-foreground">
+                    {isOpen ? <ChevronUp size={20} /> : <ChevronDown size={20} />}
+                  </div>
+                </button>
 
-                <div className="grid gap-3">
-                  {inPart.map((a) => {
-                    const st = articleState(a.id, attempts);
-                    return (
-                      <Link
-                        key={a.id}
-                        to="/learn/$slug"
-                        params={{ slug: a.slug }}
-                        className="block rounded-lg border border-border bg-card p-4 hover:border-foreground/30 transition-colors"
-                      >
-                        <div className="flex items-start justify-between gap-4">
-                          <div className="min-w-0">
-                            <div className="font-semibold leading-snug">{a.title}</div>
-                            <p className="text-sm text-muted-foreground mt-1 leading-snug">
-                              {a.summary}
-                            </p>
-                            <div className="flex flex-wrap items-center gap-2 mt-3 text-[11px] font-mono">
-                              <span
-                                className={cn(
-                                  "rounded-full border px-2 py-0.5 uppercase tracking-wide",
-                                  LEVEL_STYLE[a.level],
-                                )}
-                              >
-                                {a.level}
-                              </span>
-                              <span className="flex items-center gap-1 text-primary">
-                                <Coins size={12} />+{a.reward}
-                              </span>
-                              <span className="flex items-center gap-1 text-muted-foreground">
-                                <Clock size={12} />
-                                {a.read_minutes} min
-                              </span>
-                            </div>
-                          </div>
-                          {user && (
-                            <div className="shrink-0 text-[11px] font-mono text-right">
-                              {st.passed ? (
-                                <span className="flex items-center gap-1 text-primary">
-                                  <CheckCircle2 size={13} /> Passed
-                                </span>
-                              ) : st.attemptsLeft === 0 ? (
-                                <span className="flex items-center gap-1 text-muted-foreground">
-                                  <Lock size={12} /> No attempts left
-                                </span>
-                              ) : st.attemptsUsed > 0 ? (
-                                <span className="text-amber-400">
-                                  Attempts used {st.attemptsUsed} of 2
-                                </span>
-                              ) : (
-                                <span className="text-muted-foreground">Not started</span>
+                {isOpen && (
+                  <div className="border-t border-border px-4 pb-4 pt-3 sm:px-5 sm:pb-5 sm:pt-4">
+                    <div className="grid gap-3">
+                      {inPart.map((a) => {
+                        const st = articleState(a.id, attempts);
+                        return (
+                          <Link
+                            key={a.id}
+                            to="/learn/$slug"
+                            params={{ slug: a.slug }}
+                            className="block rounded-lg border border-border bg-background p-4 hover:border-foreground/30 transition-colors"
+                          >
+                            <div className="flex items-start justify-between gap-4">
+                              <div className="min-w-0">
+                                <div className="font-semibold leading-snug">{a.title}</div>
+                                <p className="text-sm text-muted-foreground mt-1 leading-snug">
+                                  {a.summary}
+                                </p>
+                                <div className="flex flex-wrap items-center gap-2 mt-3 text-[11px] font-mono">
+                                  <span
+                                    className={cn(
+                                      "rounded-full border px-2 py-0.5 uppercase tracking-wide",
+                                      LEVEL_STYLE[a.level],
+                                    )}
+                                  >
+                                    {a.level}
+                                  </span>
+                                  <span className="flex items-center gap-1 text-primary">
+                                    <Coins size={12} />+{a.reward}
+                                  </span>
+                                  <span className="flex items-center gap-1 text-muted-foreground">
+                                    <Clock size={12} />
+                                    {a.read_minutes} min
+                                  </span>
+                                </div>
+                              </div>
+                              {user && (
+                                <div className="shrink-0 text-[11px] font-mono text-right">
+                                  {st.passed ? (
+                                    <span className="flex items-center gap-1 text-primary">
+                                      <CheckCircle2 size={13} /> Passed
+                                    </span>
+                                  ) : st.attemptsLeft === 0 ? (
+                                    <span className="flex items-center gap-1 text-muted-foreground">
+                                      <Lock size={12} /> No attempts left
+                                    </span>
+                                  ) : st.attemptsUsed > 0 ? (
+                                    <span className="text-amber-400">
+                                      Attempts used {st.attemptsUsed} of 2
+                                    </span>
+                                  ) : (
+                                    <span className="text-muted-foreground">Not started</span>
+                                  )}
+                                </div>
                               )}
                             </div>
-                          )}
-                        </div>
-                      </Link>
-                    );
-                  })}
-                </div>
+                          </Link>
+                        );
+                      })}
+                    </div>
+                  </div>
+                )}
               </section>
             );
           })}
