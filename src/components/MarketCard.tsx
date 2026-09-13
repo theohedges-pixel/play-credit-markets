@@ -14,6 +14,7 @@ export interface MarketCardData {
   created_via?: string | null;
   source?: string | null;
   category?: { name: string } | null;
+  suggested_by?: string | null;
 }
 
 /** Urgency styling for the closing countdown. */
@@ -24,7 +25,7 @@ function timeClass(closesAt: string): string {
   return "text-muted-foreground/70"; // later: muted
 }
 
-export function MarketCard({ m }: { m: MarketCardData }) {
+export function MarketCard({ m, mine }: { m: MarketCardData; mine?: boolean }) {
   const p = yesPrice(m.yes_pool, m.no_pool);
   const zeroVolume = !m.volume || m.volume <= 0;
 
@@ -35,7 +36,12 @@ export function MarketCard({ m }: { m: MarketCardData }) {
           <span className="text-xs font-mono uppercase tracking-wider text-muted-foreground">
             {m.category?.name ?? "General"}
           </span>
-          {m.created_via === "ai_generated" && (
+          {mine && (
+            <span className="text-[10px] px-2 py-0.5 rounded-full border border-primary/60 text-primary shrink-0">
+              You suggested this
+            </span>
+          )}
+          {!mine && m.created_via === "ai_generated" && (
             <span className="text-[10px] px-2 py-0.5 rounded-full border border-yes/50 text-yes shrink-0">
               AI-estimated odds
             </span>

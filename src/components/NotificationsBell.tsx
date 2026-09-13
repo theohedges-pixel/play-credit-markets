@@ -173,6 +173,30 @@ export function NotificationsBell() {
         </Link>
       );
     }
+    if (n.kind === "suggestion_approved") {
+      return (
+        <Link
+          to="/markets/$id"
+          params={{ id: n.payload.market_id }}
+          onClick={() => setOpen(false)}
+          className="block px-4 py-3 hover:bg-secondary/50 text-sm"
+        >
+          <div>Your suggested market is live: {n.payload.title}</div>
+          <div className="text-xs text-muted-foreground">{ts}</div>
+        </Link>
+      );
+    }
+    if (n.kind === "suggestion_rejected") {
+      return (
+        <div className="px-4 py-3 text-sm">
+          <div>Your market suggestion wasn't used</div>
+          {n.payload.reason && (
+            <div className="text-xs text-muted-foreground">{n.payload.reason}</div>
+          )}
+          <div className="text-xs text-muted-foreground">{ts}</div>
+        </div>
+      );
+    }
     return (
       <div className="px-4 py-3 text-sm">
         <div>{n.kind}</div>

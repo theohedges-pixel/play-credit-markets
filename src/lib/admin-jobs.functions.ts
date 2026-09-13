@@ -82,6 +82,7 @@ export const approveSuggestionChecked = createServerFn({ method: "POST" })
         description: z.string().optional(),
         categoryId: z.string().uuid().nullable().optional(),
         closesAt: z.string().optional(),
+        probability: z.number().gt(0).lt(1).optional(),
       })
       .parse(data),
   )
@@ -117,6 +118,7 @@ export const approveSuggestionChecked = createServerFn({ method: "POST" })
     if (data.description !== undefined) payload._description = data.description;
     if (data.categoryId !== undefined) payload._category_id = data.categoryId;
     if (data.closesAt !== undefined) payload._closes_at = data.closesAt;
+    if (data.probability !== undefined) payload._probability = data.probability;
 
     const { data: marketId, error } = await context.supabase.rpc(
       "approve_market_suggestion",
@@ -150,4 +152,49 @@ export const regenerateMarketThemesNow = createServerFn({ method: "POST" })
       "@/routes/api/public/hooks/generate-market-themes"
     );
     return runThemeGeneration();
+  });
+
+/**
+ * Turns a member's raw submission into a properly-formed market for admin
+ * review. Nothing is created here — the admin sees the converted version,
+ * edits it if needed, and approves it through approveSuggestionChecked, which
+ * re-runs the staleness and duplicate gates before the market goes live.
+ */
+export const convertSuggestionWithAi = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((data) => z.object({ suggestionId: z.string().uuid() }).parse(data))
+  .handler(async ({ context, data }) => {
+    await requireAdmin(context.supabase, context.userId);
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    const { convertSubmission } = await import("@/lib/suggestion-ai.server");
+
+    const apiKey = process.env['LOVABLE_API_KEY'];
+    if (!apiKey) throw new Error("Missing LOVABLE_API_KEY");
+
+    const { data: sugg } = await (supabaseAdmin as any)
+      .from("market_suggestions")
+      .select("id, title, user_text, category_id, status")
+      .eq("id", data.suggestionId)
+      .maybeSingle();
+    if (!sugg) throw new Error("Suggestion not found");
+    if (sugg.status !== "pending") throw new Error(`Suggestion is already ${sugg.status}`);
+
+    let hint: string | null = null;
+    if (sugg.category_id) {
+      const { data: cat } = await supabaseAdmin
+        .from("categories")
+        .select("slug")
+        .eq("id", sugg.category_id)
+        .maybeSingle();
+      hint = cat?.slug ?? null;
+    }
+
+    const converted = await convertSubmission(apiKey, sugg.user_text ?? sugg.title, hint);
+    const { data: cats } = await supabaseAdmin.from("categories").select("id, slug");
+    const categoryId =
+      (cats ?? []).find((c: { slug: string }) => c.slug === converted.category_slug)?.id ??
+      sugg.category_id ??
+      null;
+
+    return { ...converted, categoryId };
   });

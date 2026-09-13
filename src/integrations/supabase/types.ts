@@ -648,39 +648,48 @@ export type Database = {
           created_at: string
           description: string | null
           id: string
+          rejection_reason: string | null
           reviewed_at: string | null
           reviewed_by: string | null
           source_summary: string | null
           status: Database["public"]["Enums"]["suggestion_status"]
+          suggested_by: string | null
           suggested_closes_at: string
           title: string
           updated_at: string
+          user_text: string | null
         }
         Insert: {
           category_id?: string | null
           created_at?: string
           description?: string | null
           id?: string
+          rejection_reason?: string | null
           reviewed_at?: string | null
           reviewed_by?: string | null
           source_summary?: string | null
           status?: Database["public"]["Enums"]["suggestion_status"]
+          suggested_by?: string | null
           suggested_closes_at: string
           title: string
           updated_at?: string
+          user_text?: string | null
         }
         Update: {
           category_id?: string | null
           created_at?: string
           description?: string | null
           id?: string
+          rejection_reason?: string | null
           reviewed_at?: string | null
           reviewed_by?: string | null
           source_summary?: string | null
           status?: Database["public"]["Enums"]["suggestion_status"]
+          suggested_by?: string | null
           suggested_closes_at?: string
           title?: string
           updated_at?: string
+          user_text?: string | null
         }
         Relationships: [
           {
@@ -688,6 +697,27 @@ export type Database = {
             columns: ["category_id"]
             isOneToOne: false
             referencedRelation: "categories"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "market_suggestions_suggested_by_fkey"
+            columns: ["suggested_by"]
+            isOneToOne: false
+            referencedRelation: "leaderboard_net_worth"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "market_suggestions_suggested_by_fkey"
+            columns: ["suggested_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "market_suggestions_suggested_by_fkey"
+            columns: ["suggested_by"]
+            isOneToOne: false
+            referencedRelation: "public_profiles"
             referencedColumns: ["id"]
           },
         ]
@@ -787,6 +817,7 @@ export type Database = {
           resolved_at: string | null
           source: string | null
           status: Database["public"]["Enums"]["market_status"]
+          suggested_by: string | null
           title: string
           volume: number
           yes_pool: number
@@ -820,6 +851,7 @@ export type Database = {
           resolved_at?: string | null
           source?: string | null
           status?: Database["public"]["Enums"]["market_status"]
+          suggested_by?: string | null
           title: string
           volume?: number
           yes_pool?: number
@@ -853,6 +885,7 @@ export type Database = {
           resolved_at?: string | null
           source?: string | null
           status?: Database["public"]["Enums"]["market_status"]
+          suggested_by?: string | null
           title?: string
           volume?: number
           yes_pool?: number
@@ -882,6 +915,27 @@ export type Database = {
           {
             foreignKeyName: "markets_creator_id_fkey"
             columns: ["creator_id"]
+            isOneToOne: false
+            referencedRelation: "public_profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "markets_suggested_by_fkey"
+            columns: ["suggested_by"]
+            isOneToOne: false
+            referencedRelation: "leaderboard_net_worth"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "markets_suggested_by_fkey"
+            columns: ["suggested_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "markets_suggested_by_fkey"
+            columns: ["suggested_by"]
             isOneToOne: false
             referencedRelation: "public_profiles"
             referencedColumns: ["id"]
@@ -1450,6 +1504,7 @@ export type Database = {
           _category_id?: string
           _closes_at?: string
           _description?: string
+          _probability?: number
           _suggestion_id: string
           _title?: string
         }
@@ -1581,7 +1636,7 @@ export type Database = {
         Returns: Json
       }
       reject_market_suggestion: {
-        Args: { _suggestion_id: string }
+        Args: { _reason?: string; _suggestion_id: string }
         Returns: undefined
       }
       remove_friend: { Args: { _friendship_id: string }; Returns: undefined }

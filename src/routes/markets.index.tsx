@@ -4,6 +4,8 @@ import { useState } from "react";
 import { formatDistanceToNow } from "date-fns";
 import { supabase } from "@/integrations/supabase/client";
 import { Header } from "@/components/Header";
+import { SuggestMarketDialog } from "@/components/SuggestMarketDialog";
+import { useAuth } from "@/lib/auth";
 import { MarketCard } from "@/components/MarketCard";
 import { GroupedMarketCard } from "@/components/GroupedMarketCard";
 import { Input } from "@/components/ui/input";
@@ -37,6 +39,7 @@ export const Route = createFileRoute("/markets/")({
 
 function MarketsPage() {
   const { sort } = Route.useSearch();
+  const { user } = useAuth();
   const navigate = useNavigate({ from: "/markets/" });
   const sortKey = SORTS[sort] ? sort : "active";
   const [q, setQ] = useState("");
@@ -105,7 +108,7 @@ function MarketsPage() {
       let query = supabase
         .from("markets")
         .select(
-          "id, title, closes_at, created_at, yes_pool, no_pool, volume, status, resolution, source, created_via, polymarket_event_id, polymarket_event_title, group_item_title, category:categories(name)",
+          "id, title, closes_at, created_at, yes_pool, no_pool, volume, status, resolution, source, created_via, suggested_by, polymarket_event_id, polymarket_event_title, group_item_title, category:categories(name)",
         )
         .eq("status", "open")
         .gt("closes_at", new Date().toISOString());
@@ -136,7 +139,7 @@ function MarketsPage() {
       const { data } = await supabase
         .from("markets")
         .select(
-          "id, title, closes_at, created_at, yes_pool, no_pool, volume, status, resolution, source, created_via, category_id, polymarket_event_id, polymarket_event_title, group_item_title, category:categories(name)",
+          "id, title, closes_at, created_at, yes_pool, no_pool, volume, status, resolution, source, created_via, category_id, suggested_by, polymarket_event_id, polymarket_event_title, group_item_title, category:categories(name)",
         )
         .eq("status", "open")
         .gt("closes_at", new Date().toISOString())
@@ -155,7 +158,15 @@ function MarketsPage() {
     const have = new Set(filtered.map((m) => m.id));
     for (const s of siblings) if (!have.has(s.id)) merged.push(s);
   }
-  const visible = merged.sort(SORTS[sortKey].order);
+  // A user's own suggested markets are pinned to the top of THEIR list only —
+  // everyone else sees the ordinary ordering.
+  const mineFirst = (a: { suggested_by?: string | null }, b: { suggested_by?: string | null }) => {
+    if (!user) return 0;
+    const am = a.suggested_by === user.id ? 1 : 0;
+    const bm = b.suggested_by === user.id ? 1 : 0;
+    return bm - am;
+  };
+  const visible = merged.sort((a, b) => mineFirst(a, b) || SORTS[sortKey].order(a, b));
 
   // Markets that share a Polymarket event are rendered as one card. Grouping
   // uses only the identifiers Polymarket supplies — never title matching — and
@@ -197,11 +208,14 @@ function MarketsPage() {
             <h1 className="font-display text-4xl font-bold mb-2">All markets</h1>
             <p className="text-muted-foreground">Pick a question, take a side.</p>
           </div>
-          {lastSync && (
-            <span className="text-xs text-muted-foreground">
-              Last synced {formatDistanceToNow(new Date(lastSync), { addSuffix: true })}
-            </span>
-          )}
+          <div className="flex items-center gap-3">
+            <SuggestMarketDialog />
+            {lastSync && (
+              <span className="text-xs text-muted-foreground">
+                Last synced {formatDistanceToNow(new Date(lastSync), { addSuffix: true })}
+              </span>
+            )}
+          </div>
         </div>
 
         <div className="flex flex-col md:flex-row gap-3 mb-6">
@@ -300,7 +314,7 @@ function MarketsPage() {
               e.kind === "group" ? (
                 <GroupedMarketCard key={e.key} markets={e.markets} eventTitle={e.title} />
               ) : (
-                <MarketCard key={e.key} m={e.market} />
+                <MarketCard key={e.key} m={e.market} mine={!!user && e.market.suggested_by === user.id} />
               ),
             )}
           </div>
