@@ -253,6 +253,16 @@ export async function runSync() {
           }
           await new Promise((r) => setTimeout(r, THROTTLE_MS));
         }
+        // Creation-time sub-theme tagging against the category's CURRENT themes.
+        if (apiKey) {
+          const { tagNewMarket } = await import("@/lib/market-themes.server");
+          await tagNewMarket(supabaseAdmin, apiKey, {
+            id: data[0]!.id,
+            title: row.title,
+            description: row.description ?? null,
+            category_id: row.category_id ?? null,
+          });
+        }
       }
     }
   }

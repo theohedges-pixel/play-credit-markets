@@ -40,6 +40,7 @@ import {
   resolveAiMarketsNow,
   approveSuggestionChecked,
   backfillPolymarketHistoryNow,
+  regenerateMarketThemesNow,
 } from "@/lib/admin-jobs.functions";
 import { toast } from "sonner";
 import {
@@ -57,6 +58,7 @@ import {
   ChevronDown,
   ChevronRight,
   History,
+  Tags,
 } from "lucide-react";
 
 export const Route = createFileRoute("/_authenticated/admin/dashboard")({
@@ -567,6 +569,26 @@ function MarketsTab() {
   const [pruning, setPruning] = useState(false);
   const runBackfill = useServerFn(backfillPolymarketHistoryNow);
   const [backfilling, setBackfilling] = useState(false);
+  const runRegenThemes = useServerFn(regenerateMarketThemesNow);
+  const [themeing, setThemeing] = useState(false);
+
+  // Full rebuild of every category's AI sub-themes (also runs daily on a schedule).
+  const onRegenThemes = async () => {
+    setThemeing(true);
+    try {
+      const body: any = await runRegenThemes();
+      toast.success(
+        `Rebuilt ${body.themes} theme${body.themes === 1 ? "" : "s"} across ${body.regenerated} categor${body.regenerated === 1 ? "y" : "ies"}`,
+        { duration: 8000 },
+      );
+      qc.invalidateQueries({ queryKey: ["market-themes"] });
+      qc.invalidateQueries({ queryKey: ["markets"] });
+    } catch (e) {
+      toast.error(e instanceof Error ? e.message : "Theme regeneration failed");
+    } finally {
+      setThemeing(false);
+    }
+  };
 
   const { data: prunable, isLoading } = useQuery({
     queryKey: ["admin-prunable"],
@@ -662,6 +684,10 @@ function MarketsTab() {
           >
             {backfilling ? <Loader2 size={14} className="animate-spin" /> : <History size={14} />}
             {backfilling ? "Backfilling…" : "Backfill Polymarket history"}
+          </Button>
+          <Button variant="outline" className="gap-2" onClick={onRegenThemes} disabled={themeing}>
+            {themeing ? <Loader2 size={14} className="animate-spin" /> : <Tags size={14} />}
+            {themeing ? "Regenerating…" : "Regenerate themes"}
           </Button>
         </div>
         <p className="text-xs text-muted-foreground mt-2">

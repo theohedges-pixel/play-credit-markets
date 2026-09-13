@@ -40,6 +40,14 @@ function MarketsPage() {
   const sortKey = SORTS[sort] ? sort : "active";
   const [q, setQ] = useState("");
   const [cat, setCat] = useState<string | null>(null);
+  // Sub-theme chips only exist inside a chosen category, so the selection is
+  // cleared whenever the category changes.
+  const [themeIds, setThemeIds] = useState<string[]>([]);
+
+  const pickCategory = (id: string | null) => {
+    setCat(id);
+    setThemeIds([]);
+  };
 
   const { data: lastSync } = useQuery({
     queryKey: ["last-polymarket-sync"],
@@ -60,6 +68,33 @@ function MarketsPage() {
     queryFn: async () => {
       const { data } = await supabase.from("categories").select("id, name, slug").order("name");
       return data ?? [];
+    },
+  });
+
+  // AI-generated sub-themes for the selected category (rebuilt daily).
+  const { data: themes } = useQuery({
+    queryKey: ["market-themes", cat],
+    enabled: !!cat,
+    queryFn: async () => {
+      const { data } = await supabase
+        .from("market_themes")
+        .select("id, name")
+        .eq("category_id", cat!)
+        .order("name");
+      return data ?? [];
+    },
+  });
+
+  // Market ids carrying any of the selected themes (OR across themes).
+  const { data: themeMatchIds } = useQuery({
+    queryKey: ["market-theme-tags", themeIds],
+    enabled: themeIds.length > 0,
+    queryFn: async () => {
+      const { data } = await supabase
+        .from("market_theme_tags")
+        .select("market_id")
+        .in("theme_id", themeIds);
+      return Array.from(new Set((data ?? []).map((r) => r.market_id)));
     },
   });
 
@@ -84,6 +119,13 @@ function MarketsPage() {
   });
 
   useMarketListRealtime(["markets"], "markets:list");
+
+  // Theme filtering is OR across the selected chips, inside the chosen category.
+  const filtered =
+    themeIds.length > 0 && themeMatchIds
+      ? (markets ?? []).filter((m) => themeMatchIds.includes(m.id))
+      : (markets ?? []);
+  const visible = [...filtered].sort(SORTS[sortKey].order);
 
   return (
     <div className="min-h-screen">
@@ -131,7 +173,7 @@ function MarketsPage() {
             </SelectContent>
           </Select>
           <button
-            onClick={() => setCat(null)}
+            onClick={() => pickCategory(null)}
             className={`px-3 py-1.5 rounded-full text-sm border ${!cat ? "bg-primary text-primary-foreground border-primary" : "border-border text-muted-foreground hover:text-foreground"}`}
           >
             All
@@ -139,13 +181,42 @@ function MarketsPage() {
           {categories?.map((c) => (
             <button
               key={c.id}
-              onClick={() => setCat(c.id)}
+              onClick={() => pickCategory(c.id)}
               className={`px-3 py-1.5 rounded-full text-sm border ${cat === c.id ? "bg-primary text-primary-foreground border-primary" : "border-border text-muted-foreground hover:text-foreground"}`}
             >
               {c.name}
             </button>
           ))}
         </div>
+
+        {cat && themes && themes.length > 0 && (
+          <div className="flex flex-wrap items-center gap-2 -mt-4 mb-8">
+            {themes.map((t) => {
+              const on = themeIds.includes(t.id);
+              return (
+                <button
+                  key={t.id}
+                  onClick={() =>
+                    setThemeIds((prev) =>
+                      prev.includes(t.id) ? prev.filter((x) => x !== t.id) : [...prev, t.id],
+                    )
+                  }
+                  className={`px-2.5 py-1 rounded-full text-xs border ${on ? "bg-secondary text-foreground border-primary/60" : "border-border text-muted-foreground hover:text-foreground"}`}
+                >
+                  {t.name}
+                </button>
+              );
+            })}
+            {themeIds.length > 0 && (
+              <button
+                onClick={() => setThemeIds([])}
+                className="text-xs text-muted-foreground hover:text-foreground underline underline-offset-2"
+              >
+                Clear
+              </button>
+            )}
+          </div>
+        )}
 
         {isLoading ? (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
@@ -162,9 +233,9 @@ function MarketsPage() {
               </div>
             ))}
           </div>
-        ) : markets && markets.length > 0 ? (
+        ) : visible.length > 0 ? (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-            {[...markets].sort(SORTS[sortKey].order).map((m) => <MarketCard key={m.id} m={m} />)}
+            {visible.map((m) => <MarketCard key={m.id} m={m} />)}
           </div>
         ) : (
           <div className="text-muted-foreground py-12 text-center">No markets match.</div>
