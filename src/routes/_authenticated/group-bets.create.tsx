@@ -126,7 +126,9 @@ function CreateGroupBet() {
           />
           <p className="text-xs text-muted-foreground mt-1">
             If you add this, we'll try to work out the outcome automatically when the bet closes —
-            everyone gets 24 hours to flag it before credits move.
+            everyone gets 24 hours to flag it before credits move. If we can't verify it (or you skip
+            this), everyone who bet will need to agree on the outcome; if you can't agree within 24
+            hours, it settles by majority vote instead.
           </p>
         </div>
 

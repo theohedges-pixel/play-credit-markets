@@ -200,6 +200,25 @@ function GroupBetDetail() {
   const pendingAuto = bet.status === "pending_auto_resolution";
   const canFlag = pendingAuto && (isCreator || !!myPart);
 
+  const fallbackAt = bet.voting_started_at
+    ? new Date(new Date(bet.voting_started_at).getTime() + 24 * 3600 * 1000)
+    : null;
+  const msLeft = fallbackAt ? fallbackAt.getTime() - Date.now() : 0;
+  const timeLeft =
+    msLeft <= 0
+      ? "any moment now"
+      : msLeft >= 3600_000
+        ? `${Math.floor(msLeft / 3600_000)}h ${Math.floor((msLeft % 3600_000) / 60_000)}m`
+        : `${Math.max(1, Math.floor(msLeft / 60_000))}m`;
+  const methodNote =
+    bet.resolution_method === "majority_fallback"
+      ? "Settled by majority fallback, not unanimous agreement"
+      : bet.resolution_method === "no_consensus_refund"
+        ? "No consensus reached — everyone was refunded"
+        : bet.auto_resolved
+          ? "Settled by automatic check"
+          : "Settled by unanimous agreement";
+
   return (
     <div>
       <Header />
