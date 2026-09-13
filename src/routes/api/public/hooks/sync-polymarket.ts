@@ -266,7 +266,7 @@ export async function runSync() {
     .from("app_settings")
     .upsert({ key: "last_polymarket_sync", value: { at: new Date().toISOString() }, updated_at: new Date().toISOString() });
 
-  return { inserted, closed, refreshed, mirrored, scanned: items.length };
+  return { inserted, closed, refreshed, mirrored, backfilledPoints, scanned: items.length };
 }
 
 /**
