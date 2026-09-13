@@ -166,7 +166,7 @@ function MarketsPage() {
             </SelectContent>
           </Select>
           <button
-            onClick={() => setCat(null)}
+            onClick={() => pickCategory(null)}
             className={`px-3 py-1.5 rounded-full text-sm border ${!cat ? "bg-primary text-primary-foreground border-primary" : "border-border text-muted-foreground hover:text-foreground"}`}
           >
             All
@@ -174,7 +174,7 @@ function MarketsPage() {
           {categories?.map((c) => (
             <button
               key={c.id}
-              onClick={() => setCat(c.id)}
+              onClick={() => pickCategory(c.id)}
               className={`px-3 py-1.5 rounded-full text-sm border ${cat === c.id ? "bg-primary text-primary-foreground border-primary" : "border-border text-muted-foreground hover:text-foreground"}`}
             >
               {c.name}
