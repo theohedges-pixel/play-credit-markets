@@ -47,6 +47,7 @@ export function groupingFields(m: PolyMarket) {
     polymarket_event_id: ev?.id != null ? String(ev.id) : null,
     polymarket_event_slug: ev?.slug ?? null,
     polymarket_neg_risk_id: m.negRiskMarketID ? String(m.negRiskMarketID) : null,
+    polymarket_event_title: ev?.title ?? null,
     group_item_title: m.groupItemTitle?.trim() || null,
   };
 }
@@ -272,6 +273,7 @@ export async function runSync() {
         polymarket_id: m.id ?? null,
         polymarket_clob_token_id: yesClobTokenId(m),
         created_via: "polymarket_import" as const,
+        ...groupingFields(m),
       };
     });
     // Insert row-by-row so a rare concurrent duplicate (blocked by the unique
