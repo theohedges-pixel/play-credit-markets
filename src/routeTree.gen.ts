@@ -31,6 +31,7 @@ import { Route as AuthenticatedGroupBetsIdRouteImport } from './routes/_authenti
 import { Route as AuthenticatedAdminDashboardRouteImport } from './routes/_authenticated/admin.dashboard'
 import { Route as ApiPublicHooksSyncPolymarketRouteImport } from './routes/api/public/hooks/sync-polymarket'
 import { Route as ApiPublicHooksResolveAiMarketsRouteImport } from './routes/api/public/hooks/resolve-ai-markets'
+import { Route as ApiPublicHooksGenerateMarketThemesRouteImport } from './routes/api/public/hooks/generate-market-themes'
 import { Route as ApiPublicHooksGenerateAiMarketsRouteImport } from './routes/api/public/hooks/generate-ai-markets'
 import { Route as ApiPublicHooksDiscoverTrendingMarketsRouteImport } from './routes/api/public/hooks/discover-trending-markets'
 import { Route as ApiPublicHooksCheckGroupBetOutcomesRouteImport } from './routes/api/public/hooks/check-group-bet-outcomes'
@@ -150,6 +151,12 @@ const ApiPublicHooksResolveAiMarketsRoute =
     path: '/api/public/hooks/resolve-ai-markets',
     getParentRoute: () => rootRouteImport,
   } as any)
+const ApiPublicHooksGenerateMarketThemesRoute =
+  ApiPublicHooksGenerateMarketThemesRouteImport.update({
+    id: '/api/public/hooks/generate-market-themes',
+    path: '/api/public/hooks/generate-market-themes',
+    getParentRoute: () => rootRouteImport,
+  } as any)
 const ApiPublicHooksGenerateAiMarketsRoute =
   ApiPublicHooksGenerateAiMarketsRouteImport.update({
     id: '/api/public/hooks/generate-ai-markets',
@@ -192,6 +199,7 @@ export interface FileRoutesByFullPath {
   '/api/public/hooks/check-group-bet-outcomes': typeof ApiPublicHooksCheckGroupBetOutcomesRoute
   '/api/public/hooks/discover-trending-markets': typeof ApiPublicHooksDiscoverTrendingMarketsRoute
   '/api/public/hooks/generate-ai-markets': typeof ApiPublicHooksGenerateAiMarketsRoute
+  '/api/public/hooks/generate-market-themes': typeof ApiPublicHooksGenerateMarketThemesRoute
   '/api/public/hooks/resolve-ai-markets': typeof ApiPublicHooksResolveAiMarketsRoute
   '/api/public/hooks/sync-polymarket': typeof ApiPublicHooksSyncPolymarketRoute
 }
@@ -217,6 +225,7 @@ export interface FileRoutesByTo {
   '/api/public/hooks/check-group-bet-outcomes': typeof ApiPublicHooksCheckGroupBetOutcomesRoute
   '/api/public/hooks/discover-trending-markets': typeof ApiPublicHooksDiscoverTrendingMarketsRoute
   '/api/public/hooks/generate-ai-markets': typeof ApiPublicHooksGenerateAiMarketsRoute
+  '/api/public/hooks/generate-market-themes': typeof ApiPublicHooksGenerateMarketThemesRoute
   '/api/public/hooks/resolve-ai-markets': typeof ApiPublicHooksResolveAiMarketsRoute
   '/api/public/hooks/sync-polymarket': typeof ApiPublicHooksSyncPolymarketRoute
 }
@@ -245,6 +254,7 @@ export interface FileRoutesById {
   '/api/public/hooks/check-group-bet-outcomes': typeof ApiPublicHooksCheckGroupBetOutcomesRoute
   '/api/public/hooks/discover-trending-markets': typeof ApiPublicHooksDiscoverTrendingMarketsRoute
   '/api/public/hooks/generate-ai-markets': typeof ApiPublicHooksGenerateAiMarketsRoute
+  '/api/public/hooks/generate-market-themes': typeof ApiPublicHooksGenerateMarketThemesRoute
   '/api/public/hooks/resolve-ai-markets': typeof ApiPublicHooksResolveAiMarketsRoute
   '/api/public/hooks/sync-polymarket': typeof ApiPublicHooksSyncPolymarketRoute
 }
@@ -273,6 +283,7 @@ export interface FileRouteTypes {
     | '/api/public/hooks/check-group-bet-outcomes'
     | '/api/public/hooks/discover-trending-markets'
     | '/api/public/hooks/generate-ai-markets'
+    | '/api/public/hooks/generate-market-themes'
     | '/api/public/hooks/resolve-ai-markets'
     | '/api/public/hooks/sync-polymarket'
   fileRoutesByTo: FileRoutesByTo
@@ -298,6 +309,7 @@ export interface FileRouteTypes {
     | '/api/public/hooks/check-group-bet-outcomes'
     | '/api/public/hooks/discover-trending-markets'
     | '/api/public/hooks/generate-ai-markets'
+    | '/api/public/hooks/generate-market-themes'
     | '/api/public/hooks/resolve-ai-markets'
     | '/api/public/hooks/sync-polymarket'
   id:
@@ -325,6 +337,7 @@ export interface FileRouteTypes {
     | '/api/public/hooks/check-group-bet-outcomes'
     | '/api/public/hooks/discover-trending-markets'
     | '/api/public/hooks/generate-ai-markets'
+    | '/api/public/hooks/generate-market-themes'
     | '/api/public/hooks/resolve-ai-markets'
     | '/api/public/hooks/sync-polymarket'
   fileRoutesById: FileRoutesById
@@ -344,6 +357,7 @@ export interface RootRouteChildren {
   ApiPublicHooksCheckGroupBetOutcomesRoute: typeof ApiPublicHooksCheckGroupBetOutcomesRoute
   ApiPublicHooksDiscoverTrendingMarketsRoute: typeof ApiPublicHooksDiscoverTrendingMarketsRoute
   ApiPublicHooksGenerateAiMarketsRoute: typeof ApiPublicHooksGenerateAiMarketsRoute
+  ApiPublicHooksGenerateMarketThemesRoute: typeof ApiPublicHooksGenerateMarketThemesRoute
   ApiPublicHooksResolveAiMarketsRoute: typeof ApiPublicHooksResolveAiMarketsRoute
   ApiPublicHooksSyncPolymarketRoute: typeof ApiPublicHooksSyncPolymarketRoute
 }
@@ -504,6 +518,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ApiPublicHooksResolveAiMarketsRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/api/public/hooks/generate-market-themes': {
+      id: '/api/public/hooks/generate-market-themes'
+      path: '/api/public/hooks/generate-market-themes'
+      fullPath: '/api/public/hooks/generate-market-themes'
+      preLoaderRoute: typeof ApiPublicHooksGenerateMarketThemesRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/api/public/hooks/generate-ai-markets': {
       id: '/api/public/hooks/generate-ai-markets'
       path: '/api/public/hooks/generate-ai-markets'
@@ -585,6 +606,8 @@ const rootRouteChildren: RootRouteChildren = {
   ApiPublicHooksDiscoverTrendingMarketsRoute:
     ApiPublicHooksDiscoverTrendingMarketsRoute,
   ApiPublicHooksGenerateAiMarketsRoute: ApiPublicHooksGenerateAiMarketsRoute,
+  ApiPublicHooksGenerateMarketThemesRoute:
+    ApiPublicHooksGenerateMarketThemesRoute,
   ApiPublicHooksResolveAiMarketsRoute: ApiPublicHooksResolveAiMarketsRoute,
   ApiPublicHooksSyncPolymarketRoute: ApiPublicHooksSyncPolymarketRoute,
 }
