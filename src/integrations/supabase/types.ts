@@ -875,9 +875,24 @@ export type Database = {
           _closes_at: string
           _description: string
           _friend_ids: string[]
+          _resolution_source?: string
           _title: string
         }
         Returns: string
+      }
+      finalize_group_bet: {
+        Args: {
+          _auto: boolean
+          _group_bet_id: string
+          _reason: string
+          _resolution: Database["public"]["Enums"]["group_bet_resolution"]
+        }
+        Returns: undefined
+      }
+      finalize_pending_auto_resolutions: { Args: never; Returns: number }
+      flag_auto_resolution: {
+        Args: { _group_bet_id: string }
+        Returns: undefined
       }
       get_public_group_bet_preview: {
         Args: { _group_bet_id: string }
@@ -914,18 +929,19 @@ export type Database = {
       }
       mark_all_notifications_read: { Args: never; Returns: undefined }
       mark_notification_read: { Args: { _id: string }; Returns: undefined }
+      propose_group_bet_resolution: {
+        Args: {
+          _group_bet_id: string
+          _reason: string
+          _resolution: Database["public"]["Enums"]["group_bet_resolution"]
+        }
+        Returns: Json
+      }
       reject_market_suggestion: {
         Args: { _suggestion_id: string }
         Returns: undefined
       }
       remove_friend: { Args: { _friendship_id: string }; Returns: undefined }
-      resolve_group_bet: {
-        Args: {
-          _group_bet_id: string
-          _resolution: Database["public"]["Enums"]["group_bet_resolution"]
-        }
-        Returns: undefined
-      }
       resolve_market: {
         Args: {
           _market_id: string
