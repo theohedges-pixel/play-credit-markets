@@ -775,6 +775,7 @@ export type Database = {
           polymarket_clob_token_id: string | null
           polymarket_event_id: string | null
           polymarket_event_slug: string | null
+          polymarket_event_title: string | null
           polymarket_id: string | null
           polymarket_neg_risk_id: string | null
           proposed_resolution:
@@ -807,6 +808,7 @@ export type Database = {
           polymarket_clob_token_id?: string | null
           polymarket_event_id?: string | null
           polymarket_event_slug?: string | null
+          polymarket_event_title?: string | null
           polymarket_id?: string | null
           polymarket_neg_risk_id?: string | null
           proposed_resolution?:
@@ -839,6 +841,7 @@ export type Database = {
           polymarket_clob_token_id?: string | null
           polymarket_event_id?: string | null
           polymarket_event_slug?: string | null
+          polymarket_event_title?: string | null
           polymarket_id?: string | null
           polymarket_neg_risk_id?: string | null
           proposed_resolution?:
