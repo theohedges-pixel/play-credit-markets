@@ -663,6 +663,10 @@ function MarketsTab() {
             {backfilling ? <Loader2 size={14} className="animate-spin" /> : <History size={14} />}
             {backfilling ? "Backfilling…" : "Backfill Polymarket history"}
           </Button>
+          <Button variant="outline" className="gap-2" onClick={onRegenThemes} disabled={themeing}>
+            {themeing ? <Loader2 size={14} className="animate-spin" /> : <Tags size={14} />}
+            {themeing ? "Regenerating…" : "Regenerate themes"}
+          </Button>
         </div>
         <p className="text-xs text-muted-foreground mt-2">
           One-time fill-in of real pre-import price history for imported markets with no Predikt
