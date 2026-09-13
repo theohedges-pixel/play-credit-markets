@@ -705,6 +705,7 @@ export type Database = {
       leaderboard_net_worth: {
         Row: {
           avatar_url: string | null
+          created_at: string | null
           credits: number | null
           id: string | null
           net_worth: number | null
