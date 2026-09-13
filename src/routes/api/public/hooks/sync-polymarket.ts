@@ -241,6 +241,17 @@ export async function runSync() {
             yes_price: Number(m.no_pool) / (Number(m.yes_pool) + Number(m.no_pool)),
           })),
         );
+        // Every NEW import gets its full Polymarket history immediately, so the
+        // chart opens with real movement instead of a single seed point.
+        if (row.polymarket_clob_token_id) {
+          try {
+            const res = await backfillMarketHistory(supabaseAdmin, data[0]!.id);
+            backfilledPoints += res.points;
+          } catch (e) {
+            console.error("[sync-polymarket] history backfill failed", data[0]!.id, (e as Error).message);
+          }
+          await new Promise((r) => setTimeout(r, THROTTLE_MS));
+        }
       }
     }
   }
