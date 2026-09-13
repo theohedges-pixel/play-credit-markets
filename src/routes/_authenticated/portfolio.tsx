@@ -10,6 +10,8 @@ import { fmtCredits, yesPrice } from "@/lib/format";
 import { toast } from "sonner";
 import { Coins, Gift, TrendingUp, WalletCards } from "lucide-react";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
+import { TradeLedger, type LedgerTrade } from "@/components/TradeRow";
+
 
 export const Route = createFileRoute("/_authenticated/portfolio")({
   head: () => ({
@@ -101,7 +103,21 @@ function Portfolio() {
   const displayedValue = (v: number) => Math.round(v);
   const valueClass = (v: number) => displayedValue(v) > 0 ? "text-yes" : displayedValue(v) < 0 ? "text-no" : "text-muted-foreground";
   const signed = (v: number) => `${displayedValue(v) > 0 ? "+" : ""}${fmtCredits(displayedValue(v))}`;
+  const { data: ledger, isLoading: ledgerLoading } = useQuery({
+    queryKey: ["public-trading-history", user?.id, user?.id],
+    enabled: !!user,
+    queryFn: async () => {
+      const { data, error } = await (supabase as any).rpc("get_public_trading_history", {
+        _user_id: user!.id,
+      });
+      if (error) throw error;
+      return data as { visible: boolean; trades: LedgerTrade[]; positions: any[] };
+    },
+  });
+  const ledgerTrades = (ledger?.trades ?? []) as LedgerTrade[];
+
   const positionRows = (positions ?? [])
+
     .filter((position: any) => position.market)
     .map((position: any) => {
       const resolved = position.market.status === "resolved";
