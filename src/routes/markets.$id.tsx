@@ -58,7 +58,7 @@ function MarketDetail() {
     queryFn: async () => {
       const { data } = await supabase
         .from("markets")
-        .select("*, category:categories(name), creator:profiles!markets_creator_id_fkey(username)")
+        .select("*, category:categories(name), creator:profiles!markets_creator_id_fkey(username), suggester:profiles!markets_suggested_by_fkey(username)")
         .eq("id", id)
         .single();
       return data;
@@ -328,6 +328,13 @@ function MarketDetail() {
             <div className="flex items-center gap-2 text-xs text-muted-foreground mb-3">
               {market.category && <span className="px-2 py-0.5 rounded bg-secondary">{market.category.name}</span>}
               <span>by @{(market as any).creator?.username ?? "anon"}</span>
+              {(market as any).suggester?.username && (
+                <span className="px-2 py-0.5 rounded-full border border-primary/60 text-primary">
+                  {user && (market as any).suggested_by === user.id
+                    ? "You suggested this"
+                    : `Suggested by @${(market as any).suggester.username}`}
+                </span>
+              )}
             </div>
             <h1 className="font-display text-3xl md:text-4xl font-bold leading-tight">{market.title}</h1>
 
