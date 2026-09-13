@@ -157,6 +157,18 @@ function CreateGroupBet() {
           </div>
         </div>
 
+        <div className="rounded-lg border border-dashed border-border bg-card/50 p-4 flex items-start gap-3">
+          <Users className="shrink-0 text-muted-foreground mt-0.5" size={18} />
+          <div>
+            <p className="text-sm font-medium text-foreground">
+              Invite someone who's not on here yet
+            </p>
+            <p className="text-xs text-muted-foreground mt-0.5">
+              You can also send an invite link once your bet is created.
+            </p>
+          </div>
+        </div>
+
         <Button onClick={submit} disabled={submitting}>
           {submitting ? "Creating…" : "Create bet"}
         </Button>
