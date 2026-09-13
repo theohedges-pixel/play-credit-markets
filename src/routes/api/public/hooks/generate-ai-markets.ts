@@ -292,6 +292,14 @@ export async function runGenerate() {
       yes_price: Number(m.no_pool) / (Number(m.yes_pool) + Number(m.no_pool)),
     }));
     await supabaseAdmin.from("price_history").insert(history);
+
+    // Creation-time sub-theme tagging against each category's CURRENT themes.
+    const { tagNewMarket } = await import("@/lib/market-themes.server");
+    const { data: fresh } = await supabaseAdmin
+      .from("markets")
+      .select("id, title, description, category_id")
+      .in("id", inserted.map((m) => m.id));
+    for (const m of fresh ?? []) await tagNewMarket(supabaseAdmin, apiKey, m);
   }
 
   const nowIso = new Date().toISOString();
