@@ -1,4 +1,5 @@
 import { createFileRoute } from "@tanstack/react-router";
+import { parseYesProbability, seedPools } from "@/lib/polymarket-odds";
 
 interface PolyMarket {
   id?: string;
@@ -9,6 +10,10 @@ interface PolyMarket {
   closed?: boolean;
   active?: boolean;
   volume?: string | number;
+  outcomePrices?: string | string[] | null;
+  lastTradePrice?: number | string | null;
+  bestBid?: number | string | null;
+  bestAsk?: number | string | null;
 }
 
 const CATEGORY_NAMES = ["Politics", "Crypto", "Sports", "Tech", "Pop Culture", "Science"] as const;
@@ -123,7 +128,13 @@ async function runSync() {
       .in("name", CATEGORY_NAMES as unknown as string[]);
     const catByName = new Map((catRows ?? []).map((c) => [c.name, c.id]));
 
-    const rows = fresh.map((m, i) => ({
+    const rows = fresh.map((m, i) => {
+      const prob = parseYesProbability(m);
+      if (prob === null) {
+        console.warn("[sync-polymarket] no usable odds, seeding neutral:", m.question);
+      }
+      const pools = seedPools(prob);
+      return {
       creator_id: null,
       title: m.question!,
       description:
@@ -131,15 +142,27 @@ async function runSync() {
       category_id: catByName.get(cats[i]) ?? null,
       closes_at: new Date(m.endDate ?? m.end_date_iso!).toISOString(),
       status: "open" as const,
-      yes_pool: 1000,
-      no_pool: 1000,
+      yes_pool: pools.yes_pool,
+      no_pool: pools.no_pool,
       volume: 0,
       source: "polymarket",
       polymarket_id: m.id ?? null,
-    }));
-    const { data, error } = await supabaseAdmin.from("markets").insert(rows).select("id");
+      };
+    });
+    const { data, error } = await supabaseAdmin
+      .from("markets")
+      .insert(rows)
+      .select("id, yes_pool, no_pool");
     if (error) throw new Error(error.message);
     inserted = data?.length ?? 0;
+    if (data && data.length > 0) {
+      await supabaseAdmin.from("price_history").insert(
+        data.map((m) => ({
+          market_id: m.id,
+          yes_price: Number(m.no_pool) / (Number(m.yes_pool) + Number(m.no_pool)),
+        })),
+      );
+    }
   }
 
   await supabaseAdmin

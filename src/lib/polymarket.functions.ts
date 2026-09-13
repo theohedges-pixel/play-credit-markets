@@ -1,5 +1,6 @@
 import { createServerFn } from "@tanstack/react-start";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
+import { parseYesProbability, seedPools } from "@/lib/polymarket-odds";
 
 interface PolyMarket {
   id?: string;
@@ -11,6 +12,10 @@ interface PolyMarket {
   volume?: string | number;
   closed?: boolean;
   active?: boolean;
+  outcomePrices?: string | string[] | null;
+  lastTradePrice?: number | string | null;
+  bestBid?: number | string | null;
+  bestAsk?: number | string | null;
 }
 
 const CATEGORY_NAMES = ["Politics", "Crypto", "Sports", "Tech", "Pop Culture", "Science"] as const;
@@ -147,7 +152,13 @@ export const importPolymarketMarkets = createServerFn({ method: "POST" })
       (catRows ?? []).map((c: { id: string; name: string }) => [c.name, c.id]),
     );
 
-    const rows = fresh.map((c, i) => ({
+    const rows = fresh.map((c, i) => {
+      const prob = parseYesProbability(c.m);
+      if (prob === null) {
+        console.warn("[polymarket import] no usable odds, seeding neutral:", c.m.question);
+      }
+      const pools = seedPools(prob);
+      return {
       creator_id: context.userId,
       title: c.m.question!,
       description:
@@ -156,18 +167,27 @@ export const importPolymarketMarkets = createServerFn({ method: "POST" })
       category_id: catByName.get(cats[i]) ?? null,
       closes_at: new Date(c.closes).toISOString(),
       status: "open" as const,
-      yes_pool: 1000,
-      no_pool: 1000,
+      yes_pool: pools.yes_pool,
+      no_pool: pools.no_pool,
       volume: 0,
       source: "polymarket",
       polymarket_id: c.m.id ?? null,
-    }));
+      };
+    });
 
     const { error: insErr, data: inserted } = await context.supabase
       .from("markets")
       .insert(rows)
-      .select("id");
+      .select("id, yes_pool, no_pool");
     if (insErr) throw new Error(insErr.message);
+    if (inserted && inserted.length > 0) {
+      await context.supabase.from("price_history").insert(
+        inserted.map((m: { id: string; yes_pool: number; no_pool: number }) => ({
+          market_id: m.id,
+          yes_price: Number(m.no_pool) / (Number(m.yes_pool) + Number(m.no_pool)),
+        })),
+      );
+    }
 
     return {
       imported: inserted?.length ?? 0,
