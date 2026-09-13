@@ -1,14 +1,16 @@
 # Roadmap
 
-## In progress
-- [ ] Verify profile privacy lockdown (credits hidden from other users, leaderboard intact, embeds via public_profiles work)
+## Urgent
+- [ ] PUBLISH the app — cron runs the published build, so all generator fixes
+      (date grounding, topic grounding, staleness gate, semantic dedupe) are
+      inactive in production until then.
 
-## Next: endpoint security + Polymarket sync consolidation
-- [ ] Add shared-secret (x-cron-secret) check to /api/public/hooks/sync-polymarket; update pg_cron job 2 header
-- [ ] Same check on generate-ai-markets and check-group-bet-outcomes if missing
-- [ ] Gate "Import from Polymarket" button to admins
-- [ ] Delete polymarket.functions.ts + import button; single sync path
-- [ ] sync-polymarket.ts: order by volume24hr, cap inserts per run (~25)
-- [ ] Partial unique index on markets.polymarket_id
-- [ ] Refresh odds on untraded polymarket_import markets (NOT EXISTS trades guard), update volume + price_history
-- [ ] Test: double sync no dupes; untraded odds refresh; traded market untouched
+## Open
+- [ ] Bucket B (stale markets with trades): currently empty — recheck after each generator run.
+- [ ] Verify profile privacy lockdown (credits hidden from other users, leaderboard intact)
+
+## Done
+- [x] Cron shared-secret guard on /api/public/hooks/*
+- [x] Polymarket sync consolidation, dedupe index, odds refresh
+- [x] Stale AI market audit + Bucket A cleanup (19 removed)
+- [x] Grounded topic sourcing + staleness verification + semantic duplicate detection
