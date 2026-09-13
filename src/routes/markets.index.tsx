@@ -120,6 +120,13 @@ function MarketsPage() {
 
   useMarketListRealtime(["markets"], "markets:list");
 
+  // Theme filtering is OR across the selected chips, inside the chosen category.
+  const filtered =
+    themeIds.length > 0 && themeMatchIds
+      ? (markets ?? []).filter((m) => themeMatchIds.includes(m.id))
+      : (markets ?? []);
+  const visible = [...filtered].sort(SORTS[sortKey].order);
+
   return (
     <div className="min-h-screen">
       <Header />
