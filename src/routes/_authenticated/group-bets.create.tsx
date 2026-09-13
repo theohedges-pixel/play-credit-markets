@@ -10,6 +10,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Checkbox } from "@/components/ui/checkbox";
 import { UserAvatar } from "@/components/UserAvatar";
 import { toast } from "sonner";
+import { Users } from "lucide-react";
 
 export const Route = createFileRoute("/_authenticated/group-bets/create")({
   head: () => ({ meta: [{ title: "New group bet — Predikt" }] }),
