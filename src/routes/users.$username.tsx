@@ -1,11 +1,10 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { format, formatDistanceToNow } from "date-fns";
+import { format } from "date-fns";
 import { supabase } from "@/integrations/supabase/client";
 import { Header } from "@/components/Header";
 import { UserAvatar } from "@/components/UserAvatar";
 import { Button } from "@/components/ui/button";
-import { fmtCredits, yesPrice } from "@/lib/format";
 import { useAuth } from "@/lib/auth";
 import { toast } from "sonner";
 
@@ -44,18 +43,10 @@ function PublicProfile() {
   });
 
   const uid = profile?.id;
+  const isOwnProfile = !!me && me.id === uid;
 
-  const { data: positions } = useQuery({
-    queryKey: ["public-positions", uid],
-    enabled: !!uid,
-    queryFn: async () => {
-      const { data } = await supabase
-        .from("positions")
-        .select("yes_shares, no_shares, credits_spent, market:markets(id, status, resolution, yes_pool, no_pool)")
-        .eq("user_id", uid!);
-      return data ?? [];
-    },
-  });
+  // NOTE: positions/trades are private (owner-only RLS) — no cross-user
+  // holdings or activity queries here.
 
   const { data: marketsCreated } = useQuery({
     queryKey: ["public-markets-created", uid],
@@ -66,20 +57,6 @@ function PublicProfile() {
         .select("id", { count: "exact", head: true })
         .eq("creator_id", uid!);
       return count ?? 0;
-    },
-  });
-
-  const { data: trades } = useQuery({
-    queryKey: ["public-trades", uid],
-    enabled: !!uid,
-    queryFn: async () => {
-      const { data } = await supabase
-        .from("trades")
-        .select("id, side, action, shares, credits, price, created_at, market:markets(id, title)")
-        .eq("user_id", uid!)
-        .order("created_at", { ascending: false })
-        .limit(10);
-      return data ?? [];
     },
   });
 
