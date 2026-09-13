@@ -1,4 +1,4 @@
-import { createFileRoute, Link } from "@tanstack/react-router";
+import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
 import { useState } from "react";
@@ -13,8 +13,23 @@ import { Search, Sparkles, Loader2, RefreshCw, Brain } from "lucide-react";
 import { toast } from "sonner";
 import { importPolymarketMarkets } from "@/lib/polymarket.functions";
 import { useMarketListRealtime } from "@/lib/realtime";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { zodValidator, fallback } from "@tanstack/zod-adapter";
+import { z } from "zod";
+import { ArrowUpDown } from "lucide-react";
+
+const marketsSearchSchema = z.object({
+  sort: fallback(z.string(), "active").default("active"),
+});
+
+const SORTS: Record<string, { label: string; order: (a: any, b: any) => number }> = {
+  active: { label: "Most active", order: (a, b) => Number(b.volume) - Number(a.volume) },
+  closing: { label: "Closing soon", order: (a, b) => new Date(a.closes_at).getTime() - new Date(b.closes_at).getTime() },
+  newest: { label: "Newest", order: (a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime() },
+};
 
 export const Route = createFileRoute("/markets/")({
+  validateSearch: zodValidator(marketsSearchSchema),
   head: () => ({
     meta: [
       { title: "Markets — Predikt" },
@@ -25,6 +40,9 @@ export const Route = createFileRoute("/markets/")({
 });
 
 function MarketsPage() {
+  const { sort } = Route.useSearch();
+  const navigate = useNavigate({ from: "/markets/" });
+  const sortKey = SORTS[sort] ? sort : "active";
   const [q, setQ] = useState("");
   const [cat, setCat] = useState<string | null>(null);
   const [importing, setImporting] = useState(false);
@@ -116,16 +134,18 @@ function MarketsPage() {
   });
 
   const { data: markets, isLoading } = useQuery({
-    queryKey: ["markets", q, cat],
+    queryKey: ["markets", q, cat, sortKey],
     queryFn: async () => {
       let query = supabase
         .from("markets")
         .select(
-          "id, title, closes_at, yes_pool, no_pool, volume, status, resolution, source, created_via, category:categories(name)",
+          "id, title, closes_at, created_at, yes_pool, no_pool, volume, status, resolution, source, created_via, category:categories(name)",
         )
         .eq("status", "open")
-        .gt("closes_at", new Date().toISOString())
-        .order("created_at", { ascending: false });
+        .gt("closes_at", new Date().toISOString());
+      if (sortKey === "active") query = query.order("volume", { ascending: false });
+      else if (sortKey === "closing") query = query.order("closes_at", { ascending: true });
+      else query = query.order("created_at", { ascending: false });
       if (cat) query = query.eq("category_id", cat);
       if (q) query = query.ilike("title", `%${q}%`);
       const { data } = await query.limit(60);
@@ -201,7 +221,23 @@ function MarketsPage() {
           </div>
         </div>
 
-        <div className="flex flex-wrap gap-2 mb-8">
+        <div className="flex flex-wrap items-center gap-2 mb-8">
+          <Select
+            value={sortKey}
+            onValueChange={(v) =>
+              navigate({ search: (prev) => ({ ...prev, sort: v }), replace: true })
+            }
+          >
+            <SelectTrigger className="w-[170px] h-8 text-sm">
+              <ArrowUpDown size={14} className="text-muted-foreground shrink-0" />
+              <SelectValue placeholder="Sort" />
+            </SelectTrigger>
+            <SelectContent>
+              {Object.entries(SORTS).map(([key, s]) => (
+                <SelectItem key={key} value={key}>{s.label}</SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
           <button
             onClick={() => setCat(null)}
             className={`px-3 py-1.5 rounded-full text-sm border ${!cat ? "bg-primary text-primary-foreground border-primary" : "border-border text-muted-foreground hover:text-foreground"}`}
@@ -236,7 +272,7 @@ function MarketsPage() {
           </div>
         ) : markets && markets.length > 0 ? (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-            {markets.map((m) => <MarketCard key={m.id} m={m} />)}
+            {[...markets].sort(SORTS[sortKey].order).map((m) => <MarketCard key={m.id} m={m} />)}
           </div>
         ) : (
           <div className="text-muted-foreground py-12 text-center">No markets match.</div>
