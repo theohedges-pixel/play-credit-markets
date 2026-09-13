@@ -276,12 +276,15 @@ export async function runGenerate() {
   const raw = await callAi(apiKey);
   const valid: AiEvent[] = [];
   let malformed = 0;
+  let roundDate = 0;
   for (const r of raw) {
     const v = validateEvent(r);
-    if (v) valid.push(v);
+    if ("ev" in v) valid.push(v.ev);
+    else if (v.rejected === "round_date") roundDate++;
     else malformed++;
   }
   if (malformed) console.warn(`[generate-ai-markets] skipped ${malformed} malformed events`);
+  if (roundDate) console.warn(`[generate-ai-markets] discarded ${roundDate} candidates with suspiciously round closes_at`);
   if (valid.length === 0) {
     await supabaseAdmin
       .from("app_settings")
