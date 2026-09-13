@@ -123,5 +123,31 @@ export const approveSuggestionChecked = createServerFn({ method: "POST" })
       payload as any,
     );
     if (error) throw new Error(error.message);
+
+    // Creation-time sub-theme tagging against the category's CURRENT theme set.
+    // Never blocks approval — an untagged market is fine until the next run.
+    try {
+      const { tagNewMarket } = await import("@/lib/market-themes.server");
+      const { data: created } = await supabaseAdmin
+        .from("markets")
+        .select("id, title, description, category_id")
+        .eq("id", marketId as string)
+        .maybeSingle();
+      if (created) await tagNewMarket(supabaseAdmin, apiKey, created);
+    } catch (e) {
+      console.warn("[approveSuggestionChecked] theme tagging failed:", (e as Error).message);
+    }
+
     return { approved: true as const, marketId };
+  });
+
+/** Manual "Regenerate themes" trigger for the admin dashboard's Markets tab. */
+export const regenerateMarketThemesNow = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .handler(async ({ context }) => {
+    await requireAdmin(context.supabase, context.userId);
+    const { runThemeGeneration } = await import(
+      "@/routes/api/public/hooks/generate-market-themes"
+    );
+    return runThemeGeneration();
   });
