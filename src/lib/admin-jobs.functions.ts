@@ -82,6 +82,7 @@ export const approveSuggestionChecked = createServerFn({ method: "POST" })
         description: z.string().optional(),
         categoryId: z.string().uuid().nullable().optional(),
         closesAt: z.string().optional(),
+        probability: z.number().gt(0).lt(1).optional(),
       })
       .parse(data),
   )
