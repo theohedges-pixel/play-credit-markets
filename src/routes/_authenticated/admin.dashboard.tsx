@@ -1206,8 +1206,9 @@ function SuggestionsTab() {
                 )}
 
                 <div className="flex gap-2 mt-4 flex-wrap">
-                  <Button size="sm" onClick={() => onApprove(s)} className="gap-1.5">
-                    <Check size={14} /> Approve
+                  <Button size="sm" onClick={() => onApprove(s)} disabled={approving === s.id} className="gap-1.5">
+                    {approving === s.id ? <Loader2 size={14} className="animate-spin" /> : <Check size={14} />}
+                    {approving === s.id ? "Checking…" : "Approve"}
                   </Button>
                   {!isEditing && (
                     <Button size="sm" variant="outline" onClick={() => startEdit(s)} className="gap-1.5">
