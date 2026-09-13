@@ -565,6 +565,8 @@ function MarketsTab() {
   const [genAi, setGenAi] = useState(false);
   const [picked, setPicked] = useState<Record<string, boolean>>({});
   const [pruning, setPruning] = useState(false);
+  const runBackfill = useServerFn(backfillPolymarketHistoryNow);
+  const [backfilling, setBackfilling] = useState(false);
 
   const { data: prunable, isLoading } = useQuery({
     queryKey: ["admin-prunable"],
