@@ -1,5 +1,5 @@
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
-import { useState, type FormEvent } from "react";
+import { useEffect, useState, type FormEvent } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { Header } from "@/components/Header";
 import { Button } from "@/components/ui/button";
@@ -8,6 +8,7 @@ import { Label } from "@/components/ui/label";
 import { toast } from "sonner";
 import { Mail } from "lucide-react";
 import { setPendingBet } from "@/lib/pending-bet";
+import { useAuth } from "@/lib/auth";
 
 export const Route = createFileRoute("/signup")({
   validateSearch: (search: Record<string, unknown>): { ref?: string; bet?: string } => {
