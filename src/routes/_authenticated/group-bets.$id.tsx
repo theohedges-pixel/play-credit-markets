@@ -84,6 +84,28 @@ function GroupBetDetail() {
   const closed = new Date(bet.closes_at) <= new Date();
   const myPart = (participants ?? []).find((p) => p.user_id === user?.id);
 
+  // Anyone taking part (creator included) can share their own chain link.
+  const canShare = (isCreator || !!myPart) && bet.status === "open" && !closed && !!profile?.username;
+  const shareUrl = profile?.username ? `${origin}/join/${profile.username}?bet=${bet.id}` : "";
+
+  const share = async () => {
+    const text = `Join me on Predikt — free prediction markets, no real money. Bet with me on: ${bet.title}`;
+    if (typeof navigator !== "undefined" && navigator.share) {
+      try {
+        await navigator.share({ title: "Predikt group bet", text, url: shareUrl });
+        return;
+      } catch {
+        /* dismissed — fall through to copy */
+      }
+    }
+    try {
+      await navigator.clipboard.writeText(shareUrl);
+      toast.success("Link copied!");
+    } catch {
+      toast.error("Could not copy the link");
+    }
+  };
+
   const totals = (participants ?? []).reduce(
     (acc, p) => {
       acc.total += Number(p.credits_wagered);
