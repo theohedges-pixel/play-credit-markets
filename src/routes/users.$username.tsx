@@ -1,6 +1,8 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { format } from "date-fns";
+import { Lock } from "lucide-react";
+import { fmtCredits, fmtPct } from "@/lib/format";
 import { supabase } from "@/integrations/supabase/client";
 import { Header } from "@/components/Header";
 import { UserAvatar } from "@/components/UserAvatar";
@@ -29,7 +31,7 @@ function PublicProfile() {
     queryFn: async () => {
       const { data } = await (supabase as any)
         .from("public_profiles")
-        .select("id, username, avatar_url, bio, peak_net_worth, created_at")
+        .select("id, username, avatar_url, bio, peak_net_worth, trading_history_public, created_at")
         .eq("username", username)
         .maybeSingle();
       return data as {
@@ -38,6 +40,7 @@ function PublicProfile() {
         avatar_url: string | null;
         bio: string | null;
         peak_net_worth: number | null;
+        trading_history_public: boolean | null;
         created_at: string;
       } | null;
     },
@@ -46,8 +49,24 @@ function PublicProfile() {
   const uid = profile?.id;
   const isOwnProfile = !!me && me.id === uid;
 
-  // NOTE: positions/trades are private (owner-only RLS) — no cross-user
-  // holdings or activity queries here.
+  // Trading history visibility is enforced in exactly one place — the
+  // get_public_trading_history function — which honours each user's opt-out
+  // and always lets a user see their own data.
+  const { data: tradingHistory, isLoading: historyLoading } = useQuery({
+    queryKey: ["public-trading-history", uid, me?.id],
+    enabled: !!uid && !!me,
+    queryFn: async () => {
+      const { data, error } = await (supabase as any).rpc("get_public_trading_history", {
+        _user_id: uid,
+      });
+      if (error) throw error;
+      return data as {
+        visible: boolean;
+        trades: any[];
+        positions: any[];
+      };
+    },
+  });
 
   const { data: marketsCreated } = useQuery({
     queryKey: ["public-markets-created", uid],
@@ -194,14 +213,119 @@ function PublicProfile() {
           <Stat label="Friends" value={String(friendCount ?? 0)} />
         </div>
 
-        <p className="text-xs text-muted-foreground">
-          Holdings and trade history are private — check the{" "}
-          <Link to="/leaderboard" className="text-primary hover:underline">
-            leaderboard
-          </Link>{" "}
-          for public rankings.
-        </p>
+        <section>
+          <h2 className="font-display text-xl font-bold mb-3">Trading history</h2>
+
+          {!me ? (
+            <EmptyNote>
+              <Link to="/login" className="text-primary hover:underline">
+                Sign in
+              </Link>{" "}
+              to see this trader's history.
+            </EmptyNote>
+          ) : historyLoading ? (
+            <EmptyNote>Loading…</EmptyNote>
+          ) : !tradingHistory?.visible ? (
+            <EmptyNote>
+              <span className="inline-flex items-center gap-2">
+                <Lock size={14} /> This user has made their trading history private.
+              </span>
+            </EmptyNote>
+          ) : (
+            <div className="space-y-6">
+              {isOwnProfile && profile.trading_history_public === false && (
+                <p className="text-xs text-muted-foreground">
+                  Only you can see this — your history is set to private in{" "}
+                  <Link to="/settings" className="text-primary hover:underline">
+                    settings
+                  </Link>
+                  .
+                </p>
+              )}
+
+              <div>
+                <h3 className="text-[11px] uppercase tracking-wider text-muted-foreground mb-2">
+                  Open positions
+                </h3>
+                {tradingHistory.positions.length === 0 ? (
+                  <EmptyNote>No open positions.</EmptyNote>
+                ) : (
+                  <div className="rounded-lg border border-border bg-card divide-y divide-border">
+                    {tradingHistory.positions.map((pos: any) => (
+                      <div key={pos.market_id} className="px-4 py-3 flex items-center gap-4">
+                        <Link
+                          to="/markets/$id"
+                          params={{ id: pos.market_id }}
+                          className="flex-1 min-w-0 text-sm hover:text-primary truncate"
+                        >
+                          {pos.market_title}
+                        </Link>
+                        <span className="text-xs font-mono text-muted-foreground shrink-0">
+                          {Number(pos.yes_shares) > 0 && (
+                            <span className="text-yes">{Number(pos.yes_shares).toFixed(0)} YES</span>
+                          )}
+                          {Number(pos.yes_shares) > 0 && Number(pos.no_shares) > 0 && " · "}
+                          {Number(pos.no_shares) > 0 && (
+                            <span className="text-no">{Number(pos.no_shares).toFixed(0)} NO</span>
+                          )}
+                        </span>
+                        <span className="text-xs font-mono tabular-nums shrink-0 w-16 text-right">
+                          {fmtCredits(pos.value ?? 0)}c
+                        </span>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+
+              <div>
+                <h3 className="text-[11px] uppercase tracking-wider text-muted-foreground mb-2">
+                  Trades
+                </h3>
+                {tradingHistory.trades.length === 0 ? (
+                  <EmptyNote>No trades yet.</EmptyNote>
+                ) : (
+                  <div className="rounded-lg border border-border bg-card divide-y divide-border">
+                    {tradingHistory.trades.map((t: any) => (
+                      <div key={t.id} className="px-4 py-3 flex items-center gap-3 flex-wrap">
+                        <span
+                          className={`text-[10px] font-mono px-1.5 py-0.5 rounded shrink-0 ${
+                            t.side === "yes" ? "bg-yes/15 text-yes" : "bg-no/15 text-no"
+                          }`}
+                        >
+                          {String(t.action).toUpperCase()} {String(t.side).toUpperCase()}
+                        </span>
+                        <Link
+                          to="/markets/$id"
+                          params={{ id: t.market_id }}
+                          className="flex-1 min-w-0 text-sm hover:text-primary truncate"
+                        >
+                          {t.market_title}
+                        </Link>
+                        <span className="text-xs font-mono text-muted-foreground shrink-0">
+                          {Number(t.shares).toFixed(2)} sh · {fmtCredits(t.credits)}c ·{" "}
+                          {fmtPct(Number(t.price))}
+                        </span>
+                        <span className="text-[10px] text-muted-foreground shrink-0 w-20 text-right">
+                          {format(new Date(t.created_at), "d MMM HH:mm")}
+                        </span>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+            </div>
+          )}
+        </section>
       </div>
+    </div>
+  );
+}
+
+function EmptyNote({ children }: { children: React.ReactNode }) {
+  return (
+    <div className="rounded-lg border border-border bg-card px-4 py-5 text-sm text-muted-foreground">
+      {children}
     </div>
   );
 }
