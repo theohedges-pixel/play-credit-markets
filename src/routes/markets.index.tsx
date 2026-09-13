@@ -13,8 +13,23 @@ import { Search, Sparkles, Loader2, RefreshCw, Brain } from "lucide-react";
 import { toast } from "sonner";
 import { importPolymarketMarkets } from "@/lib/polymarket.functions";
 import { useMarketListRealtime } from "@/lib/realtime";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { zodValidator, fallback } from "@tanstack/zod-adapter";
+import { z } from "zod";
+import { ArrowUpDown } from "lucide-react";
+
+const marketsSearchSchema = z.object({
+  sort: fallback(z.string(), "active").default("active"),
+});
+
+const SORTS: Record<string, { label: string; order: (a: any, b: any) => number }> = {
+  active: { label: "Most active", order: (a, b) => Number(b.volume) - Number(a.volume) },
+  closing: { label: "Closing soon", order: (a, b) => new Date(a.closes_at).getTime() - new Date(b.closes_at).getTime() },
+  newest: { label: "Newest", order: (a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime() },
+};
 
 export const Route = createFileRoute("/markets/")({
+  validateSearch: zodValidator(marketsSearchSchema),
   head: () => ({
     meta: [
       { title: "Markets — Predikt" },
