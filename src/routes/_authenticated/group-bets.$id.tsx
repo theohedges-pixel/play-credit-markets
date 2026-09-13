@@ -9,6 +9,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { UserAvatar } from "@/components/UserAvatar";
+import { HowGroupBetsWorkDialog } from "@/components/HowGroupBetsWorkDialog";
 import { fmtCredits } from "@/lib/format";
 import { format } from "date-fns";
 import { toast } from "sonner";
@@ -296,17 +297,52 @@ function GroupBetDetail() {
           </div>
         )}
 
-        <div className="grid grid-cols-3 gap-3">
-          <Stat label="Pot" value={`${fmtCredits(totals.total)}c`} />
-          <Stat label="YES" value={`${fmtCredits(totals.yes)}c`} tone="yes" />
-          <Stat label="NO" value={`${fmtCredits(totals.no)}c`} tone="no" />
+        <div className="rounded-lg border border-border bg-card p-5 space-y-4">
+          <div className="flex items-center justify-between">
+            <h2 className="font-display font-semibold">What the group thinks</h2>
+            <span className="text-xs text-muted-foreground">
+              Total pot <span className="font-mono text-foreground">{fmtCredits(totals.total)}c</span>
+            </span>
+          </div>
+          {totals.total > 0 && (
+            <div className="h-2 rounded-full overflow-hidden flex bg-secondary">
+              <div className="bg-yes" style={{ width: `${yesPct}%` }} />
+              <div className="bg-no" style={{ width: `${noPct}%` }} />
+            </div>
+          )}
+          <div className="grid grid-cols-2 gap-3">
+            <div className="rounded-md border border-border bg-secondary/30 p-3">
+              <div className="flex items-baseline justify-between">
+                <span className="text-xs font-semibold text-yes">YES</span>
+                <span className="font-mono text-sm">{yesPct}%</span>
+              </div>
+              <div className="text-xs text-muted-foreground mt-1">
+                {fmtCredits(totals.yes)}c wagered · {multiple(totals.yes)} if YES wins
+              </div>
+            </div>
+            <div className="rounded-md border border-border bg-secondary/30 p-3">
+              <div className="flex items-baseline justify-between">
+                <span className="text-xs font-semibold text-no">NO</span>
+                <span className="font-mono text-sm">{noPct}%</span>
+              </div>
+              <div className="text-xs text-muted-foreground mt-1">
+                {fmtCredits(totals.no)}c wagered · {multiple(totals.no)} if NO wins
+              </div>
+            </div>
+          </div>
+          <p className="text-[11px] text-muted-foreground">
+            Percentages show where the group's credits sit — not a forecast of the outcome.
+          </p>
         </div>
 
         {!myPart && bet.status === "open" && !closed && (
           <div className="rounded-lg border border-border bg-card p-5">
-            <h2 className="font-display font-semibold mb-3">
-              {isCreator ? "Take a side in your own bet" : "Join this bet"}
-            </h2>
+            <div className="flex items-center justify-between mb-3">
+              <h2 className="font-display font-semibold">
+                {isCreator ? "Take a side in your own bet" : "Join this bet"}
+              </h2>
+              <HowGroupBetsWorkDialog />
+            </div>
             <div className="flex gap-2 mb-3">
               <Button
                 size="sm"
@@ -334,6 +370,17 @@ function GroupBetDetail() {
                 {submitting ? "Joining…" : "Join"}
               </Button>
             </div>
+            {wagerAmt > 0 && (
+              <p className="text-xs text-muted-foreground mt-3">
+                After your wager: <span className="font-mono text-foreground">{afterYesPct}% YES / {afterNoPct}% NO</span>
+                {myMultiple != null && (
+                  <>
+                    {" "}· your side pays{" "}
+                    <span className="font-mono text-foreground">{myMultiple.toFixed(2)}×</span> if it wins
+                  </>
+                )}
+              </p>
+            )}
           </div>
         )}
 
