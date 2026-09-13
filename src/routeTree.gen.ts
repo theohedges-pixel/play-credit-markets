@@ -30,6 +30,7 @@ import { Route as AuthenticatedGroupBetsCreateRouteImport } from './routes/_auth
 import { Route as AuthenticatedGroupBetsIdRouteImport } from './routes/_authenticated/group-bets.$id'
 import { Route as AuthenticatedAdminDashboardRouteImport } from './routes/_authenticated/admin.dashboard'
 import { Route as ApiPublicHooksSyncPolymarketRouteImport } from './routes/api/public/hooks/sync-polymarket'
+import { Route as ApiPublicHooksScreenSuggestionRouteImport } from './routes/api/public/hooks/screen-suggestion'
 import { Route as ApiPublicHooksResolveAiMarketsRouteImport } from './routes/api/public/hooks/resolve-ai-markets'
 import { Route as ApiPublicHooksGenerateAiMarketsRouteImport } from './routes/api/public/hooks/generate-ai-markets'
 import { Route as ApiPublicHooksDiscoverTrendingMarketsRouteImport } from './routes/api/public/hooks/discover-trending-markets'
@@ -144,6 +145,12 @@ const ApiPublicHooksSyncPolymarketRoute =
     path: '/api/public/hooks/sync-polymarket',
     getParentRoute: () => rootRouteImport,
   } as any)
+const ApiPublicHooksScreenSuggestionRoute =
+  ApiPublicHooksScreenSuggestionRouteImport.update({
+    id: '/api/public/hooks/screen-suggestion',
+    path: '/api/public/hooks/screen-suggestion',
+    getParentRoute: () => rootRouteImport,
+  } as any)
 const ApiPublicHooksResolveAiMarketsRoute =
   ApiPublicHooksResolveAiMarketsRouteImport.update({
     id: '/api/public/hooks/resolve-ai-markets',
@@ -193,6 +200,7 @@ export interface FileRoutesByFullPath {
   '/api/public/hooks/discover-trending-markets': typeof ApiPublicHooksDiscoverTrendingMarketsRoute
   '/api/public/hooks/generate-ai-markets': typeof ApiPublicHooksGenerateAiMarketsRoute
   '/api/public/hooks/resolve-ai-markets': typeof ApiPublicHooksResolveAiMarketsRoute
+  '/api/public/hooks/screen-suggestion': typeof ApiPublicHooksScreenSuggestionRoute
   '/api/public/hooks/sync-polymarket': typeof ApiPublicHooksSyncPolymarketRoute
 }
 export interface FileRoutesByTo {
@@ -218,6 +226,7 @@ export interface FileRoutesByTo {
   '/api/public/hooks/discover-trending-markets': typeof ApiPublicHooksDiscoverTrendingMarketsRoute
   '/api/public/hooks/generate-ai-markets': typeof ApiPublicHooksGenerateAiMarketsRoute
   '/api/public/hooks/resolve-ai-markets': typeof ApiPublicHooksResolveAiMarketsRoute
+  '/api/public/hooks/screen-suggestion': typeof ApiPublicHooksScreenSuggestionRoute
   '/api/public/hooks/sync-polymarket': typeof ApiPublicHooksSyncPolymarketRoute
 }
 export interface FileRoutesById {
@@ -246,6 +255,7 @@ export interface FileRoutesById {
   '/api/public/hooks/discover-trending-markets': typeof ApiPublicHooksDiscoverTrendingMarketsRoute
   '/api/public/hooks/generate-ai-markets': typeof ApiPublicHooksGenerateAiMarketsRoute
   '/api/public/hooks/resolve-ai-markets': typeof ApiPublicHooksResolveAiMarketsRoute
+  '/api/public/hooks/screen-suggestion': typeof ApiPublicHooksScreenSuggestionRoute
   '/api/public/hooks/sync-polymarket': typeof ApiPublicHooksSyncPolymarketRoute
 }
 export interface FileRouteTypes {
@@ -274,6 +284,7 @@ export interface FileRouteTypes {
     | '/api/public/hooks/discover-trending-markets'
     | '/api/public/hooks/generate-ai-markets'
     | '/api/public/hooks/resolve-ai-markets'
+    | '/api/public/hooks/screen-suggestion'
     | '/api/public/hooks/sync-polymarket'
   fileRoutesByTo: FileRoutesByTo
   to:
@@ -299,6 +310,7 @@ export interface FileRouteTypes {
     | '/api/public/hooks/discover-trending-markets'
     | '/api/public/hooks/generate-ai-markets'
     | '/api/public/hooks/resolve-ai-markets'
+    | '/api/public/hooks/screen-suggestion'
     | '/api/public/hooks/sync-polymarket'
   id:
     | '__root__'
@@ -326,6 +338,7 @@ export interface FileRouteTypes {
     | '/api/public/hooks/discover-trending-markets'
     | '/api/public/hooks/generate-ai-markets'
     | '/api/public/hooks/resolve-ai-markets'
+    | '/api/public/hooks/screen-suggestion'
     | '/api/public/hooks/sync-polymarket'
   fileRoutesById: FileRoutesById
 }
@@ -345,6 +358,7 @@ export interface RootRouteChildren {
   ApiPublicHooksDiscoverTrendingMarketsRoute: typeof ApiPublicHooksDiscoverTrendingMarketsRoute
   ApiPublicHooksGenerateAiMarketsRoute: typeof ApiPublicHooksGenerateAiMarketsRoute
   ApiPublicHooksResolveAiMarketsRoute: typeof ApiPublicHooksResolveAiMarketsRoute
+  ApiPublicHooksScreenSuggestionRoute: typeof ApiPublicHooksScreenSuggestionRoute
   ApiPublicHooksSyncPolymarketRoute: typeof ApiPublicHooksSyncPolymarketRoute
 }
 
@@ -497,6 +511,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ApiPublicHooksSyncPolymarketRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/api/public/hooks/screen-suggestion': {
+      id: '/api/public/hooks/screen-suggestion'
+      path: '/api/public/hooks/screen-suggestion'
+      fullPath: '/api/public/hooks/screen-suggestion'
+      preLoaderRoute: typeof ApiPublicHooksScreenSuggestionRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/api/public/hooks/resolve-ai-markets': {
       id: '/api/public/hooks/resolve-ai-markets'
       path: '/api/public/hooks/resolve-ai-markets'
@@ -586,6 +607,7 @@ const rootRouteChildren: RootRouteChildren = {
     ApiPublicHooksDiscoverTrendingMarketsRoute,
   ApiPublicHooksGenerateAiMarketsRoute: ApiPublicHooksGenerateAiMarketsRoute,
   ApiPublicHooksResolveAiMarketsRoute: ApiPublicHooksResolveAiMarketsRoute,
+  ApiPublicHooksScreenSuggestionRoute: ApiPublicHooksScreenSuggestionRoute,
   ApiPublicHooksSyncPolymarketRoute: ApiPublicHooksSyncPolymarketRoute,
 }
 export const routeTree = rootRouteImport
