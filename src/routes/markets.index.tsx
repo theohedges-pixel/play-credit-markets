@@ -5,6 +5,7 @@ import { formatDistanceToNow } from "date-fns";
 import { supabase } from "@/integrations/supabase/client";
 import { Header } from "@/components/Header";
 import { MarketCard } from "@/components/MarketCard";
+import { GroupedMarketCard } from "@/components/GroupedMarketCard";
 import { Input } from "@/components/ui/input";
 import { Search } from "lucide-react";
 import { useMarketListRealtime } from "@/lib/realtime";
@@ -266,7 +267,13 @@ function MarketsPage() {
           </div>
         ) : visible.length > 0 ? (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-            {visible.map((m) => <MarketCard key={m.id} m={m} />)}
+            {entries.map((e) =>
+              e.kind === "group" ? (
+                <GroupedMarketCard key={e.key} markets={e.markets} eventTitle={e.title} />
+              ) : (
+                <MarketCard key={e.key} m={e.market} />
+              ),
+            )}
           </div>
         ) : (
           <div className="text-muted-foreground py-12 text-center">No markets match.</div>
