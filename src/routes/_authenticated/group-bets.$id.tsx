@@ -550,28 +550,3 @@ function GroupBetDetail() {
     </div>
   );
 }
-
-function Stat({
-  label,
-  value,
-  tone,
-}: {
-  label: string;
-  value: string;
-  tone?: "yes" | "no";
-}) {
-  return (
-    <div className="rounded-lg border border-border bg-card p-4">
-      <div className="text-[10px] uppercase tracking-wider text-muted-foreground">
-        {label}
-      </div>
-      <div
-        className={`font-display text-2xl font-bold tabular-nums mt-1 ${
-          tone === "yes" ? "text-yes" : tone === "no" ? "text-no" : ""
-        }`}
-      >
-        {value}
-      </div>
-    </div>
-  );
-}
