@@ -12,6 +12,7 @@ import { LineChart, Line, ResponsiveContainer, YAxis, Tooltip, XAxis, ReferenceD
 import { toast } from "sonner";
 import { format } from "date-fns";
 import { Loader2 } from "lucide-react";
+import { HowTradingWorksDialog } from "@/components/HowTradingWorksDialog";
 
 // Renders the "AI estimate" annotation offset into the chart so it never clips
 // at the left edge (the seed point is always the leftmost x).
@@ -528,6 +529,10 @@ function MarketDetail() {
 
     return (
       <div className={`rounded-lg border border-border bg-card p-5 ${insideSheet ? "" : "sticky top-20"}`}>
+        <div className="mb-2 flex items-center justify-between">
+          <span className="text-xs uppercase tracking-wider text-muted-foreground">Trade</span>
+          <HowTradingWorksDialog />
+        </div>
         <div className="grid grid-cols-2 gap-1 mb-4 p-1 rounded-md bg-secondary/60">
           <button
             onClick={() => { setMode("buy"); setAmount(""); }}
