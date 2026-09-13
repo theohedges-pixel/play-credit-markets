@@ -40,6 +40,7 @@ import {
   resolveAiMarketsNow,
   approveSuggestionChecked,
   backfillPolymarketHistoryNow,
+  regenerateMarketThemesNow,
 } from "@/lib/admin-jobs.functions";
 import { toast } from "sonner";
 import {
@@ -57,6 +58,7 @@ import {
   ChevronDown,
   ChevronRight,
   History,
+  Tags,
 } from "lucide-react";
 
 export const Route = createFileRoute("/_authenticated/admin/dashboard")({
