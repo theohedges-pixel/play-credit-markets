@@ -136,7 +136,6 @@ export async function runSync() {
       const prob = parseYesProbability(upstream);
       if (prob === null) continue;
       const pools = seedPools(prob);
-      const price = Number(m.no_pool) / (Number(m.yes_pool) + Number(m.no_pool));
       if (
         pools.yes_pool === Number(m.yes_pool) &&
         pools.no_pool === Number(m.no_pool)
