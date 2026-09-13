@@ -36,9 +36,6 @@ import { syncPolymarketNow, discoverTrendingNow } from "@/lib/admin-jobs.functio
 import { toast } from "sonner";
 import {
   ShieldCheck,
-  Users,
-  BarChart3,
-  ScrollText,
   Sparkles,
   Loader2,
   RefreshCw,
@@ -1045,6 +1042,3 @@ function SuggestionsTab() {
     </div>
   );
 }
-
-/* eslint-disable-next-line @typescript-eslint/no-unused-vars */
-const _icons = { Users, BarChart3, ScrollText };
