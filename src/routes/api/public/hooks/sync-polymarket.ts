@@ -1,6 +1,7 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { verifyCronSecret } from "@/lib/cron-auth.server";
 import { parseYesProbability, seedPools } from "@/lib/polymarket-odds";
+import { buildImportedDescription } from "@/lib/polymarket-description";
 import {
   yesClobTokenId,
   backfillMarketHistory,
@@ -22,6 +23,8 @@ interface PolyMarket {
   bestAsk?: number | string | null;
   /** Gamma returns a JSON string array of [YES token, NO token]. */
   clobTokenIds?: string | string[] | null;
+  /** Gamma returns a JSON string array of the two outcome labels, YES first. */
+  outcomes?: string | string[] | null;
 }
 
 const CATEGORY_NAMES = ["Politics", "Crypto", "Sports", "Tech", "Pop Culture", "Science"] as const;
@@ -209,8 +212,10 @@ export async function runSync() {
       return {
         creator_id: null,
         title: m.question!,
-        description:
-          (m.description ?? "Imported from Polymarket.").slice(0, 1000) + "\n\nSource: Polymarket",
+        description: buildImportedDescription(
+          m.description ?? "Imported from Polymarket.",
+          m.outcomes,
+        ),
         category_id: catByName.get(cats[i]) ?? null,
         closes_at: new Date(m.endDate ?? m.end_date_iso!).toISOString(),
         status: "open" as const,
