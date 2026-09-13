@@ -66,6 +66,7 @@ function CreateGroupBet() {
       _description: description.trim() || null,
       _closes_at: new Date(closesAt).toISOString(),
       _friend_ids: Array.from(picked),
+      _resolution_source: resolutionSource.trim() || null,
     });
     setSubmitting(false);
     if (error) return toast.error(error.message);
