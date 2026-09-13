@@ -40,6 +40,9 @@ export const Route = createFileRoute("/markets/")({
 });
 
 function MarketsPage() {
+  const { sort } = Route.useSearch();
+  const navigate = useNavigate({ from: "/markets" });
+  const sortKey = SORTS[sort] ? sort : "active";
   const [q, setQ] = useState("");
   const [cat, setCat] = useState<string | null>(null);
   const [importing, setImporting] = useState(false);
