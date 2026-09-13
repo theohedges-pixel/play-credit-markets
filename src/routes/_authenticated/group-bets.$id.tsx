@@ -7,6 +7,7 @@ import { useAuth } from "@/lib/auth";
 import { Header } from "@/components/Header";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea";
 import { UserAvatar } from "@/components/UserAvatar";
 import { fmtCredits } from "@/lib/format";
 import { format } from "date-fns";
@@ -25,6 +26,8 @@ function GroupBetDetail() {
   const [amount, setAmount] = useState("");
   const [submitting, setSubmitting] = useState(false);
   const [origin, setOrigin] = useState("");
+  const [voteSide, setVoteSide] = useState<"yes" | "no" | "invalid">("yes");
+  const [voteReason, setVoteReason] = useState("");
 
   useEffect(() => {
     if (typeof window !== "undefined") setOrigin(window.location.origin);
@@ -49,6 +52,19 @@ function GroupBetDetail() {
         .from("group_bet_participants" as any)
         .select(
           "id, user_id, side, credits_wagered, payout, user:profiles!group_bet_participants_user_id_fkey(id, username, avatar_url)",
+        )
+        .eq("group_bet_id", id);
+      return (data ?? []) as any[];
+    },
+  });
+
+  const { data: votes } = useQuery({
+    queryKey: ["gb-votes", id],
+    queryFn: async () => {
+      const { data } = await supabase
+        .from("group_bet_resolution_votes" as any)
+        .select(
+          "id, voter_id, proposed_resolution, reason, voter:profiles!group_bet_resolution_votes_voter_id_fkey(id, username, avatar_url)",
         )
         .eq("group_bet_id", id);
       return (data ?? []) as any[];
@@ -132,19 +148,55 @@ function GroupBetDetail() {
     qc.invalidateQueries({ queryKey: ["gb-parts", id] });
   };
 
-  const resolve = async (resolution: "yes" | "no" | "invalid") => {
-    setSubmitting(true);
-    const { error } = await supabase.rpc("resolve_group_bet" as any, {
-      _group_bet_id: id,
-      _resolution: resolution,
-    });
-    setSubmitting(false);
-    if (error) return toast.error(error.message);
-    toast.success("Resolved");
+  const refreshAll = () => {
     refreshProfile();
     qc.invalidateQueries({ queryKey: ["gb-detail", id] });
     qc.invalidateQueries({ queryKey: ["gb-parts", id] });
+    qc.invalidateQueries({ queryKey: ["gb-votes", id] });
   };
+
+  const castVote = async () => {
+    if (!voteReason.trim()) return toast.error("Add a short reason for your vote");
+    setSubmitting(true);
+    const { data, error } = await supabase.rpc("propose_group_bet_resolution" as any, {
+      _group_bet_id: id,
+      _resolution: voteSide,
+      _reason: voteReason.trim(),
+    });
+    setSubmitting(false);
+    if (error) return toast.error(error.message);
+    const r = data as any;
+    toast.success(
+      r?.resolved
+        ? `Settled ${String(r.resolution).toUpperCase()} — the group agreed`
+        : `Vote recorded (${r?.votes} of ${r?.eligible})`,
+    );
+    setVoteReason("");
+    refreshAll();
+  };
+
+  const flagAuto = async () => {
+    setSubmitting(true);
+    const { error } = await supabase.rpc("flag_auto_resolution" as any, { _group_bet_id: id });
+    setSubmitting(false);
+    if (error) return toast.error(error.message);
+    toast.success("Flagged — the group will vote on the outcome instead");
+    refreshAll();
+  };
+
+  const canVote = (isCreator || !!myPart) && closed &&
+    (bet.status === "open" || bet.status === "voting");
+  const eligibleCount = new Set([
+    bet.creator_id,
+    ...(participants ?? []).map((p) => p.user_id),
+  ]).size;
+  const tally = (votes ?? []).reduce<Record<string, number>>((acc, v) => {
+    acc[v.proposed_resolution] = (acc[v.proposed_resolution] ?? 0) + 1;
+    return acc;
+  }, {});
+  const myVote = (votes ?? []).find((v) => v.voter_id === user?.id);
+  const pendingAuto = bet.status === "pending_auto_resolution";
+  const canFlag = pendingAuto && (isCreator || !!myPart);
 
   return (
     <div>
@@ -194,7 +246,7 @@ function GroupBetDetail() {
           <Stat label="NO" value={`${fmtCredits(totals.no)}c`} tone="no" />
         </div>
 
-        {!myPart && bet.status === "open" && !closed && (
+        {!myPart && !isCreator && bet.status === "open" && !closed && (
           <div className="rounded-lg border border-border bg-card p-5">
             <h2 className="font-display font-semibold mb-3">Join this bet</h2>
             <div className="flex gap-2 mb-3">
@@ -227,27 +279,109 @@ function GroupBetDetail() {
           </div>
         )}
 
-        {isCreator && closed && bet.status !== "resolved" && (
+        {bet.status === "resolved" && bet.resolution_reason && (
           <div className="rounded-lg border border-border bg-card p-5">
-            <h2 className="font-display font-semibold mb-3">Resolve</h2>
-            <div className="flex gap-2">
-              <Button size="sm" onClick={() => resolve("yes")} disabled={submitting}>
-                YES wins
+            <h2 className="font-display font-semibold">
+              Resolved {String(bet.resolution).toUpperCase()}
+            </h2>
+            <p className="text-sm text-muted-foreground mt-2">{bet.resolution_reason}</p>
+            <p className="text-[10px] uppercase tracking-wider text-muted-foreground mt-3">
+              {bet.auto_resolved ? "Settled by automatic check" : "Settled by group vote"}
+            </p>
+          </div>
+        )}
+
+        {pendingAuto && (
+          <div className="rounded-lg border border-primary/40 bg-primary/5 p-5">
+            <h2 className="font-display font-semibold">
+              We think this resolved {String(bet.proposed_resolution).toUpperCase()}
+            </h2>
+            <p className="text-sm text-muted-foreground mt-2">{bet.resolution_reason}</p>
+            {bet.auto_resolution_deadline && (
+              <p className="text-xs text-muted-foreground mt-2">
+                Credits move {format(new Date(bet.auto_resolution_deadline), "MMM d, yyyy HH:mm")}{" "}
+                unless someone flags this.
+              </p>
+            )}
+            {canFlag && (
+              <Button size="sm" variant="secondary" className="mt-3" onClick={flagAuto} disabled={submitting}>
+                This looks wrong — flag it
               </Button>
-              <Button size="sm" onClick={() => resolve("no")} disabled={submitting}>
-                NO wins
-              </Button>
-              <Button
-                size="sm"
-                variant="ghost"
-                onClick={() => resolve("invalid")}
-                disabled={submitting}
-              >
-                Invalid (refund)
-              </Button>
+            )}
+          </div>
+        )}
+
+        {canVote && (
+          <div className="rounded-lg border border-border bg-card p-5">
+            <h2 className="font-display font-semibold mb-1">What was the outcome?</h2>
+            <p className="text-xs text-muted-foreground mb-3">
+              Everyone in this bet gets one vote. It settles as soon as more than half agree.
+            </p>
+            <div className="flex gap-2 mb-3">
+              {(["yes", "no", "invalid"] as const).map((s) => (
+                <Button
+                  key={s}
+                  size="sm"
+                  variant={voteSide === s ? "default" : "secondary"}
+                  onClick={() => setVoteSide(s)}
+                >
+                  {s === "invalid" ? "Invalid (refund)" : s.toUpperCase()}
+                </Button>
+              ))}
+            </div>
+            <Textarea
+              rows={2}
+              placeholder="Why? e.g. Final score was 112-104, confirmed on the official box score"
+              value={voteReason}
+              onChange={(e) => setVoteReason(e.target.value)}
+            />
+            <Button className="mt-3" onClick={castVote} disabled={submitting}>
+              {myVote ? "Change my vote" : "Submit vote"}
+            </Button>
+          </div>
+        )}
+
+        {(votes ?? []).length > 0 && bet.status !== "resolved" && (
+          <div>
+            <h2 className="font-display font-semibold mb-3">Votes</h2>
+            <div className="rounded-lg border border-border bg-card divide-y divide-border">
+              <div className="px-5 py-3 text-xs text-muted-foreground">
+                {(["yes", "no", "invalid"] as const)
+                  .filter((s) => tally[s])
+                  .map((s) => `${tally[s]} of ${eligibleCount} for ${s.toUpperCase()}`)
+                  .join(" · ")}
+              </div>
+              {(votes ?? []).map((v) => (
+                <div key={v.id} className="px-5 py-3 flex items-start gap-3">
+                  <UserAvatar
+                    username={v.voter?.username}
+                    avatarUrl={v.voter?.avatar_url}
+                    userId={v.voter?.id}
+                    size="sm"
+                  />
+                  <div className="min-w-0">
+                    <div className="text-sm">
+                      @{v.voter?.username}{" "}
+                      <span
+                        className={`font-mono text-xs uppercase ${
+                          v.proposed_resolution === "yes"
+                            ? "text-yes"
+                            : v.proposed_resolution === "no"
+                              ? "text-no"
+                              : "text-muted-foreground"
+                        }`}
+                      >
+                        {v.proposed_resolution}
+                      </span>
+                    </div>
+                    <p className="text-xs text-muted-foreground mt-0.5">{v.reason}</p>
+                  </div>
+                </div>
+              ))}
             </div>
           </div>
         )}
+
 
         <div>
           <h2 className="font-display font-semibold mb-3">Participants</h2>

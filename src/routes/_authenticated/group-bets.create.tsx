@@ -28,6 +28,7 @@ function CreateGroupBet() {
   const [title, setTitle] = useState("");
   const [description, setDescription] = useState("");
   const [closesAt, setClosesAt] = useState("");
+  const [resolutionSource, setResolutionSource] = useState("");
   const [picked, setPicked] = useState<Set<string>>(new Set());
   const [submitting, setSubmitting] = useState(false);
 
@@ -65,6 +66,7 @@ function CreateGroupBet() {
       _description: description.trim() || null,
       _closes_at: new Date(closesAt).toISOString(),
       _friend_ids: Array.from(picked),
+      _resolution_source: resolutionSource.trim() || null,
     });
     setSubmitting(false);
     if (error) return toast.error(error.message);
@@ -105,6 +107,22 @@ function CreateGroupBet() {
             onChange={(e) => setClosesAt(e.target.value)}
             className="mt-1"
           />
+        </div>
+        <div>
+          <label className="text-xs uppercase tracking-wider text-muted-foreground">
+            How can this be verified? (optional)
+          </label>
+          <Textarea
+            value={resolutionSource}
+            onChange={(e) => setResolutionSource(e.target.value)}
+            placeholder="e.g. The official NBA box score for the Lakers vs Suns game on Friday"
+            className="mt-1"
+            rows={2}
+          />
+          <p className="text-xs text-muted-foreground mt-1">
+            If you add this, we'll try to work out the outcome automatically when the bet closes —
+            everyone gets 24 hours to flag it before credits move.
+          </p>
         </div>
 
         <div>

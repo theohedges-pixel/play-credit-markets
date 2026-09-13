@@ -210,40 +210,116 @@ export type Database = {
           },
         ]
       }
+      group_bet_resolution_votes: {
+        Row: {
+          created_at: string
+          group_bet_id: string
+          id: string
+          proposed_resolution: Database["public"]["Enums"]["group_bet_resolution"]
+          reason: string
+          updated_at: string
+          voter_id: string
+        }
+        Insert: {
+          created_at?: string
+          group_bet_id: string
+          id?: string
+          proposed_resolution: Database["public"]["Enums"]["group_bet_resolution"]
+          reason: string
+          updated_at?: string
+          voter_id: string
+        }
+        Update: {
+          created_at?: string
+          group_bet_id?: string
+          id?: string
+          proposed_resolution?: Database["public"]["Enums"]["group_bet_resolution"]
+          reason?: string
+          updated_at?: string
+          voter_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "group_bet_resolution_votes_group_bet_id_fkey"
+            columns: ["group_bet_id"]
+            isOneToOne: false
+            referencedRelation: "group_bets"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "group_bet_resolution_votes_voter_id_fkey"
+            columns: ["voter_id"]
+            isOneToOne: false
+            referencedRelation: "leaderboard_net_worth"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "group_bet_resolution_votes_voter_id_fkey"
+            columns: ["voter_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       group_bets: {
         Row: {
+          auto_checked_at: string | null
+          auto_resolution_deadline: string | null
+          auto_resolved: boolean
           closes_at: string
           created_at: string
           creator_id: string
           description: string | null
           id: string
+          proposed_resolution:
+            | Database["public"]["Enums"]["group_bet_resolution"]
+            | null
           resolution: Database["public"]["Enums"]["group_bet_resolution"] | null
+          resolution_reason: string | null
+          resolution_source: string | null
           resolved_at: string | null
           status: Database["public"]["Enums"]["group_bet_status"]
           title: string
         }
         Insert: {
+          auto_checked_at?: string | null
+          auto_resolution_deadline?: string | null
+          auto_resolved?: boolean
           closes_at: string
           created_at?: string
           creator_id: string
           description?: string | null
           id?: string
+          proposed_resolution?:
+            | Database["public"]["Enums"]["group_bet_resolution"]
+            | null
           resolution?:
             | Database["public"]["Enums"]["group_bet_resolution"]
             | null
+          resolution_reason?: string | null
+          resolution_source?: string | null
           resolved_at?: string | null
           status?: Database["public"]["Enums"]["group_bet_status"]
           title: string
         }
         Update: {
+          auto_checked_at?: string | null
+          auto_resolution_deadline?: string | null
+          auto_resolved?: boolean
           closes_at?: string
           created_at?: string
           creator_id?: string
           description?: string | null
           id?: string
+          proposed_resolution?:
+            | Database["public"]["Enums"]["group_bet_resolution"]
+            | null
           resolution?:
             | Database["public"]["Enums"]["group_bet_resolution"]
             | null
+          resolution_reason?: string | null
+          resolution_source?: string | null
           resolved_at?: string | null
           status?: Database["public"]["Enums"]["group_bet_status"]
           title?: string
@@ -802,9 +878,24 @@ export type Database = {
           _closes_at: string
           _description: string
           _friend_ids: string[]
+          _resolution_source?: string
           _title: string
         }
         Returns: string
+      }
+      finalize_group_bet: {
+        Args: {
+          _auto: boolean
+          _group_bet_id: string
+          _reason: string
+          _resolution: Database["public"]["Enums"]["group_bet_resolution"]
+        }
+        Returns: undefined
+      }
+      finalize_pending_auto_resolutions: { Args: never; Returns: number }
+      flag_auto_resolution: {
+        Args: { _group_bet_id: string }
+        Returns: undefined
       }
       get_public_group_bet_preview: {
         Args: { _group_bet_id: string }
@@ -841,18 +932,19 @@ export type Database = {
       }
       mark_all_notifications_read: { Args: never; Returns: undefined }
       mark_notification_read: { Args: { _id: string }; Returns: undefined }
+      propose_group_bet_resolution: {
+        Args: {
+          _group_bet_id: string
+          _reason: string
+          _resolution: Database["public"]["Enums"]["group_bet_resolution"]
+        }
+        Returns: Json
+      }
       reject_market_suggestion: {
         Args: { _suggestion_id: string }
         Returns: undefined
       }
       remove_friend: { Args: { _friendship_id: string }; Returns: undefined }
-      resolve_group_bet: {
-        Args: {
-          _group_bet_id: string
-          _resolution: Database["public"]["Enums"]["group_bet_resolution"]
-        }
-        Returns: undefined
-      }
       resolve_market: {
         Args: {
           _market_id: string
@@ -878,7 +970,12 @@ export type Database = {
       app_role: "admin" | "user"
       friendship_status: "pending" | "accepted" | "declined"
       group_bet_resolution: "yes" | "no" | "invalid"
-      group_bet_status: "open" | "closed" | "resolved"
+      group_bet_status:
+        | "open"
+        | "closed"
+        | "resolved"
+        | "voting"
+        | "pending_auto_resolution"
       invite_status: "pending" | "accepted" | "declined"
       market_origin:
         | "user"
@@ -1020,7 +1117,13 @@ export const Constants = {
       app_role: ["admin", "user"],
       friendship_status: ["pending", "accepted", "declined"],
       group_bet_resolution: ["yes", "no", "invalid"],
-      group_bet_status: ["open", "closed", "resolved"],
+      group_bet_status: [
+        "open",
+        "closed",
+        "resolved",
+        "voting",
+        "pending_auto_resolution",
+      ],
       invite_status: ["pending", "accepted", "declined"],
       market_origin: [
         "user",

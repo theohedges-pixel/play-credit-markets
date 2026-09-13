@@ -147,7 +147,11 @@ function BetList({ bets, empty }: { bets: Bet[]; empty: string }) {
             <span className="text-xs uppercase tracking-wider text-muted-foreground">
               {b.status === "resolved" && b.resolution
                 ? `Resolved ${b.resolution}`
-                : b.status}
+                : b.status === "voting"
+                  ? "Awaiting votes"
+                  : b.status === "pending_auto_resolution"
+                    ? "Awaiting review"
+                    : b.status}
             </span>
           </div>
         </Link>
