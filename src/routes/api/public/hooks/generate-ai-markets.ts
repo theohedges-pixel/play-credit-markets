@@ -1,4 +1,5 @@
 import { verifyCronSecret } from "@/lib/cron-auth.server";
+import { findSemanticDuplicates, verifyUnsettled } from "@/lib/market-gates.server";
 import { createFileRoute } from "@tanstack/react-router";
 
 interface AiEvent {
