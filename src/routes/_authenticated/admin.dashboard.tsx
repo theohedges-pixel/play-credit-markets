@@ -31,6 +31,7 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { UserAvatar } from "@/components/UserAvatar";
+import { LearnContentTab } from "@/components/admin/LearnContentTab";
 import { fmtCredits } from "@/lib/format";
 import { sendPasswordReset } from "@/lib/admin.functions";
 import {
@@ -118,6 +119,7 @@ function AdminDashboard() {
             <TabsTrigger value="activity">Activity</TabsTrigger>
             <TabsTrigger value="audit">Audit log</TabsTrigger>
             <TabsTrigger value="suggestions">AI Suggestions</TabsTrigger>
+            <TabsTrigger value="content">Content</TabsTrigger>
           </TabsList>
 
           <TabsContent value="admins" className="pt-6">
@@ -137,6 +139,9 @@ function AdminDashboard() {
           </TabsContent>
           <TabsContent value="suggestions" className="pt-6">
             <SuggestionsTab />
+          </TabsContent>
+          <TabsContent value="content" className="pt-6">
+            <LearnContentTab />
           </TabsContent>
         </Tabs>
       </div>
