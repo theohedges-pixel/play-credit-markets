@@ -141,6 +141,24 @@ function GroupBetDetail() {
     { total: 0, yes: 0, no: 0 },
   );
 
+  const pct = (n: number) => (totals.total > 0 ? Math.round((n / totals.total) * 100) : 0);
+  const yesPct = pct(totals.yes);
+  const noPct = pct(totals.no);
+  const multiple = (sideTotal: number) =>
+    sideTotal > 0 ? `${(totals.total / sideTotal).toFixed(2)}×` : "—";
+
+  // Live impact preview for the join panel (post-wager numbers).
+  const wagerAmt = Number(amount) > 0 ? Number(amount) : 0;
+  const after = {
+    total: totals.total + wagerAmt,
+    yes: totals.yes + (side === "yes" ? wagerAmt : 0),
+    no: totals.no + (side === "no" ? wagerAmt : 0),
+  };
+  const afterYesPct = after.total > 0 ? Math.round((after.yes / after.total) * 100) : 0;
+  const afterNoPct = after.total > 0 ? 100 - afterYesPct : 0;
+  const mySideTotal = side === "yes" ? after.yes : after.no;
+  const myMultiple = wagerAmt > 0 && mySideTotal > 0 ? after.total / mySideTotal : null;
+
   const join = async () => {
     const n = Number(amount);
     if (!n || n <= 0) return toast.error("Enter a positive amount");
