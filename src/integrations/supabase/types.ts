@@ -14,6 +14,55 @@ export type Database = {
   }
   public: {
     Tables: {
+      admin_audit_log: {
+        Row: {
+          action: string
+          admin_id: string | null
+          created_at: string
+          details: Json
+          id: string
+          target_id: string | null
+        }
+        Insert: {
+          action: string
+          admin_id?: string | null
+          created_at?: string
+          details?: Json
+          id?: string
+          target_id?: string | null
+        }
+        Update: {
+          action?: string
+          admin_id?: string | null
+          created_at?: string
+          details?: Json
+          id?: string
+          target_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "admin_audit_log_admin_id_fkey"
+            columns: ["admin_id"]
+            isOneToOne: false
+            referencedRelation: "leaderboard_net_worth"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "admin_audit_log_admin_id_fkey"
+            columns: ["admin_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "admin_audit_log_admin_id_fkey"
+            columns: ["admin_id"]
+            isOneToOne: false
+            referencedRelation: "public_profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       app_settings: {
         Row: {
           key: string
@@ -903,16 +952,19 @@ export type Database = {
       }
       user_roles: {
         Row: {
+          granted_at: string
           id: string
           role: Database["public"]["Enums"]["app_role"]
           user_id: string
         }
         Insert: {
+          granted_at?: string
           id?: string
           role: Database["public"]["Enums"]["app_role"]
           user_id: string
         }
         Update: {
+          granted_at?: string
           id?: string
           role?: Database["public"]["Enums"]["app_role"]
           user_id?: string
@@ -959,6 +1011,92 @@ export type Database = {
       }
     }
     Functions: {
+      admin_activity_series: {
+        Args: { _days?: number }
+        Returns: {
+          day: string
+          group_bets: number
+          referral_credits: number
+          signups: number
+          trade_volume: number
+          trades: number
+        }[]
+      }
+      admin_audit_list: {
+        Args: { _limit?: number }
+        Returns: {
+          action: string
+          admin_id: string
+          admin_username: string
+          created_at: string
+          details: Json
+          id: string
+          target_id: string
+          target_username: string
+        }[]
+      }
+      admin_grant_admin: { Args: { _target_id: string }; Returns: undefined }
+      admin_list_admins: {
+        Args: never
+        Returns: {
+          avatar_url: string
+          granted_at: string
+          user_id: string
+          username: string
+        }[]
+      }
+      admin_list_users: {
+        Args: { _limit?: number; _offset?: number; _search?: string }
+        Returns: {
+          created_at: string
+          credits: number
+          email_confirmed: boolean
+          id: string
+          is_admin: boolean
+          net_worth: number
+          total_count: number
+          username: string
+        }[]
+      }
+      admin_prunable_markets: {
+        Args: never
+        Returns: {
+          closes_at: string
+          created_at: string
+          id: string
+          title: string
+        }[]
+      }
+      admin_prune_markets: { Args: { _ids: string[] }; Returns: Json }
+      admin_revoke_admin: { Args: { _target_id: string }; Returns: undefined }
+      admin_user_overview: { Args: { _user_id: string }; Returns: Json }
+      admin_user_positions: {
+        Args: { _user_id: string }
+        Returns: {
+          credits_spent: number
+          market_id: string
+          market_status: string
+          market_title: string
+          no_shares: number
+          realized_pnl: number
+          resolution: string
+          yes_shares: number
+        }[]
+      }
+      admin_user_trades: {
+        Args: { _limit?: number; _user_id: string }
+        Returns: {
+          action: string
+          created_at: string
+          credits: number
+          id: string
+          market_id: string
+          market_title: string
+          price: number
+          shares: number
+          side: string
+        }[]
+      }
       approve_market_suggestion: {
         Args: {
           _category_id?: string
@@ -1048,6 +1186,10 @@ export type Database = {
       }
       mark_all_notifications_read: { Args: never; Returns: undefined }
       mark_notification_read: { Args: { _id: string }; Returns: undefined }
+      notify_admins: {
+        Args: { _actor: string; _kind: string; _payload: Json }
+        Returns: undefined
+      }
       open_group_bet_voting: { Args: never; Returns: number }
       propose_group_bet_resolution: {
         Args: {
@@ -1062,6 +1204,7 @@ export type Database = {
         Returns: undefined
       }
       remove_friend: { Args: { _friendship_id: string }; Returns: undefined }
+      require_admin: { Args: never; Returns: string }
       resolve_market: {
         Args: {
           _market_id: string
