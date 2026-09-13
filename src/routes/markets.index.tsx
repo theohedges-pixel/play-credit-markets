@@ -121,12 +121,41 @@ function MarketsPage() {
 
   useMarketListRealtime(["markets"], "markets:list");
 
+  // The page query is capped, so a big event can have members below the cut.
+  // Pull the remaining siblings for every event on the page so a group card is
+  // never missing outcomes. Skipped while searching or theme-filtering, where
+  // showing non-matching siblings would contradict the filter.
+  const pageEventIds = Array.from(
+    new Set((markets ?? []).map((m) => m.polymarket_event_id).filter(Boolean) as string[]),
+  ).sort();
+  const unfiltered = !q && themeIds.length === 0;
+  const { data: siblings } = useQuery({
+    queryKey: ["market-group-siblings", pageEventIds],
+    enabled: unfiltered && pageEventIds.length > 0,
+    queryFn: async () => {
+      const { data } = await supabase
+        .from("markets")
+        .select(
+          "id, title, closes_at, created_at, yes_pool, no_pool, volume, status, resolution, source, created_via, polymarket_event_id, polymarket_event_title, group_item_title, category:categories(name)",
+        )
+        .eq("status", "open")
+        .gt("closes_at", new Date().toISOString())
+        .in("polymarket_event_id", pageEventIds);
+      return data ?? [];
+    },
+  });
+
   // Theme filtering is OR across the selected chips, inside the chosen category.
   const filtered =
     themeIds.length > 0 && themeMatchIds
       ? (markets ?? []).filter((m) => themeMatchIds.includes(m.id))
       : (markets ?? []);
-  const visible = [...filtered].sort(SORTS[sortKey].order);
+  const merged = [...filtered];
+  if (unfiltered && siblings) {
+    const have = new Set(filtered.map((m) => m.id));
+    for (const s of siblings) if (!have.has(s.id)) merged.push(s);
+  }
+  const visible = merged.sort(SORTS[sortKey].order);
 
   // Markets that share a Polymarket event are rendered as one card. Grouping
   // uses only the identifiers Polymarket supplies — never title matching — and
