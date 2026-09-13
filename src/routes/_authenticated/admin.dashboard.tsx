@@ -45,6 +45,7 @@ import {
   Sparkles,
   Loader2,
   RefreshCw,
+  Brain,
   Trash2,
   KeyRound,
   Gavel,
@@ -586,6 +587,19 @@ function MarketsTab() {
       toast.error(e instanceof Error ? e.message : "Sync failed");
     } finally {
       setSyncing(false);
+    }
+  };
+
+  const onGenerateAi = async () => {
+    setGenAi(true);
+    try {
+      const body: any = await runGenerateNow();
+      toast.success(`Created ${body.inserted} new AI market${body.inserted === 1 ? "" : "s"}`);
+      qc.invalidateQueries({ queryKey: ["markets"] });
+    } catch (e) {
+      toast.error(e instanceof Error ? e.message : "AI generation failed");
+    } finally {
+      setGenAi(false);
     }
   };
 
