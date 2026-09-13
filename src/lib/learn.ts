@@ -141,4 +141,9 @@ export function articleState(articleId: string, attempts: LearnAttempt[]): Artic
 /** One-line description shown under each part heading on the Learn index. */
 export const PART_DESCRIPTIONS: Record<number, string> = {
   1: "Predikt looks like a betting app on purpose. These six articles explain exactly how real gambling is designed to take your money — and why knowing the mechanism is the best protection there is.",
+  2: "The stuff nobody teaches you but everybody needs: where money comes from, why it shrinks, how debt works, and the one mathematical force that does most of the heavy lifting.",
+  3: "What you actually own when you buy a stock, how prices get set, why the Fed moves everything, and what a bubble feels like from inside one.",
+  4: "Almost everything that reliably works in investing is boring. Here's why — and why the exciting alternatives usually cost you money.",
+  5: "If you're going to trade actively, these are the things that actually determine whether you survive — and the honest statistics about who doesn't.",
+  6: "Three studies in what actually produced extraordinary results — and one in what destroyed them.",
 };
