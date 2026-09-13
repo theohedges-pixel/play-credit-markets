@@ -642,83 +642,6 @@ export type Database = {
           },
         ]
       }
-      learning_completions: {
-        Row: {
-          completed_at: string
-          credits_awarded: number
-          id: string
-          module_id: string
-          score: number | null
-          user_id: string
-        }
-        Insert: {
-          completed_at?: string
-          credits_awarded: number
-          id?: string
-          module_id: string
-          score?: number | null
-          user_id: string
-        }
-        Update: {
-          completed_at?: string
-          credits_awarded?: number
-          id?: string
-          module_id?: string
-          score?: number | null
-          user_id?: string
-        }
-        Relationships: [
-          {
-            foreignKeyName: "learning_completions_module_id_fkey"
-            columns: ["module_id"]
-            isOneToOne: false
-            referencedRelation: "learning_modules"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
-      learning_modules: {
-        Row: {
-          created_at: string
-          description: string
-          id: string
-          kind: string
-          min_watch_seconds: number
-          pass_threshold: number
-          questions: Json | null
-          reward: number
-          sort_order: number
-          title: string
-          video_url: string | null
-        }
-        Insert: {
-          created_at?: string
-          description: string
-          id?: string
-          kind: string
-          min_watch_seconds?: number
-          pass_threshold?: number
-          questions?: Json | null
-          reward?: number
-          sort_order?: number
-          title: string
-          video_url?: string | null
-        }
-        Update: {
-          created_at?: string
-          description?: string
-          id?: string
-          kind?: string
-          min_watch_seconds?: number
-          pass_threshold?: number
-          questions?: Json | null
-          reward?: number
-          sort_order?: number
-          title?: string
-          video_url?: string | null
-        }
-        Relationships: []
-      }
       market_suggestions: {
         Row: {
           category_id: string | null
@@ -1528,13 +1451,6 @@ export type Database = {
       }
       check_learn_achievements: { Args: { _user_id: string }; Returns: Json }
       claim_daily_credits: { Args: never; Returns: Json }
-      claim_learning_reward: {
-        Args: { _module_id: string; _score: number }
-        Returns: {
-          credits_awarded: number
-          new_balance: number
-        }[]
-      }
       claim_referral_reward: { Args: never; Returns: Json }
       create_group_bet: {
         Args: {
