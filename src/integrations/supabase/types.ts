@@ -264,6 +264,7 @@ export type Database = {
       }
       group_bets: {
         Row: {
+          auto_checked_at: string | null
           auto_resolution_deadline: string | null
           auto_resolved: boolean
           closes_at: string
@@ -282,6 +283,7 @@ export type Database = {
           title: string
         }
         Insert: {
+          auto_checked_at?: string | null
           auto_resolution_deadline?: string | null
           auto_resolved?: boolean
           closes_at: string
@@ -302,6 +304,7 @@ export type Database = {
           title: string
         }
         Update: {
+          auto_checked_at?: string | null
           auto_resolution_deadline?: string | null
           auto_resolved?: boolean
           closes_at?: string
