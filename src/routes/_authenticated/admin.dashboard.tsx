@@ -35,6 +35,7 @@ import { fmtCredits } from "@/lib/format";
 import { sendPasswordReset } from "@/lib/admin.functions";
 import {
   syncPolymarketNow,
+  generateAiMarketsNow,
   discoverTrendingNow,
   resolveAiMarketsNow,
 } from "@/lib/admin-jobs.functions";
@@ -555,7 +556,9 @@ function Empty({ children }: { children: React.ReactNode }) {
 function MarketsTab() {
   const qc = useQueryClient();
   const runSync = useServerFn(syncPolymarketNow);
+  const runGenerateNow = useServerFn(generateAiMarketsNow);
   const [syncing, setSyncing] = useState(false);
+  const [genAi, setGenAi] = useState(false);
   const [picked, setPicked] = useState<Record<string, boolean>>({});
   const [pruning, setPruning] = useState(false);
 
