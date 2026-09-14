@@ -40,7 +40,7 @@ function CreateGroupBet() {
       const { data } = await supabase
         .from("friendships" as any)
         .select(
-          "requester_id, addressee_id, requester:profiles!friendships_requester_id_fkey(id, username, avatar_url), addressee:profiles!friendships_addressee_id_fkey(id, username, avatar_url)",
+          "requester_id, addressee_id, requester:public_profiles!friendships_requester_id_fkey(id, username, avatar_url), addressee:public_profiles!friendships_addressee_id_fkey(id, username, avatar_url)",
         )
         .eq("status", "accepted");
       const list: Friend[] = [];
