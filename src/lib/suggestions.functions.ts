@@ -70,6 +70,8 @@ export const submitMarketSuggestion = createServerFn({ method: "POST" })
       user_text: data.text,
       suggested_by: context.userId,
       category_id: data.categoryId ?? null,
+      // null means "use whatever my account default is when this gets approved".
+      attribute_publicly: data.attributePublicly ?? null,
       suggested_closes_at: placeholderClose,
       status: reason ? "rejected" : "pending",
       rejection_reason: reason,
