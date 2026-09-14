@@ -48,11 +48,32 @@ export function parseYesProbability(m: PolyOddsFields): number | null {
   return null;
 }
 
-/** Pools seeded from a probability; neutral 1000/1000 when the probability is unknown. */
+/**
+ * Upper bound on seeded liquidity. Lets us price a 0.1% long shot honestly
+ * while keeping the thin side of the book at MIN_POOL.
+ */
+export const MAX_LIQUIDITY = 50_000;
+
+/**
+ * Pools seeded from a probability; neutral 1000/1000 when the probability is unknown.
+ *
+ * A flat 2,000-credit budget with a 50-credit floor cannot express anything
+ * below 2.5% — every long shot in a 50-way field collapsed onto the same 2c.
+ * Instead of lowering the floor (which leaves the thin side so shallow that a
+ * single small trade swings the price to the cap), we scale total liquidity up
+ * so the ratio survives: total = MIN_POOL / p for small p. The price is exact,
+ * the thin side still holds MIN_POOL credits of depth, and the deep side just
+ * takes more volume to move — which is correct for a 0.5% candidate.
+ */
 export function seedPools(p: number | null): { yes_pool: number; no_pool: number } {
   if (p === null) return { yes_pool: 1000, no_pool: 1000 };
-  let yes_pool = Math.round(TOTAL_LIQUIDITY * (1 - p));
-  let no_pool = Math.round(TOTAL_LIQUIDITY * p);
+  const thin = Math.min(p, 1 - p);
+  const total = Math.min(
+    MAX_LIQUIDITY,
+    Math.max(TOTAL_LIQUIDITY, thin > 0 ? MIN_POOL / thin : TOTAL_LIQUIDITY),
+  );
+  let yes_pool = Math.round(total * (1 - p));
+  let no_pool = Math.round(total * p);
   if (yes_pool < MIN_POOL) yes_pool = MIN_POOL;
   if (no_pool < MIN_POOL) no_pool = MIN_POOL;
   return { yes_pool, no_pool };
