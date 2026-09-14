@@ -10,6 +10,8 @@ export interface GroupedMarketData extends MarketCardData {
   polymarket_event_id?: string | null;
   polymarket_event_title?: string | null;
   group_item_title?: string | null;
+  /** True number of open outcomes upstream; may exceed what we hold. */
+  upstream_outcome_count?: number | null;
 }
 
 /** Outcomes shown before the "show all" expansion kicks in. */
@@ -90,6 +92,12 @@ export function GroupedMarketCard({
 }) {
   const eventKey = markets[0]?.polymarket_event_id ?? eventTitle;
   const volume = markets.reduce((s, m) => s + Number(m.volume ?? 0), 0);
+  // A truncated field must say so: unlabelled, the prices look like they should
+  // sum to 100% when they can't.
+  const upstreamTotal = markets.reduce(
+    (n, m) => Math.max(n, Number(m.upstream_outcome_count ?? 0)),
+    0,
+  );
   const wide = useWideViewport();
   // Either signal of significance is enough: heavy trading, or a field wide
   // enough that nobody would have built it for an obscure event.
@@ -126,6 +134,11 @@ export function GroupedMarketCard({
         </div>
 
         <h3 className="font-semibold text-base leading-snug line-clamp-2">{eventTitle}</h3>
+        {upstreamTotal > markets.length && (
+          <p className="mt-1 text-[11px] text-muted-foreground">
+            {markets.length} of {upstreamTotal} outcomes, by trading volume
+          </p>
+        )}
       </div>
 
 

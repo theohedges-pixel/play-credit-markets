@@ -345,6 +345,17 @@ export async function runSync() {
   // Mirrored volume for every open import that has never been traded here.
   const volumeRefreshed = await refreshUpstreamVolume(supabaseAdmin);
 
+  // Fill in missing siblings of multi-outcome events so a group is never
+  // silently partial. Bounded per run; prop collections are flagged and skipped.
+  let groupOutcomesAdded = 0;
+  try {
+    const { completeMarketGroups } = await import("@/lib/polymarket-groups.server");
+    const res = await completeMarketGroups(supabaseAdmin, { budget: 30 });
+    groupOutcomesAdded = res.imported;
+  } catch (e) {
+    console.error("[sync-polymarket] group completion failed", (e as Error).message);
+  }
+
   // Mirror upstream settlements: any closed Predikt import whose Polymarket
   // twin has settled is resolved to the SAME outcome. Polymarket is the ground
   // truth here, so no AI guess and no review window are involved.
@@ -360,6 +371,7 @@ export async function runSync() {
     upstreamClosed,
     refreshed,
     volumeRefreshed,
+    groupOutcomesAdded,
     mirrored,
     backfilledPoints,
     scanned: items.length,
