@@ -23,7 +23,7 @@ const PREVIEW = 4;
  * collapsed group card (header + 4 outcome rows + footer); single markets fill
  * the same box with their footer pinned to the bottom.
  */
-export const CARD_MIN_HEIGHT = "min-h-[368px]";
+export const CARD_MIN_HEIGHT = "min-h-[372px]";
 
 /**
  * Per-event expansion state, kept outside React so a card the user opened (or
