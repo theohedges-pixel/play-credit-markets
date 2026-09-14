@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Card } from "@/components/ui/card";
 import { Link } from "@tanstack/react-router";
 import { History, Layers } from "lucide-react";
@@ -14,6 +14,35 @@ export interface GroupedMarketData extends MarketCardData {
 
 /** Outcomes shown before the "show all" expansion kicks in. */
 const PREVIEW = 4;
+
+/**
+ * Groups whose combined volume clears this render fully expanded. Chosen from
+ * the live distribution of group volumes: it selects the top third of groups
+ * (the notable elections / championships) and leaves the long tail collapsed.
+ */
+export const AUTO_EXPAND_VOLUME = 1_000_000;
+
+/** Auto-expansion is desktop-only; a 20-outcome card is unscannable on a phone. */
+const AUTO_EXPAND_MIN_WIDTH = 640;
+
+/**
+ * Per-event expansion overrides, kept outside React so a user's choice to
+ * collapse an auto-expanded card survives re-renders/refilters while they
+ * stay on the page.
+ */
+const overrides = new Map<string, boolean>();
+
+function useWideViewport(): boolean {
+  const [wide, setWide] = useState(false);
+  useEffect(() => {
+    const mq = window.matchMedia(`(min-width: ${AUTO_EXPAND_MIN_WIDTH}px)`);
+    const update = () => setWide(mq.matches);
+    update();
+    mq.addEventListener("change", update);
+    return () => mq.removeEventListener("change", update);
+  }, []);
+  return wide;
+}
 
 /**
  * Label for one outcome inside a group. Polymarket's groupItemTitle is the
