@@ -176,7 +176,10 @@ function Portfolio() {
 
         <section className="mb-8 overflow-hidden rounded-lg border border-border bg-card" aria-labelledby="worth-heading">
           <div className="border-b border-border p-6">
-            <div id="worth-heading" className="flex items-center gap-2 text-xs uppercase text-muted-foreground"><TrendingUp size={14} /> Net worth</div>
+            <div id="worth-heading" className="flex items-center justify-between gap-2 text-xs uppercase text-muted-foreground">
+              <span className="flex items-center gap-2"><TrendingUp size={14} /> Net worth</span>
+              <PortfolioExplainerDialog />
+            </div>
             <div className={`mt-2 font-display text-4xl font-bold tabular-nums ${valueClass((profile?.credits ?? 0) + posValue)}`}>
               {fmtCredits((profile?.credits ?? 0) + posValue)}c
             </div>
