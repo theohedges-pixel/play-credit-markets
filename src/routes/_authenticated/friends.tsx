@@ -53,6 +53,15 @@ function FriendsPage() {
     invalidate();
   };
 
+  const block = async (userId: string, username: string) => {
+    if (!window.confirm(`Block @${username}? They won't be able to send you requests.`)) return;
+    const { error } = await (supabase as any).rpc("block_user", { _user_id: userId });
+    if (error) return toast.error(error.message);
+    toast.success(`@${username} blocked`);
+    invalidate();
+    qc.invalidateQueries({ queryKey: ["blocked-users"] });
+  };
+
   const remove = async (id: string) => {
     const { error } = await supabase.rpc("remove_friend" as any, { _friendship_id: id });
     if (error) return toast.error(error.message);
