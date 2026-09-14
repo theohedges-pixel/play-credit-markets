@@ -275,7 +275,7 @@ export async function runSync() {
         status: "open" as const,
         yes_pool: pools.yes_pool,
         no_pool: pools.no_pool,
-        volume: 0,
+        volume: upstreamVolume(m),
         source: "polymarket",
         polymarket_id: m.id ?? null,
         polymarket_clob_token_id: yesClobTokenId(m),
