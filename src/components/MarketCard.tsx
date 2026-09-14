@@ -50,7 +50,7 @@ export function MarketCard({ m, mine }: { m: MarketCardData; mine?: boolean }) {
             </span>
           )}
         </div>
-        <h3 className="font-semibold text-base leading-snug mb-5 line-clamp-2 group-hover:text-primary transition-colors">
+        <h3 className="font-semibold text-base leading-snug mb-5 min-h-[3rem] line-clamp-2 group-hover:text-primary transition-colors">
           {m.title}
         </h3>
         <div className="flex items-baseline justify-between mb-2">
