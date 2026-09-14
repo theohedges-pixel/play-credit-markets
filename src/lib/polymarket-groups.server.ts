@@ -73,6 +73,24 @@ function vol(m: GammaMarket): number {
   return Number.isFinite(n) && n > 0 ? n : 0;
 }
 
+/**
+ * Current upstream YES probability, 0 when unavailable.
+ *
+ * Selection ranks on this, NOT on lifetime volume. On long-shot fields
+ * (presidential nominations) lifetime volume is dominated by novelty entries
+ * — Oprah, MrBeast, LeBron — while the genuine front-runners sit lower.
+ * Price is what makes an outcome worth showing; volume is only a tie-break.
+ */
+function price(m: GammaMarket): number {
+  try {
+    const raw = (m as unknown as { outcomePrices?: string }).outcomePrices;
+    const n = Number(JSON.parse(raw ?? "[]")[0]);
+    return Number.isFinite(n) ? n : 0;
+  } catch {
+    return 0;
+  }
+}
+
 const GAME_GRACE_MS = 6 * 60 * 60 * 1000;
 
 function closesAt(m: GammaMarket): string | null {
@@ -197,7 +215,7 @@ export async function completeMarketGroups(
     }
 
     const have = new Set(members.map((m) => String(m.polymarket_id)));
-    const ranked = [...upstreamOpen].sort((a, b) => vol(b) - vol(a));
+    const ranked = [...upstreamOpen].sort((a, b) => price(b) - price(a) || vol(b) - vol(a));
     const target = ranked.slice(0, MAX_PER_GROUP);
     const missing = target.filter((m) => m.id != null && !have.has(String(m.id)));
 
