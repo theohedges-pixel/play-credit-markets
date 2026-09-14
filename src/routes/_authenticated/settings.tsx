@@ -36,6 +36,41 @@ function Settings() {
     setAttributeSuggestions((profile as any)?.attribute_suggestions_publicly ?? true);
   }, [(profile as any)?.attribute_suggestions_publicly]);
 
+  const { data: blocked, refetch: refetchBlocked } = useQuery({
+    queryKey: ["blocked-users", user?.id],
+    enabled: !!user,
+    queryFn: async () => {
+      const { data } = await (supabase as any)
+        .from("friendships")
+        .select(
+          "id, requester_id, addressee_id, requester:public_profiles!friendships_requester_id_fkey(id, username, avatar_url), addressee:public_profiles!friendships_addressee_id_fkey(id, username, avatar_url)",
+        )
+        .eq("status", "blocked")
+        .eq("blocked_by", user!.id);
+      type Row = {
+        id: string;
+        requester_id: string;
+        requester: { id: string; username: string; avatar_url: string | null } | null;
+        addressee: { id: string; username: string; avatar_url: string | null } | null;
+      };
+      return ((data as Row[] | null) ?? [])
+        .map((r) => ({
+          id: r.id,
+          other: r.requester_id === user!.id ? r.addressee : r.requester,
+        }))
+        .filter((r): r is { id: string; other: { id: string; username: string; avatar_url: string | null } } =>
+          !!r.other,
+        );
+    },
+  });
+
+  const unblock = async (otherId: string) => {
+    const { error } = await (supabase as any).rpc("unblock_user", { _user_id: otherId });
+    if (error) return toast.error(error.message);
+    toast.success("Unblocked");
+    refetchBlocked();
+  };
+
   // Default for future suggestions only; markets already live keep their setting.
   const toggleAttribution = async (next: boolean) => {
     if (!user) return;
@@ -282,6 +317,36 @@ function Settings() {
               onCheckedChange={toggleAttribution}
             />
           </div>
+        </section>
+
+        <section className="rounded-lg border border-border bg-card p-5">
+          <h2 className="font-display text-lg font-semibold mb-2">Blocked members</h2>
+          <p className="text-xs text-muted-foreground mb-4 max-w-md">
+            Blocked members can't send you friend requests, and neither of you appears
+            in the other's member search. Unblocking restores that.
+          </p>
+          {(blocked ?? []).length === 0 ? (
+            <p className="text-sm text-muted-foreground">You haven't blocked anyone.</p>
+          ) : (
+            <div className="divide-y divide-border">
+              {(blocked ?? []).map((b) => (
+                <div key={b.id} className="flex items-center justify-between gap-3 py-2.5">
+                  <div className="flex items-center gap-3 min-w-0">
+                    <UserAvatar
+                      username={b.other.username}
+                      avatarUrl={b.other.avatar_url}
+                      userId={b.other.id}
+                      size="md"
+                    />
+                    <span className="truncate text-sm">@{b.other.username}</span>
+                  </div>
+                  <Button size="sm" variant="secondary" onClick={() => unblock(b.other.id)}>
+                    Unblock
+                  </Button>
+                </div>
+              ))}
+            </div>
+          )}
         </section>
 
         <section className="rounded-lg border border-border bg-card p-5">

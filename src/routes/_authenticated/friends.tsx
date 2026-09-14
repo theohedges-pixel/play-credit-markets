@@ -6,6 +6,7 @@ import { Header } from "@/components/Header";
 import { Button } from "@/components/ui/button";
 import { UserAvatar } from "@/components/UserAvatar";
 import { InviteFriends } from "@/components/InviteFriends";
+import { FriendSearch } from "@/components/FriendSearch";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { toast } from "sonner";
 
@@ -52,6 +53,15 @@ function FriendsPage() {
     invalidate();
   };
 
+  const block = async (userId: string, username: string) => {
+    if (!window.confirm(`Block @${username}? They won't be able to send you requests.`)) return;
+    const { error } = await (supabase as any).rpc("block_user", { _user_id: userId });
+    if (error) return toast.error(error.message);
+    toast.success(`@${username} blocked`);
+    invalidate();
+    qc.invalidateQueries({ queryKey: ["blocked-users"] });
+  };
+
   const remove = async (id: string) => {
     const { error } = await supabase.rpc("remove_friend" as any, { _friendship_id: id });
     if (error) return toast.error(error.message);
@@ -76,6 +86,8 @@ function FriendsPage() {
       <div className="max-w-3xl mx-auto px-6 py-10">
         <h1 className="font-display text-3xl font-bold mb-6">Friends</h1>
 
+        <FriendSearch />
+
         <InviteFriends />
 
         <Tabs defaultValue="friends">
@@ -89,7 +101,7 @@ function FriendsPage() {
             <div className="rounded-lg border border-border bg-card divide-y divide-border">
               {accepted.length === 0 && (
                 <p className="px-5 py-8 text-sm text-center text-muted-foreground">
-                  No friends yet. Visit a profile and send a friend request.
+                  No friends yet. Search for someone above to send a friend request.
                 </p>
               )}
               {accepted.map((r) => {
@@ -105,9 +117,14 @@ function FriendsPage() {
                       <UserAvatar username={o.username} avatarUrl={o.avatar_url} userId={o.id} size="md" />
                       <span className="truncate">@{o.username}</span>
                     </Link>
-                    <Button size="sm" variant="ghost" onClick={() => remove(r.id)}>
-                      Remove
-                    </Button>
+                    <div className="flex gap-1">
+                      <Button size="sm" variant="ghost" onClick={() => remove(r.id)}>
+                        Remove
+                      </Button>
+                      <Button size="sm" variant="ghost" onClick={() => block(o.id, o.username)}>
+                        Block
+                      </Button>
+                    </div>
                   </div>
                 );
               })}

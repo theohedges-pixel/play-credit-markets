@@ -100,13 +100,19 @@ function PublicProfile() {
     queryFn: async () => {
       const { data } = await (supabase as any)
         .from("friendships")
-        .select("id, status, requester_id, addressee_id")
+        .select("id, status, requester_id, addressee_id, blocked_by")
         .or(
           `and(requester_id.eq.${me!.id},addressee_id.eq.${uid}),and(requester_id.eq.${uid},addressee_id.eq.${me!.id})`,
         )
         .maybeSingle();
       return data as
-        | { id: string; status: "pending" | "accepted" | "declined"; requester_id: string; addressee_id: string }
+        | {
+            id: string;
+            status: "pending" | "accepted" | "declined" | "blocked";
+            requester_id: string;
+            addressee_id: string;
+            blocked_by: string | null;
+          }
         | null;
     },
   });
@@ -140,6 +146,25 @@ function PublicProfile() {
     qc.invalidateQueries({ queryKey: ["public-friend-count", uid] });
   };
 
+  const blockUser = async () => {
+    if (!uid) return;
+    if (!window.confirm(`Block @${username}? They won't be able to send you requests.`)) return;
+    const { error } = await (supabase as any).rpc("block_user", { _user_id: uid });
+    if (error) return toast.error(error.message);
+    toast.success("Blocked");
+    refetchFriendship();
+    qc.invalidateQueries({ queryKey: ["blocked-users"] });
+    qc.invalidateQueries({ queryKey: ["public-friend-count", uid] });
+  };
+
+  const unblockUser = async () => {
+    if (!uid) return;
+    const { error } = await (supabase as any).rpc("unblock_user", { _user_id: uid });
+    if (error) return toast.error(error.message);
+    toast.success("Unblocked");
+    refetchFriendship();
+    qc.invalidateQueries({ queryKey: ["blocked-users"] });
+  };
 
   if (isLoading) {
     return (
@@ -187,7 +212,7 @@ function PublicProfile() {
               <TierBadge peakNetWorth={profile.peak_net_worth} size="md" />
               {me && me.id !== profile.id && (
                 <>
-                  {!friendship && (
+                  {(!friendship || friendship.status === "declined") && (
                     <Button size="sm" onClick={sendRequest}>Add friend</Button>
                   )}
                   {friendship?.status === "pending" && friendship.requester_id === me.id && (
@@ -199,6 +224,11 @@ function PublicProfile() {
                   {friendship?.status === "accepted" && (
                     <Button size="sm" variant="secondary" onClick={removeFriend}>Friends ✓</Button>
                   )}
+                  {friendship?.status === "blocked" && friendship.blocked_by === me.id ? (
+                    <Button size="sm" variant="secondary" onClick={unblockUser}>Unblock</Button>
+                  ) : friendship?.status !== "blocked" ? (
+                    <Button size="sm" variant="ghost" onClick={blockUser}>Block</Button>
+                  ) : null}
                 </>
               )}
             </div>

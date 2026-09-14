@@ -108,7 +108,9 @@ export type Database = {
       friendships: {
         Row: {
           addressee_id: string
+          blocked_by: string | null
           created_at: string
+          decline_count: number
           id: string
           requester_id: string
           status: Database["public"]["Enums"]["friendship_status"]
@@ -116,7 +118,9 @@ export type Database = {
         }
         Insert: {
           addressee_id: string
+          blocked_by?: string | null
           created_at?: string
+          decline_count?: number
           id?: string
           requester_id: string
           status?: Database["public"]["Enums"]["friendship_status"]
@@ -124,7 +128,9 @@ export type Database = {
         }
         Update: {
           addressee_id?: string
+          blocked_by?: string | null
           created_at?: string
+          decline_count?: number
           id?: string
           requester_id?: string
           status?: Database["public"]["Enums"]["friendship_status"]
@@ -148,6 +154,27 @@ export type Database = {
           {
             foreignKeyName: "friendships_addressee_id_fkey"
             columns: ["addressee_id"]
+            isOneToOne: false
+            referencedRelation: "public_profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "friendships_blocked_by_fkey"
+            columns: ["blocked_by"]
+            isOneToOne: false
+            referencedRelation: "leaderboard_net_worth"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "friendships_blocked_by_fkey"
+            columns: ["blocked_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "friendships_blocked_by_fkey"
+            columns: ["blocked_by"]
             isOneToOne: false
             referencedRelation: "public_profiles"
             referencedColumns: ["id"]
@@ -1520,6 +1547,7 @@ export type Database = {
         Returns: string
       }
       auto_close_markets: { Args: never; Returns: undefined }
+      block_user: { Args: { _user_id: string }; Returns: undefined }
       buy_shares: {
         Args: {
           p_market_id: string
@@ -1661,6 +1689,16 @@ export type Database = {
         Args: { _accept: boolean; _friendship_id: string }
         Returns: undefined
       }
+      search_users: {
+        Args: { _q: string }
+        Returns: {
+          avatar_url: string
+          friendship_id: string
+          id: string
+          rel: string
+          username: string
+        }[]
+      }
       sell_shares: {
         Args: {
           p_market_id: string
@@ -1681,10 +1719,11 @@ export type Database = {
       }
       sync_all_peak_net_worth: { Args: never; Returns: number }
       sync_peak_net_worth: { Args: { _user_id: string }; Returns: Json }
+      unblock_user: { Args: { _user_id: string }; Returns: undefined }
     }
     Enums: {
       app_role: "admin" | "user"
-      friendship_status: "pending" | "accepted" | "declined"
+      friendship_status: "pending" | "accepted" | "declined" | "blocked"
       group_bet_resolution: "yes" | "no" | "invalid"
       group_bet_status:
         | "open"
@@ -1831,7 +1870,7 @@ export const Constants = {
   public: {
     Enums: {
       app_role: ["admin", "user"],
-      friendship_status: ["pending", "accepted", "declined"],
+      friendship_status: ["pending", "accepted", "declined", "blocked"],
       group_bet_resolution: ["yes", "no", "invalid"],
       group_bet_status: [
         "open",
