@@ -63,6 +63,23 @@ export function SuggestMarketDialog() {
     queryFn: () => loadMine(),
   });
 
+  const { data: myMarkets } = useQuery({
+    queryKey: ["my-suggested-markets", user?.id],
+    enabled: !!user && open,
+    queryFn: () => loadMyMarkets(),
+  });
+
+  const flipAttribution = async (marketId: string, next: boolean) => {
+    try {
+      await setAttribution({ data: { marketId, isPublic: next } });
+      qc.invalidateQueries({ queryKey: ["my-suggested-markets"] });
+      qc.invalidateQueries({ queryKey: ["market"] });
+      toast.success(next ? "Your username is shown on that market" : "Your username is hidden on that market");
+    } catch (e) {
+      toast.error(e instanceof Error ? e.message : "Couldn't change that");
+    }
+  };
+
   if (!user) return null;
 
   const onSubmit = async () => {
