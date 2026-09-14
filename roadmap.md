@@ -11,3 +11,5 @@
 - [x] Polymarket sync consolidation, dedupe index, odds refresh
 - [x] Stale AI market audit + Bucket A cleanup (19 removed)
 - [x] Grounded topic sourcing + staleness verification + semantic duplicate detection
+
+- [ ] Audit all UI reading other users' profile details (group bet participants, resolution votes, notifications, market activity, friend requests, leaderboard, public profiles) — must use public_profiles, not restricted profiles table.
