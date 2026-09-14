@@ -144,7 +144,7 @@ export function GroupedMarketCard({
 
       {rows.length > PREVIEW && (
         <button
-          onClick={() => setExpanded((v) => !v)}
+          onClick={() => setExpanded(!expanded)}
           className="mt-2 text-xs text-muted-foreground hover:text-foreground underline underline-offset-2 self-start"
         >
           {expanded ? "Show fewer" : `Show all ${rows.length} outcomes`}
