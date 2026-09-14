@@ -10,6 +10,8 @@ export interface GroupedMarketData extends MarketCardData {
   polymarket_event_id?: string | null;
   polymarket_event_title?: string | null;
   group_item_title?: string | null;
+  /** True number of open outcomes upstream; may exceed what we hold. */
+  upstream_outcome_count?: number | null;
 }
 
 /** Outcomes shown before the "show all" expansion kicks in. */
