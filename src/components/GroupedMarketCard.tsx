@@ -81,31 +81,43 @@ export function GroupedMarketCard({
   markets: GroupedMarketData[];
   eventTitle: string;
 }) {
-  const [expanded, setExpanded] = useState(false);
+  const eventKey = markets[0]?.polymarket_event_id ?? eventTitle;
+  const volume = markets.reduce((s, m) => s + Number(m.volume ?? 0), 0);
+  const wide = useWideViewport();
+  const autoExpanded = wide && volume >= AUTO_EXPAND_VOLUME;
+
+  const [override, setOverride] = useState<boolean | undefined>(() => overrides.get(eventKey));
+  const expanded = override ?? autoExpanded;
+  const setExpanded = (v: boolean) => {
+    overrides.set(eventKey, v);
+    setOverride(v);
+  };
 
   const rows = markets
     .map((m) => ({ m, p: yesPrice(m.yes_pool, m.no_pool) }))
     .sort((a, b) => b.p - a.p);
   const shown = expanded ? rows : rows.slice(0, PREVIEW);
 
-  const volume = markets.reduce((s, m) => s + Number(m.volume ?? 0), 0);
   const closesAt = markets
     .map((m) => m.closes_at)
     .sort((a, b) => new Date(a).getTime() - new Date(b).getTime())[0]!;
 
   return (
     <Card className="h-full p-5 bg-card flex flex-col">
-      <div className="flex items-center justify-between gap-2 mb-3">
-        <span className="text-xs font-mono uppercase tracking-wider text-muted-foreground">
-          {markets[0]?.category?.name ?? "General"}
-        </span>
-        <span className="flex items-center gap-1 text-[10px] px-2 py-0.5 rounded-full border border-border text-muted-foreground shrink-0">
-          <Layers size={10} />
-          {markets.length} outcomes
-        </span>
+      <div className="sticky top-0 z-10 -mx-5 -mt-5 px-5 pt-5 pb-3 bg-card rounded-t-[inherit]">
+        <div className="flex items-center justify-between gap-2 mb-3">
+          <span className="text-xs font-mono uppercase tracking-wider text-muted-foreground">
+            {markets[0]?.category?.name ?? "General"}
+          </span>
+          <span className="flex items-center gap-1 text-[10px] px-2 py-0.5 rounded-full border border-border text-muted-foreground shrink-0">
+            <Layers size={10} />
+            {markets.length} outcomes
+          </span>
+        </div>
+
+        <h3 className="font-semibold text-base leading-snug line-clamp-2">{eventTitle}</h3>
       </div>
 
-      <h3 className="font-semibold text-base leading-snug mb-4 line-clamp-2">{eventTitle}</h3>
 
       <div className="space-y-1.5 flex-1">
         {shown.map(({ m, p }) => (
