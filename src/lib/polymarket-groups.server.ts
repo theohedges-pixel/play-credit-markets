@@ -257,10 +257,30 @@ export async function completeMarketGroups(
         .insert(row)
         .select("id, yes_pool, no_pool");
       if (error) {
-        if (error.code === "23505") continue; // already imported concurrently
+        if (error.code === "23505") {
+          // We already hold this outcome, but it was imported without event
+          // fields (an older standalone import), so it never joined the group.
+          // Adopt it instead of skipping, or the group stays permanently short
+          // of exactly the outcomes we imported first — often the favourite.
+          await supabaseAdmin
+            .from("markets")
+            .update({
+              polymarket_event_id: row.polymarket_event_id,
+              polymarket_event_slug: row.polymarket_event_slug,
+              polymarket_event_title: row.polymarket_event_title,
+              polymarket_neg_risk_id: row.polymarket_neg_risk_id,
+              group_item_title: row.group_item_title,
+              event_mutually_exclusive: true,
+              upstream_outcome_count: upstreamOpen.length,
+            })
+            .eq("polymarket_id", String(m.id))
+            .is("polymarket_event_id", null);
+          continue;
+        }
         console.error("[group-complete] insert failed", m.id, error.message);
         continue;
       }
+
       added++;
       budget--;
       const newId = data?.[0]?.id as string | undefined;
