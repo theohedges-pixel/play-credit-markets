@@ -86,7 +86,13 @@ export function SuggestMarketDialog() {
     setSubmitting(true);
     setBlocked(null);
     try {
-      const res = await submit({ data: { text: text.trim(), categoryId: categoryId || null } });
+      const res = await submit({
+        data: {
+          text: text.trim(),
+          categoryId: categoryId || null,
+          attributePublicly: attribute,
+        },
+      });
       if (res.status === "pending") {
         toast.success("Sent for review — you'll be notified either way.");
         setText("");
