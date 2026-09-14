@@ -2,7 +2,14 @@ import { useState } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
 import { supabase } from "@/integrations/supabase/client";
-import { submitMarketSuggestion, mySuggestions } from "@/lib/suggestions.functions";
+import {
+  submitMarketSuggestion,
+  mySuggestions,
+  mySuggestedMarkets,
+  setMarketAttribution,
+} from "@/lib/suggestions.functions";
+import { Checkbox } from "@/components/ui/checkbox";
+import { Switch } from "@/components/ui/switch";
 import { useAuth } from "@/lib/auth";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
