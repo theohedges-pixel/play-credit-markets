@@ -7,7 +7,9 @@ import { Input } from "@/components/ui/input";
 import { Share2, Copy } from "lucide-react";
 import { toast } from "sonner";
 
-const REFERRAL_REWARD = 200;
+const REFERRAL_REWARD = 10;
+const REFERRAL_BONUS_EVERY = 20;
+const REFERRAL_BONUS = 100;
 
 export function InviteFriends() {
   const { user, profile } = useAuth();
