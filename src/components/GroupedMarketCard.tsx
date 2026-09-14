@@ -23,7 +23,7 @@ const PREVIEW = 4;
  * collapsed group card (header + 4 outcome rows + footer); single markets fill
  * the same box with their footer pinned to the bottom.
  */
-export const CARD_MIN_HEIGHT = "min-h-[272px]";
+export const CARD_MIN_HEIGHT = "min-h-[368px]";
 
 /**
  * Per-event expansion state, kept outside React so a card the user opened (or
@@ -106,11 +106,13 @@ export function GroupedMarketCard({
         </div>
 
         <h3 className="font-semibold text-base leading-snug min-h-[3rem] line-clamp-2">{eventTitle}</h3>
-        {upstreamTotal > markets.length && (
-          <p className="mt-1 text-[11px] text-muted-foreground">
-            {markets.length} of {upstreamTotal} outcomes, by trading volume
-          </p>
-        )}
+        {/* Reserved whether or not it is used, so labelled and complete
+            groups keep the same header height. */}
+        <p className="mt-1 h-4 text-[11px] text-muted-foreground">
+          {upstreamTotal > markets.length
+            ? `${markets.length} of ${upstreamTotal} outcomes, by trading volume`
+            : ""}
+        </p>
       </div>
 
 
