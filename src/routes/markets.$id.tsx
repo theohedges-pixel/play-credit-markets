@@ -328,13 +328,18 @@ function MarketDetail() {
             <div className="flex items-center gap-2 text-xs text-muted-foreground mb-3">
               {market.category && <span className="px-2 py-0.5 rounded bg-secondary">{market.category.name}</span>}
               <span>by @{(market as any).creator?.username ?? "anon"}</span>
-              {(market as any).suggester?.username && (
-                <span className="px-2 py-0.5 rounded-full border border-primary/60 text-primary">
-                  {user && (market as any).suggested_by === user.id
-                    ? "You suggested this"
-                    : `Suggested by @${(market as any).suggester.username}`}
-                </span>
-              )}
+              {/* Own badge is private to the suggester and always shows. Public credit
+                  only shows when they left attribution on — otherwise nothing at all. */}
+              {(market as any).suggester?.username &&
+                (user && (market as any).suggested_by === user.id ? (
+                  <span className="px-2 py-0.5 rounded-full border border-primary/60 text-primary">
+                    You suggested this
+                  </span>
+                ) : (market as any).attributed_publicly !== false ? (
+                  <span className="px-2 py-0.5 rounded-full border border-primary/60 text-primary">
+                    Suggested by @{(market as any).suggester.username}
+                  </span>
+                ) : null)}
             </div>
             <h1 className="font-display text-3xl md:text-4xl font-bold leading-tight">{market.title}</h1>
 
