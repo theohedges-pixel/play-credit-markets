@@ -198,3 +198,18 @@ export const convertSuggestionWithAi = createServerFn({ method: "POST" })
 
     return { ...converted, categoryId };
   });
+
+/**
+ * Backlog pass for multi-outcome event completion. The same routine runs on
+ * every sync with a small budget; this lets an admin clear a large backlog in
+ * one go and see the per-event breakdown.
+ */
+export const completeMarketGroupsNow = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((data) => z.object({ budget: z.number().min(1).max(500).optional() }).parse(data ?? {}))
+  .handler(async ({ context, data }) => {
+    await requireAdmin(context.supabase, context.userId);
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    const { completeMarketGroups } = await import("@/lib/polymarket-groups.server");
+    return completeMarketGroups(supabaseAdmin, { budget: data.budget ?? 200 });
+  });
