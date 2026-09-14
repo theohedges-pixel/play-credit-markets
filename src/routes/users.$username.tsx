@@ -100,13 +100,19 @@ function PublicProfile() {
     queryFn: async () => {
       const { data } = await (supabase as any)
         .from("friendships")
-        .select("id, status, requester_id, addressee_id")
+        .select("id, status, requester_id, addressee_id, blocked_by")
         .or(
           `and(requester_id.eq.${me!.id},addressee_id.eq.${uid}),and(requester_id.eq.${uid},addressee_id.eq.${me!.id})`,
         )
         .maybeSingle();
       return data as
-        | { id: string; status: "pending" | "accepted" | "declined"; requester_id: string; addressee_id: string }
+        | {
+            id: string;
+            status: "pending" | "accepted" | "declined" | "blocked";
+            requester_id: string;
+            addressee_id: string;
+            blocked_by: string | null;
+          }
         | null;
     },
   });
