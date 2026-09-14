@@ -20,7 +20,7 @@ const PREVIEW = 4;
  * the live distribution of group volumes: it selects the top third of groups
  * (the notable elections / championships) and leaves the long tail collapsed.
  */
-export const AUTO_EXPAND_VOLUME = 1_000_000;
+export const AUTO_EXPAND_VOLUME = 10_000_000;
 
 /** Auto-expansion is desktop-only; a 20-outcome card is unscannable on a phone. */
 const AUTO_EXPAND_MIN_WIDTH = 640;

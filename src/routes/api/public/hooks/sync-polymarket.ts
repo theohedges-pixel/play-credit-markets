@@ -53,6 +53,16 @@ export function groupingFields(m: PolyMarket) {
 }
 
 /**
+ * Lifetime traded volume as Polymarket reports it, per OUTCOME market.
+ * Gamma sends it as `volumeNum` (number) and `volume` (string) — read both.
+ */
+export function upstreamVolume(m: PolyMarket & { volumeNum?: number | string | null }): number {
+  const raw = m.volumeNum ?? m.volume;
+  const n = Number(raw);
+  return Number.isFinite(n) && n > 0 ? n : 0;
+}
+
+/**
  * Polymarket's endDate on sports markets is a generous fallback (often the
  * game start + 7 days), not when trading actually stops. When a real
  * gameStartTime exists we cap our own deadline at start + 6h — long enough to
@@ -275,7 +285,7 @@ export async function runSync() {
         status: "open" as const,
         yes_pool: pools.yes_pool,
         no_pool: pools.no_pool,
-        volume: 0,
+        volume: upstreamVolume(m),
         source: "polymarket",
         polymarket_id: m.id ?? null,
         polymarket_clob_token_id: yesClobTokenId(m),
@@ -332,6 +342,9 @@ export async function runSync() {
   const upstreamClosed = await sweepUpstreamClosures(supabaseAdmin);
   closed += upstreamClosed;
 
+  // Mirrored volume for every open import that has never been traded here.
+  const volumeRefreshed = await refreshUpstreamVolume(supabaseAdmin);
+
   // Mirror upstream settlements: any closed Predikt import whose Polymarket
   // twin has settled is resolved to the SAME outcome. Polymarket is the ground
   // truth here, so no AI guess and no review window are involved.
@@ -346,10 +359,65 @@ export async function runSync() {
     closed,
     upstreamClosed,
     refreshed,
+    volumeRefreshed,
     mirrored,
     backfilledPoints,
     scanned: items.length,
   };
+}
+
+/**
+ * Mirror Polymarket's per-outcome traded volume onto every OPEN import that
+ * has never been traded on Predikt. Imports are inserted straight from the
+ * Gamma feed, but grouped outcomes arrive via the by-id endpoint and the
+ * feed only ever carries the top 100 markets — so without this sweep most
+ * imports sit at zero forever. Once a market has a Predikt trade, `volume`
+ * is OUR volume and is never overwritten.
+ */
+export async function refreshUpstreamVolume(supabaseAdmin: any): Promise<number> {
+  const { data: open } = await supabaseAdmin
+    .from("markets")
+    .select("id, polymarket_id, volume")
+    .eq("status", "open")
+    .eq("created_via", "polymarket_import")
+    .not("polymarket_id", "is", null);
+  const rows = (open ?? []) as { id: string; polymarket_id: string; volume: number }[];
+  if (rows.length === 0) return 0;
+
+  const { data: tradeRows } = await supabaseAdmin
+    .from("trades")
+    .select("market_id")
+    .in("market_id", rows.map((r) => r.id));
+  const traded = new Set((tradeRows ?? []).map((t: { market_id: string }) => t.market_id));
+
+  const untraded = rows.filter((r) => !traded.has(r.id));
+  const byPid = new Map(untraded.map((r) => [String(r.polymarket_id), r]));
+  const ids = [...byPid.keys()];
+  const CHUNK = 40;
+  let updated = 0;
+
+  for (let i = 0; i < ids.length; i += CHUNK) {
+    const chunk = ids.slice(i, i + CHUNK);
+    const qs = chunk.map((id) => `id=${encodeURIComponent(id)}`).join("&");
+    try {
+      const r = await fetch(`https://gamma-api.polymarket.com/markets?${qs}&limit=${CHUNK}`, {
+        headers: { accept: "application/json" },
+      });
+      if (!r.ok) continue;
+      const body = (await r.json()) as PolyMarket[];
+      for (const up of Array.isArray(body) ? body : []) {
+        const local = up.id ? byPid.get(String(up.id)) : undefined;
+        if (!local) continue;
+        const vol = upstreamVolume(up);
+        if (vol <= 0 || Math.abs(vol - Number(local.volume)) < 1) continue;
+        const { error } = await supabaseAdmin.from("markets").update({ volume: vol }).eq("id", local.id);
+        if (!error) updated++;
+      }
+    } catch (e) {
+      console.error("[sync-polymarket] volume sweep failed", (e as Error).message);
+    }
+  }
+  return updated;
 }
 
 /**
