@@ -148,7 +148,7 @@ function PublicProfile() {
 
   const blockUser = async () => {
     if (!uid) return;
-    if (!window.confirm(`Block @${username}? They won't be able to send you requests.`)) return;
+    if (!(await confirmBlock(uid, username))) return;
     const { error } = await (supabase as any).rpc("block_user", { _user_id: uid });
     if (error) return toast.error(error.message);
     toast.success("Blocked");

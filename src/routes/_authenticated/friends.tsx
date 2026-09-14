@@ -9,6 +9,7 @@ import { InviteFriends } from "@/components/InviteFriends";
 import { FriendSearch } from "@/components/FriendSearch";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { toast } from "sonner";
+import { confirmBlock } from "@/lib/block";
 
 export const Route = createFileRoute("/_authenticated/friends")({
   head: () => ({ meta: [{ title: "Friends — Predikt" }] }),
