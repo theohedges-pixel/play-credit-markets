@@ -829,6 +829,7 @@ export type Database = {
           created_via: Database["public"]["Enums"]["market_origin"]
           creator_id: string | null
           description: string | null
+          event_mutually_exclusive: boolean | null
           group_item_title: string | null
           id: string
           needs_manual_resolution: boolean
@@ -850,6 +851,7 @@ export type Database = {
           status: Database["public"]["Enums"]["market_status"]
           suggested_by: string | null
           title: string
+          upstream_outcome_count: number | null
           volume: number
           yes_pool: number
         }
@@ -864,6 +866,7 @@ export type Database = {
           created_via?: Database["public"]["Enums"]["market_origin"]
           creator_id?: string | null
           description?: string | null
+          event_mutually_exclusive?: boolean | null
           group_item_title?: string | null
           id?: string
           needs_manual_resolution?: boolean
@@ -885,6 +888,7 @@ export type Database = {
           status?: Database["public"]["Enums"]["market_status"]
           suggested_by?: string | null
           title: string
+          upstream_outcome_count?: number | null
           volume?: number
           yes_pool?: number
         }
@@ -899,6 +903,7 @@ export type Database = {
           created_via?: Database["public"]["Enums"]["market_origin"]
           creator_id?: string | null
           description?: string | null
+          event_mutually_exclusive?: boolean | null
           group_item_title?: string | null
           id?: string
           needs_manual_resolution?: boolean
@@ -920,6 +925,7 @@ export type Database = {
           status?: Database["public"]["Enums"]["market_status"]
           suggested_by?: string | null
           title?: string
+          upstream_outcome_count?: number | null
           volume?: number
           yes_pool?: number
         }
