@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { Card } from "@/components/ui/card";
 import { Link } from "@tanstack/react-router";
 import { History, Layers } from "lucide-react";
@@ -18,40 +18,19 @@ export interface GroupedMarketData extends MarketCardData {
 const PREVIEW = 4;
 
 /**
- * Groups whose combined volume clears this render fully expanded. Chosen from
- * the live distribution of group volumes: it selects the top third of groups
- * (the notable elections / championships) and leaves the long tail collapsed.
+ * Shared collapsed height for every card in the list, grouped or not, so the
+ * grid reads as an even set of tiles instead of alternating sizes. Sized to a
+ * collapsed group card (header + 4 outcome rows + footer); single markets fill
+ * the same box with their footer pinned to the bottom.
  */
-export const AUTO_EXPAND_VOLUME = 10_000_000;
+export const CARD_MIN_HEIGHT = "min-h-[272px]";
 
 /**
- * Fallback rule: a wide field is itself a signal of significance — nobody
- * builds a 12-way market for an obscure event. Catches the big championship
- * and price-ladder events whose volume sits below the threshold.
- */
-export const AUTO_EXPAND_OUTCOMES = 12;
-
-/** Auto-expansion is desktop-only; a 20-outcome card is unscannable on a phone. */
-const AUTO_EXPAND_MIN_WIDTH = 640;
-
-/**
- * Per-event expansion overrides, kept outside React so a user's choice to
- * collapse an auto-expanded card survives re-renders/refilters while they
- * stay on the page.
+ * Per-event expansion state, kept outside React so a card the user opened (or
+ * closed) stays that way through re-renders and refilters while they remain on
+ * the page. Every card starts collapsed.
  */
 const overrides = new Map<string, boolean>();
-
-function useWideViewport(): boolean {
-  const [wide, setWide] = useState(false);
-  useEffect(() => {
-    const mq = window.matchMedia(`(min-width: ${AUTO_EXPAND_MIN_WIDTH}px)`);
-    const update = () => setWide(mq.matches);
-    update();
-    mq.addEventListener("change", update);
-    return () => mq.removeEventListener("change", update);
-  }, []);
-  return wide;
-}
 
 /**
  * Label for one outcome inside a group. Polymarket's groupItemTitle is the
@@ -98,17 +77,10 @@ export function GroupedMarketCard({
     (n, m) => Math.max(n, Number(m.upstream_outcome_count ?? 0)),
     0,
   );
-  const wide = useWideViewport();
-  // Either signal of significance is enough: heavy trading, or a field wide
-  // enough that nobody would have built it for an obscure event.
-  const autoExpanded =
-    wide && (volume >= AUTO_EXPAND_VOLUME || markets.length >= AUTO_EXPAND_OUTCOMES);
-
-  const [override, setOverride] = useState<boolean | undefined>(() => overrides.get(eventKey));
-  const expanded = override ?? autoExpanded;
+  const [expanded, setExpandedState] = useState<boolean>(() => overrides.get(eventKey) ?? false);
   const setExpanded = (v: boolean) => {
     overrides.set(eventKey, v);
-    setOverride(v);
+    setExpandedState(v);
   };
 
   const rows = markets
@@ -121,7 +93,7 @@ export function GroupedMarketCard({
     .sort((a, b) => new Date(a).getTime() - new Date(b).getTime())[0]!;
 
   return (
-    <Card className="h-full p-5 bg-card flex flex-col">
+    <Card className={`h-full ${CARD_MIN_HEIGHT} p-5 bg-card flex flex-col`}>
       <div className="sticky top-0 z-10 -mx-5 -mt-5 px-5 pt-5 pb-3 bg-card rounded-t-[inherit]">
         <div className="flex items-center justify-between gap-2 mb-3">
           <span className="text-xs font-mono uppercase tracking-wider text-muted-foreground">

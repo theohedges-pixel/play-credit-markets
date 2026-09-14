@@ -3,6 +3,7 @@ import { formatDistanceToNowStrict } from "date-fns";
 import { Link } from "@tanstack/react-router";
 import { History } from "lucide-react";
 import { yesPrice } from "@/lib/format";
+import { CARD_MIN_HEIGHT } from "@/components/GroupedMarketCard";
 
 export interface MarketCardData {
   id: string;
@@ -31,7 +32,9 @@ export function MarketCard({ m, mine }: { m: MarketCardData; mine?: boolean }) {
 
   return (
     <Link to="/markets/$id" params={{ id: m.id }} className="group">
-      <Card className="h-full p-5 hover:border-primary/50 transition-colors bg-card">
+      <Card
+        className={`h-full ${CARD_MIN_HEIGHT} p-5 flex flex-col hover:border-primary/50 transition-colors bg-card`}
+      >
         <div className="flex items-center justify-between gap-2 mb-3">
           <span className="text-xs font-mono uppercase tracking-wider text-muted-foreground">
             {m.category?.name ?? "General"}
@@ -68,7 +71,7 @@ export function MarketCard({ m, mine }: { m: MarketCardData; mine?: boolean }) {
             {m.volume.toFixed(0)} vol
           </span>
         </div>
-        <div className="h-1.5 rounded-full bg-secondary overflow-hidden mb-3">
+        <div className="h-1.5 rounded-full bg-secondary overflow-hidden mb-3 mt-auto">
           <div className="h-full bg-yes transition-all" style={{ width: `${p * 100}%` }} />
         </div>
         <div className="flex items-center justify-between gap-2 text-xs text-muted-foreground">
