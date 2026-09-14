@@ -285,6 +285,36 @@ function Settings() {
         </section>
 
         <section className="rounded-lg border border-border bg-card p-5">
+          <h2 className="font-display text-lg font-semibold mb-2">Blocked members</h2>
+          <p className="text-xs text-muted-foreground mb-4 max-w-md">
+            Blocked members can't send you friend requests, and neither of you appears
+            in the other's member search. Unblocking restores that.
+          </p>
+          {(blocked ?? []).length === 0 ? (
+            <p className="text-sm text-muted-foreground">You haven't blocked anyone.</p>
+          ) : (
+            <div className="divide-y divide-border">
+              {(blocked ?? []).map((b) => (
+                <div key={b.id} className="flex items-center justify-between gap-3 py-2.5">
+                  <div className="flex items-center gap-3 min-w-0">
+                    <UserAvatar
+                      username={b.other.username}
+                      avatarUrl={b.other.avatar_url}
+                      userId={b.other.id}
+                      size="md"
+                    />
+                    <span className="truncate text-sm">@{b.other.username}</span>
+                  </div>
+                  <Button size="sm" variant="secondary" onClick={() => unblock(b.other.id)}>
+                    Unblock
+                  </Button>
+                </div>
+              ))}
+            </div>
+          )}
+        </section>
+
+        <section className="rounded-lg border border-border bg-card p-5">
           <h2 className="font-display text-lg font-semibold mb-2">Social</h2>
           <p className="text-sm text-muted-foreground">
             You have <span className="text-foreground font-semibold">{friendCount ?? 0}</span>{" "}
