@@ -40,6 +40,7 @@ import {
   discoverTrendingNow,
   resolveAiMarketsNow,
   approveSuggestionChecked,
+  convertSuggestionWithAi,
   backfillPolymarketHistoryNow,
   regenerateMarketThemesNow,
 } from "@/lib/admin-jobs.functions";
@@ -118,7 +119,7 @@ function AdminDashboard() {
             <TabsTrigger value="markets">Markets</TabsTrigger>
             <TabsTrigger value="activity">Activity</TabsTrigger>
             <TabsTrigger value="audit">Audit log</TabsTrigger>
-            <TabsTrigger value="suggestions">AI Suggestions</TabsTrigger>
+            <TabsTrigger value="suggestions">Suggestions</TabsTrigger>
             <TabsTrigger value="content">Content</TabsTrigger>
           </TabsList>
 
@@ -1109,10 +1110,12 @@ function SuggestionsTab() {
   const qc = useQueryClient();
   const [discovering, setDiscovering] = useState(false);
   const [approving, setApproving] = useState<string | null>(null);
+  const [converting, setConverting] = useState<string | null>(null);
   const [editing, setEditing] = useState<string | null>(null);
-  const [draft, setDraft] = useState<Partial<Suggestion>>({});
+  const [draft, setDraft] = useState<Partial<Suggestion> & { probability?: number }>({});
   const runDiscoverNow = useServerFn(discoverTrendingNow);
   const runApprove = useServerFn(approveSuggestionChecked);
+  const runConvert = useServerFn(convertSuggestionWithAi);
 
   const { data: categories } = useQuery({
     queryKey: ["categories"],
@@ -1127,7 +1130,7 @@ function SuggestionsTab() {
     queryFn: async () => {
       const { data, error } = await (supabase as any)
         .from("market_suggestions")
-        .select("*")
+        .select("*, suggester:profiles!market_suggestions_suggested_by_fkey(username)")
         .eq("status", "pending")
         .order("created_at", { ascending: false });
       if (error) throw error;
@@ -1156,6 +1159,31 @@ function SuggestionsTab() {
     setDraft({ ...s });
   };
 
+  /**
+   * Member submissions are raw text, so the AI forms the actual market first
+   * and the admin reviews and edits that version before anything goes live.
+   */
+  const onConvert = async (s: Suggestion) => {
+    setConverting(s.id);
+    try {
+      const r: any = await runConvert({ data: { suggestionId: s.id } });
+      setEditing(s.id);
+      setDraft({
+        ...s,
+        title: r.title,
+        description: r.description,
+        category_id: r.categoryId,
+        suggested_closes_at: r.closes_at,
+        probability: r.probability_yes,
+      });
+      toast.success("Converted — review it before approving");
+    } catch (e) {
+      toast.error(e instanceof Error ? e.message : "Conversion failed", { duration: 10000 });
+    } finally {
+      setConverting(null);
+    }
+  };
+
   const onApprove = async (s: Suggestion) => {
     const payload =
       editing === s.id
@@ -1165,6 +1193,7 @@ function SuggestionsTab() {
             description: draft.description ?? s.description ?? "",
             categoryId: draft.category_id ?? s.category_id,
             closesAt: draft.suggested_closes_at ?? s.suggested_closes_at,
+            ...(draft.probability !== undefined ? { probability: draft.probability } : {}),
           }
         : { suggestionId: s.id };
     setApproving(s.id);
@@ -1186,7 +1215,16 @@ function SuggestionsTab() {
   };
 
   const onReject = async (s: Suggestion) => {
-    const { error } = await rpc("reject_market_suggestion", { _suggestion_id: s.id });
+    // A member submission always gets a reason back, so one is required here.
+    let reason: string | null = null;
+    if (s.suggested_by) {
+      reason = window.prompt("Why is this being rejected? The suggester will see this.");
+      if (!reason || !reason.trim()) return;
+    }
+    const { error } = await rpc("reject_market_suggestion", {
+      _suggestion_id: s.id,
+      ...(reason ? { _reason: reason.trim() } : {}),
+    } as any);
     if (error) return toast.error(error.message);
     toast.success("Rejected");
     qc.invalidateQueries({ queryKey: ["market-suggestions"] });
@@ -1196,7 +1234,7 @@ function SuggestionsTab() {
     <div>
       <div className="flex items-start justify-between gap-4 mb-5 flex-wrap">
         <p className="text-sm text-muted-foreground">
-          Review trending market ideas surfaced by AI. Approve to publish.
+          Ideas from members and trending topics found by AI. Convert, review, then approve to publish.
         </p>
         <Button onClick={onDiscover} disabled={discovering} variant="outline" size="sm" className="gap-2">
           {discovering ? <Loader2 size={14} className="animate-spin" /> : <Sparkles size={14} />}
@@ -1214,9 +1252,27 @@ function SuggestionsTab() {
         <div className="space-y-3">
           {suggestions.map((s) => {
             const isEditing = editing === s.id;
+            const fromUser = !!s.suggested_by;
             const d = isEditing ? draft : s;
             return (
               <div key={s.id} className="rounded-lg border border-border bg-card p-5">
+                <div className="flex items-center gap-2 mb-3 text-xs">
+                  <span
+                    className={`px-2 py-0.5 rounded-full border ${fromUser ? "border-primary/60 text-primary" : "border-border text-muted-foreground"}`}
+                  >
+                    {fromUser ? `Member · @${s.suggester?.username ?? "unknown"}` : "AI-discovered"}
+                  </span>
+                  <span className="text-muted-foreground">
+                    {format(new Date(s.created_at), "PP")}
+                  </span>
+                </div>
+
+                {fromUser && s.user_text && (
+                  <p className="text-sm italic text-muted-foreground mb-3 border-l-2 border-border pl-3">
+                    “{s.user_text}”
+                  </p>
+                )}
+
                 {isEditing ? (
                   <div className="space-y-3">
                     <Input
@@ -1228,7 +1284,7 @@ function SuggestionsTab() {
                       value={d.description ?? ""}
                       onChange={(e) => setDraft((p) => ({ ...p, description: e.target.value }))}
                     />
-                    <div className="flex gap-3 flex-wrap">
+                    <div className="flex gap-3 flex-wrap items-center">
                       <select
                         value={d.category_id ?? ""}
                         onChange={(e) => setDraft((p) => ({ ...p, category_id: e.target.value || null }))}
@@ -1256,6 +1312,25 @@ function SuggestionsTab() {
                           }))
                         }
                       />
+                      {draft.probability !== undefined && (
+                        <label className="text-xs text-muted-foreground flex items-center gap-2">
+                          Starting YES
+                          <Input
+                            type="number"
+                            min={1}
+                            max={99}
+                            className="w-20"
+                            value={Math.round((draft.probability ?? 0.5) * 100)}
+                            onChange={(e) =>
+                              setDraft((p) => ({
+                                ...p,
+                                probability: Math.min(99, Math.max(1, Number(e.target.value))) / 100,
+                              }))
+                            }
+                          />
+                          ¢
+                        </label>
+                      )}
                     </div>
                   </div>
                 ) : (
@@ -1266,7 +1341,7 @@ function SuggestionsTab() {
                       <span className="px-2 py-0.5 rounded bg-secondary text-foreground/70">
                         {catName(s.category_id)}
                       </span>
-                      <span>Closes {format(new Date(s.suggested_closes_at), "PP")}</span>
+                      {!fromUser && <span>Closes {format(new Date(s.suggested_closes_at), "PP")}</span>}
                     </div>
                     {s.source_summary && (
                       <p className="text-xs text-muted-foreground/80 italic">{s.source_summary}</p>
@@ -1275,11 +1350,27 @@ function SuggestionsTab() {
                 )}
 
                 <div className="flex gap-2 mt-4 flex-wrap">
-                  <Button size="sm" onClick={() => onApprove(s)} disabled={approving === s.id} className="gap-1.5">
-                    {approving === s.id ? <Loader2 size={14} className="animate-spin" /> : <Check size={14} />}
-                    {approving === s.id ? "Checking…" : "Approve"}
-                  </Button>
-                  {!isEditing && (
+                  {fromUser && !isEditing ? (
+                    <Button
+                      size="sm"
+                      onClick={() => onConvert(s)}
+                      disabled={converting === s.id}
+                      className="gap-1.5"
+                    >
+                      {converting === s.id ? (
+                        <Loader2 size={14} className="animate-spin" />
+                      ) : (
+                        <Sparkles size={14} />
+                      )}
+                      {converting === s.id ? "Converting…" : "Convert with AI"}
+                    </Button>
+                  ) : (
+                    <Button size="sm" onClick={() => onApprove(s)} disabled={approving === s.id} className="gap-1.5">
+                      {approving === s.id ? <Loader2 size={14} className="animate-spin" /> : <Check size={14} />}
+                      {approving === s.id ? "Checking…" : "Approve"}
+                    </Button>
+                  )}
+                  {!isEditing && !fromUser && (
                     <Button size="sm" variant="outline" onClick={() => startEdit(s)} className="gap-1.5">
                       <Pencil size={14} /> Edit
                     </Button>
@@ -1299,7 +1390,8 @@ function SuggestionsTab() {
         </div>
       ) : (
         <div className="text-center text-muted-foreground py-12 rounded-lg border border-dashed border-border text-sm">
-          No pending suggestions. Click <span className="font-mono">Discover now</span> to fetch new ones.
+          No pending suggestions. Member ideas appear here, or click{" "}
+          <span className="font-mono">Discover now</span> to fetch AI-found ones.
         </div>
       )}
     </div>
