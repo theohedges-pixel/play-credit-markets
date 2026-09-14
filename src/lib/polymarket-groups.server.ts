@@ -86,6 +86,25 @@ function closesAt(m: GammaMarket): string | null {
   return new Date(Math.min(...cands)).toISOString();
 }
 
+/**
+ * Is this event a single question with alternative outcomes, or a bag of props?
+ *
+ * `negRisk: true` marks a genuinely mutually exclusive field (election winner,
+ * championship winner, exact score). Threshold ladders ("what price will
+ * Bitcoin hit in September?") and date series ("... by when?") are negRisk
+ * false — the outcomes are not exclusive — but they are still one question
+ * with alternative answers, and Gamma distinguishes them cleanly: every market
+ * carries a `groupItemTitle` and NO market carries a `sportsMarketType`.
+ * Prop collections always carry a `sportsMarketType` (moneyline, spreads,
+ * totals, tennis_set_winner, lol_penta_kill, ...) on at least one market.
+ */
+function isGroupable(ev: GammaEvent, open: GammaMarket[]): boolean {
+  if (ev.negRisk) return true;
+  if (open.length < 2) return false;
+  if (open.some((m) => (m.sportsMarketType ?? "").trim() !== "")) return false;
+  return open.every((m) => (m.groupItemTitle ?? "").trim() !== "");
+}
+
 async function fetchEvent(eventId: string): Promise<GammaEvent | null> {
   try {
     const r = await fetch(`https://gamma-api.polymarket.com/events?id=${encodeURIComponent(eventId)}`, {
@@ -160,7 +179,7 @@ export async function completeMarketGroups(
     const memberIds = members.map((m) => m.id);
 
     // Prop collections: flagged, never grouped, never completed.
-    if (!ev.negRisk) {
+    if (!isGroupable(ev, upstreamOpen)) {
       await supabaseAdmin
         .from("markets")
         .update({ event_mutually_exclusive: false, upstream_outcome_count: upstreamOpen.length })
