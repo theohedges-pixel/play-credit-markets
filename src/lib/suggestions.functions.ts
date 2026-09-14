@@ -18,6 +18,7 @@ export const submitMarketSuggestion = createServerFn({ method: "POST" })
       .object({
         text: z.string().trim().min(15).max(500),
         categoryId: z.string().uuid().nullable().optional(),
+        attributePublicly: z.boolean().nullable().optional(),
       })
       .parse(data),
   )
@@ -69,6 +70,8 @@ export const submitMarketSuggestion = createServerFn({ method: "POST" })
       user_text: data.text,
       suggested_by: context.userId,
       category_id: data.categoryId ?? null,
+      // null means "use whatever my account default is when this gets approved".
+      attribute_publicly: data.attributePublicly ?? null,
       suggested_closes_at: placeholderClose,
       status: reason ? "rejected" : "pending",
       rejection_reason: reason,
@@ -100,4 +103,37 @@ export const mySuggestions = createServerFn({ method: "GET" })
       rejection_reason: string | null;
       created_at: string;
     }>;
+  });
+
+/** Live markets created from this user's suggestions, with their public-credit state. */
+export const mySuggestedMarkets = createServerFn({ method: "GET" })
+  .middleware([requireSupabaseAuth])
+  .handler(async ({ context }) => {
+    const { data } = await (context.supabase as any)
+      .from("markets")
+      .select("id, title, attributed_publicly, created_at")
+      .eq("suggested_by", context.userId)
+      .order("created_at", { ascending: false })
+      .limit(20);
+    return (data ?? []) as Array<{
+      id: string;
+      title: string;
+      attributed_publicly: boolean;
+      created_at: string;
+    }>;
+  });
+
+/** Turn public credit on or off after the fact, for a market this user suggested. */
+export const setMarketAttribution = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((data) =>
+    z.object({ marketId: z.string().uuid(), isPublic: z.boolean() }).parse(data),
+  )
+  .handler(async ({ context, data }) => {
+    const { error } = await (context.supabase as any).rpc("set_market_attribution", {
+      _market_id: data.marketId,
+      _public: data.isPublic,
+    });
+    if (error) throw new Error(error.message);
+    return { ok: true };
   });

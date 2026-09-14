@@ -644,6 +644,7 @@ export type Database = {
       }
       market_suggestions: {
         Row: {
+          attribute_publicly: boolean | null
           category_id: string | null
           created_at: string
           description: string | null
@@ -660,6 +661,7 @@ export type Database = {
           user_text: string | null
         }
         Insert: {
+          attribute_publicly?: boolean | null
           category_id?: string | null
           created_at?: string
           description?: string | null
@@ -676,6 +678,7 @@ export type Database = {
           user_text?: string | null
         }
         Update: {
+          attribute_publicly?: boolean | null
           category_id?: string | null
           created_at?: string
           description?: string | null
@@ -789,6 +792,7 @@ export type Database = {
       }
       markets: {
         Row: {
+          attributed_publicly: boolean
           auto_checked_at: string | null
           auto_resolution_deadline: string | null
           auto_resolved: boolean
@@ -823,6 +827,7 @@ export type Database = {
           yes_pool: number
         }
         Insert: {
+          attributed_publicly?: boolean
           auto_checked_at?: string | null
           auto_resolution_deadline?: string | null
           auto_resolved?: boolean
@@ -857,6 +862,7 @@ export type Database = {
           yes_pool?: number
         }
         Update: {
+          attributed_publicly?: boolean
           auto_checked_at?: string | null
           auto_resolution_deadline?: string | null
           auto_resolved?: boolean
@@ -1082,6 +1088,7 @@ export type Database = {
       profiles: {
         Row: {
           articles_passed: number
+          attribute_suggestions_publicly: boolean
           avatar_url: string | null
           bio: string | null
           claim_streak: number
@@ -1097,6 +1104,7 @@ export type Database = {
         }
         Insert: {
           articles_passed?: number
+          attribute_suggestions_publicly?: boolean
           avatar_url?: string | null
           bio?: string | null
           claim_streak?: number
@@ -1112,6 +1120,7 @@ export type Database = {
         }
         Update: {
           articles_passed?: number
+          attribute_suggestions_publicly?: boolean
           avatar_url?: string | null
           bio?: string | null
           claim_streak?: number
@@ -1661,6 +1670,10 @@ export type Database = {
         Returns: Json
       }
       send_friend_request: { Args: { _addressee_id: string }; Returns: string }
+      set_market_attribution: {
+        Args: { _market_id: string; _public: boolean }
+        Returns: undefined
+      }
       start_learn_attempt: { Args: { _article_id: string }; Returns: Json }
       submit_learn_attempt: {
         Args: { _answers: Json; _article_id: string }

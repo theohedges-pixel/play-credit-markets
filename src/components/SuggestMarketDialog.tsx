@@ -1,8 +1,15 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
 import { supabase } from "@/integrations/supabase/client";
-import { submitMarketSuggestion, mySuggestions } from "@/lib/suggestions.functions";
+import {
+  submitMarketSuggestion,
+  mySuggestions,
+  mySuggestedMarkets,
+  setMarketAttribution,
+} from "@/lib/suggestions.functions";
+import { Checkbox } from "@/components/ui/checkbox";
+import { Switch } from "@/components/ui/switch";
 import { useAuth } from "@/lib/auth";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
@@ -22,16 +29,25 @@ import { toast } from "sonner";
  * question, because an admin-reviewed AI step turns it into one.
  */
 export function SuggestMarketDialog() {
-  const { user } = useAuth();
+  const { user, profile } = useAuth();
   const qc = useQueryClient();
   const [open, setOpen] = useState(false);
   const [text, setText] = useState("");
   const [categoryId, setCategoryId] = useState("");
   const [submitting, setSubmitting] = useState(false);
   const [blocked, setBlocked] = useState<string | null>(null);
+  const accountDefault = (profile as any)?.attribute_suggestions_publicly ?? true;
+  const [attribute, setAttribute] = useState<boolean>(accountDefault);
 
   const submit = useServerFn(submitMarketSuggestion);
   const loadMine = useServerFn(mySuggestions);
+  const loadMyMarkets = useServerFn(mySuggestedMarkets);
+  const setAttribution = useServerFn(setMarketAttribution);
+
+  useEffect(() => {
+    if (open) setAttribute(accountDefault);
+  }, [open, accountDefault]);
+
 
   const { data: categories } = useQuery({
     queryKey: ["categories"],
@@ -47,13 +63,36 @@ export function SuggestMarketDialog() {
     queryFn: () => loadMine(),
   });
 
+  const { data: myMarkets } = useQuery({
+    queryKey: ["my-suggested-markets", user?.id],
+    enabled: !!user && open,
+    queryFn: () => loadMyMarkets(),
+  });
+
+  const flipAttribution = async (marketId: string, next: boolean) => {
+    try {
+      await setAttribution({ data: { marketId, isPublic: next } });
+      qc.invalidateQueries({ queryKey: ["my-suggested-markets"] });
+      qc.invalidateQueries({ queryKey: ["market"] });
+      toast.success(next ? "Your username is shown on that market" : "Your username is hidden on that market");
+    } catch (e) {
+      toast.error(e instanceof Error ? e.message : "Couldn't change that");
+    }
+  };
+
   if (!user) return null;
 
   const onSubmit = async () => {
     setSubmitting(true);
     setBlocked(null);
     try {
-      const res = await submit({ data: { text: text.trim(), categoryId: categoryId || null } });
+      const res = await submit({
+        data: {
+          text: text.trim(),
+          categoryId: categoryId || null,
+          attributePublicly: attribute,
+        },
+      });
       if (res.status === "pending") {
         toast.success("Sent for review — you'll be notified either way.");
         setText("");
@@ -97,6 +136,20 @@ export function SuggestMarketDialog() {
             setBlocked(null);
           }}
         />
+
+        <label className="flex items-start gap-2.5 text-sm cursor-pointer">
+          <Checkbox
+            checked={attribute}
+            onCheckedChange={(v) => setAttribute(v === true)}
+            className="mt-0.5"
+          />
+          <span>
+            Show my username publicly if this is approved
+            <span className="block text-xs text-muted-foreground">
+              Applies to this suggestion only. You can change it later.
+            </span>
+          </span>
+        </label>
 
         <div className="flex items-center gap-2 flex-wrap">
           <select
@@ -151,6 +204,29 @@ export function SuggestMarketDialog() {
                       )}
                     </span>
                   </span>
+                </li>
+              ))}
+            </ul>
+          </div>
+        )}
+
+        {myMarkets && myMarkets.length > 0 && (
+          <div className="border-t border-border pt-4">
+            <p className="text-xs uppercase tracking-wide text-muted-foreground mb-1">
+              Your live markets
+            </p>
+            <p className="text-xs text-muted-foreground mb-3">
+              Turn the credit off and your username disappears from the market page.
+            </p>
+            <ul className="space-y-3">
+              {myMarkets.map((m) => (
+                <li key={m.id} className="flex items-start justify-between gap-3 text-sm">
+                  <span className="line-clamp-2">{m.title}</span>
+                  <Switch
+                    checked={m.attributed_publicly}
+                    onCheckedChange={(v) => flipAttribution(m.id, v)}
+                    aria-label="Show my username on this market"
+                  />
                 </li>
               ))}
             </ul>

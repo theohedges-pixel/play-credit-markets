@@ -27,7 +27,34 @@ function Settings() {
   const [historyPublic, setHistoryPublic] = useState<boolean>(
     (profile as any)?.trading_history_public ?? true,
   );
+  const [attributeSuggestions, setAttributeSuggestions] = useState<boolean>(
+    (profile as any)?.attribute_suggestions_publicly ?? true,
+  );
   const fileRef = useRef<HTMLInputElement | null>(null);
+
+  useEffect(() => {
+    setAttributeSuggestions((profile as any)?.attribute_suggestions_publicly ?? true);
+  }, [(profile as any)?.attribute_suggestions_publicly]);
+
+  // Default for future suggestions only; markets already live keep their setting.
+  const toggleAttribution = async (next: boolean) => {
+    if (!user) return;
+    setAttributeSuggestions(next);
+    const { error } = await (supabase as any)
+      .from("profiles")
+      .update({ attribute_suggestions_publicly: next })
+      .eq("id", user.id);
+    if (error) {
+      setAttributeSuggestions(!next);
+      return toast.error(error.message);
+    }
+    toast.success(
+      next
+        ? "New suggestions will show your username"
+        : "New suggestions won't show your username",
+    );
+    refreshProfile();
+  };
 
   useEffect(() => {
     setBio(profile?.bio ?? "");
@@ -233,6 +260,26 @@ function Settings() {
               id="history-public"
               checked={historyPublic}
               onCheckedChange={toggleHistory}
+            />
+          </div>
+
+          <div className="flex items-start justify-between gap-5 mt-6 pt-6 border-t border-border">
+            <div>
+              <label htmlFor="attribute-suggestions" className="text-sm font-medium">
+                Show my username on markets I suggest
+              </label>
+              <p className="text-xs text-muted-foreground mt-1.5 max-w-md">
+                When this is on, markets created from your suggestions show
+                "Suggested by @{profile?.username}". This sets the default for
+                suggestions you send from now on — it doesn't change markets that
+                are already live. You can change those one by one from your
+                suggestions list.
+              </p>
+            </div>
+            <Switch
+              id="attribute-suggestions"
+              checked={attributeSuggestions}
+              onCheckedChange={toggleAttribution}
             />
           </div>
         </section>
