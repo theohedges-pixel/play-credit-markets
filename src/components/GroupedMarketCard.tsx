@@ -22,6 +22,13 @@ const PREVIEW = 4;
  */
 export const AUTO_EXPAND_VOLUME = 10_000_000;
 
+/**
+ * Fallback rule: a wide field is itself a signal of significance — nobody
+ * builds a 12-way market for an obscure event. Catches the big championship
+ * and price-ladder events whose volume sits below the threshold.
+ */
+export const AUTO_EXPAND_OUTCOMES = 12;
+
 /** Auto-expansion is desktop-only; a 20-outcome card is unscannable on a phone. */
 const AUTO_EXPAND_MIN_WIDTH = 640;
 
