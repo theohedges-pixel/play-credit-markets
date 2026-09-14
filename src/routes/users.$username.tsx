@@ -212,7 +212,7 @@ function PublicProfile() {
               <TierBadge peakNetWorth={profile.peak_net_worth} size="md" />
               {me && me.id !== profile.id && (
                 <>
-                  {!friendship && (
+                  {(!friendship || friendship.status === "declined") && (
                     <Button size="sm" onClick={sendRequest}>Add friend</Button>
                   )}
                   {friendship?.status === "pending" && friendship.requester_id === me.id && (
@@ -224,6 +224,11 @@ function PublicProfile() {
                   {friendship?.status === "accepted" && (
                     <Button size="sm" variant="secondary" onClick={removeFriend}>Friends ✓</Button>
                   )}
+                  {friendship?.status === "blocked" && friendship.blocked_by === me.id ? (
+                    <Button size="sm" variant="secondary" onClick={unblockUser}>Unblock</Button>
+                  ) : friendship?.status !== "blocked" ? (
+                    <Button size="sm" variant="ghost" onClick={blockUser}>Block</Button>
+                  ) : null}
                 </>
               )}
             </div>
