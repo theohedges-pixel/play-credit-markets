@@ -53,6 +53,16 @@ export function groupingFields(m: PolyMarket) {
 }
 
 /**
+ * Lifetime traded volume as Polymarket reports it, per OUTCOME market.
+ * Gamma sends it as `volumeNum` (number) and `volume` (string) — read both.
+ */
+export function upstreamVolume(m: PolyMarket & { volumeNum?: number | string | null }): number {
+  const raw = m.volumeNum ?? m.volume;
+  const n = Number(raw);
+  return Number.isFinite(n) && n > 0 ? n : 0;
+}
+
+/**
  * Polymarket's endDate on sports markets is a generous fallback (often the
  * game start + 7 days), not when trading actually stops. When a real
  * gameStartTime exists we cap our own deadline at start + 6h — long enough to
