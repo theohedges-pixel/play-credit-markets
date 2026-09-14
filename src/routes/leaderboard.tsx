@@ -81,7 +81,7 @@ function Leaderboard() {
                   <div className="text-right">
                     <div className="font-mono tabular-nums">{fmtCredits(t.net_worth)}c</div>
                     <div className="text-[11px] font-mono text-muted-foreground">
-                      {fmtCredits(t.credits)} cash · {fmtCredits(t.position_value)} positions
+                      {fmtCredits(t.credits)}c cash · {fmtCredits(t.position_value)}c in positions
                     </div>
                   </div>
                 </Link>

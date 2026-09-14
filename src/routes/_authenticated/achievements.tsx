@@ -88,8 +88,8 @@ function Achievements() {
             <div className="text-right text-xs font-mono text-muted-foreground">
               <div>{fmtCredits(standing?.net_worth ?? 0)} now</div>
               <div>
-                {fmtCredits(standing?.credits ?? 0)} cash ·{" "}
-                {fmtCredits(standing?.position_value ?? 0)} positions
+                {fmtCredits(standing?.credits ?? 0)}c cash ·{" "}
+                {fmtCredits(standing?.position_value ?? 0)}c in positions
               </div>
             </div>
           </div>
