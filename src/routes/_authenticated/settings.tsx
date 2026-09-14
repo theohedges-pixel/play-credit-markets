@@ -27,7 +27,34 @@ function Settings() {
   const [historyPublic, setHistoryPublic] = useState<boolean>(
     (profile as any)?.trading_history_public ?? true,
   );
+  const [attributeSuggestions, setAttributeSuggestions] = useState<boolean>(
+    (profile as any)?.attribute_suggestions_publicly ?? true,
+  );
   const fileRef = useRef<HTMLInputElement | null>(null);
+
+  useEffect(() => {
+    setAttributeSuggestions((profile as any)?.attribute_suggestions_publicly ?? true);
+  }, [(profile as any)?.attribute_suggestions_publicly]);
+
+  // Default for future suggestions only; markets already live keep their setting.
+  const toggleAttribution = async (next: boolean) => {
+    if (!user) return;
+    setAttributeSuggestions(next);
+    const { error } = await (supabase as any)
+      .from("profiles")
+      .update({ attribute_suggestions_publicly: next })
+      .eq("id", user.id);
+    if (error) {
+      setAttributeSuggestions(!next);
+      return toast.error(error.message);
+    }
+    toast.success(
+      next
+        ? "New suggestions will show your username"
+        : "New suggestions won't show your username",
+    );
+    refreshProfile();
+  };
 
   useEffect(() => {
     setBio(profile?.bio ?? "");
