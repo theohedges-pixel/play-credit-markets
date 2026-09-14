@@ -7,7 +7,9 @@ import { Input } from "@/components/ui/input";
 import { Share2, Copy } from "lucide-react";
 import { toast } from "sonner";
 
-const REFERRAL_REWARD = 200;
+const REFERRAL_REWARD = 10;
+const REFERRAL_BONUS_EVERY = 20;
+const REFERRAL_BONUS = 100;
 
 export function InviteFriends() {
   const { user, profile } = useAuth();
@@ -29,7 +31,8 @@ export function InviteFriends() {
         .eq("referrer_id", user!.id);
       const rows = (data as { reward_credited: boolean }[] | null) ?? [];
       const confirmed = rows.filter((r) => r.reward_credited).length;
-      return { joined: rows.length, confirmed, earned: confirmed * REFERRAL_REWARD };
+      const earned = confirmed * REFERRAL_REWARD + Math.floor(confirmed / REFERRAL_BONUS_EVERY) * REFERRAL_BONUS;
+      return { joined: rows.length, confirmed, earned };
     },
   });
 
@@ -66,7 +69,7 @@ export function InviteFriends() {
           <h2 className="font-display text-lg font-semibold">Invite friends</h2>
           <p className="text-sm text-muted-foreground mt-1">
             They start with 1,250 credits. You earn {REFERRAL_REWARD} credits once they confirm
-            their email.
+            their email — plus {REFERRAL_BONUS} bonus credits for every {REFERRAL_BONUS_EVERY} friends who join.
           </p>
         </div>
         <Button onClick={share} disabled={!link} className="gap-2">

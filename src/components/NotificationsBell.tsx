@@ -186,6 +186,20 @@ export function NotificationsBell() {
         </Link>
       );
     }
+    if (n.kind === "referral_reward") {
+      const bonus = Number(n.payload.bonus ?? 0);
+      return (
+        <div className="px-4 py-3 text-sm">
+          <div>A friend joined with your link — +{n.payload.credits ?? 10} credits</div>
+          {bonus > 0 && (
+            <div className="text-xs text-primary">
+              🎉 {n.payload.total_referrals} friends joined — +{bonus} bonus credits
+            </div>
+          )}
+          <div className="text-xs text-muted-foreground">{ts}</div>
+        </div>
+      );
+    }
     if (n.kind === "suggestion_rejected") {
       return (
         <div className="px-4 py-3 text-sm">
