@@ -371,6 +371,7 @@ export async function runSync() {
     upstreamClosed,
     refreshed,
     volumeRefreshed,
+    groupOutcomesAdded,
     mirrored,
     backfilledPoints,
     scanned: items.length,
