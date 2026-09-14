@@ -18,6 +18,7 @@ export const submitMarketSuggestion = createServerFn({ method: "POST" })
       .object({
         text: z.string().trim().min(15).max(500),
         categoryId: z.string().uuid().nullable().optional(),
+        attributePublicly: z.boolean().nullable().optional(),
       })
       .parse(data),
   )
