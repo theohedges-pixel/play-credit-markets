@@ -58,7 +58,9 @@ function MarketDetail() {
     queryFn: async () => {
       const { data } = await supabase
         .from("markets")
-        .select("*, category:categories(name), creator:profiles!markets_creator_id_fkey(username), suggester:profiles!markets_suggested_by_fkey(username)")
+        // Other members cannot read the profiles table, so names must come from
+        // the public view or every market renders "by @anon".
+        .select("*, category:categories(name), creator:public_profiles!markets_creator_id_fkey(username), suggester:public_profiles!markets_suggested_by_fkey(username)")
         .eq("id", id)
         .single();
       return data;
