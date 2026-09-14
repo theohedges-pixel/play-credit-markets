@@ -146,6 +146,25 @@ function PublicProfile() {
     qc.invalidateQueries({ queryKey: ["public-friend-count", uid] });
   };
 
+  const blockUser = async () => {
+    if (!uid) return;
+    if (!window.confirm(`Block @${username}? They won't be able to send you requests.`)) return;
+    const { error } = await (supabase as any).rpc("block_user", { _user_id: uid });
+    if (error) return toast.error(error.message);
+    toast.success("Blocked");
+    refetchFriendship();
+    qc.invalidateQueries({ queryKey: ["blocked-users"] });
+    qc.invalidateQueries({ queryKey: ["public-friend-count", uid] });
+  };
+
+  const unblockUser = async () => {
+    if (!uid) return;
+    const { error } = await (supabase as any).rpc("unblock_user", { _user_id: uid });
+    if (error) return toast.error(error.message);
+    toast.success("Unblocked");
+    refetchFriendship();
+    qc.invalidateQueries({ queryKey: ["blocked-users"] });
+  };
 
   if (isLoading) {
     return (
