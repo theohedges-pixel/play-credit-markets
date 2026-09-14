@@ -128,6 +128,11 @@ export function GroupedMarketCard({
         </div>
 
         <h3 className="font-semibold text-base leading-snug line-clamp-2">{eventTitle}</h3>
+        {upstreamTotal > markets.length && (
+          <p className="mt-1 text-[11px] text-muted-foreground">
+            {markets.length} of {upstreamTotal} outcomes, by trading volume
+          </p>
+        )}
       </div>
 
 
