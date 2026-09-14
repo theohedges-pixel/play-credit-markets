@@ -110,7 +110,7 @@ export function GroupedMarketCard({
             groups keep the same header height. */}
         <p className="mt-1 h-4 text-[11px] text-muted-foreground">
           {upstreamTotal > markets.length
-            ? `Showing the ${markets.length} most likely of ${upstreamTotal} outcomes`
+            ? `Showing ${markets.length} of ${upstreamTotal} outcomes, the most likely first`
             : ""}
         </p>
       </div>
