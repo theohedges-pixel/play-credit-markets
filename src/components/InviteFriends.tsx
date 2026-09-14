@@ -31,7 +31,8 @@ export function InviteFriends() {
         .eq("referrer_id", user!.id);
       const rows = (data as { reward_credited: boolean }[] | null) ?? [];
       const confirmed = rows.filter((r) => r.reward_credited).length;
-      return { joined: rows.length, confirmed, earned: confirmed * REFERRAL_REWARD };
+      const earned = confirmed * REFERRAL_REWARD + Math.floor(confirmed / REFERRAL_BONUS_EVERY) * REFERRAL_BONUS;
+      return { joined: rows.length, confirmed, earned };
     },
   });
 
