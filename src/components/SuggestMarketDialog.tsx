@@ -209,6 +209,29 @@ export function SuggestMarketDialog() {
             </ul>
           </div>
         )}
+
+        {myMarkets && myMarkets.length > 0 && (
+          <div className="border-t border-border pt-4">
+            <p className="text-xs uppercase tracking-wide text-muted-foreground mb-1">
+              Your live markets
+            </p>
+            <p className="text-xs text-muted-foreground mb-3">
+              Turn the credit off and your username disappears from the market page.
+            </p>
+            <ul className="space-y-3">
+              {myMarkets.map((m) => (
+                <li key={m.id} className="flex items-start justify-between gap-3 text-sm">
+                  <span className="line-clamp-2">{m.title}</span>
+                  <Switch
+                    checked={m.attributed_publicly}
+                    onCheckedChange={(v) => flipAttribution(m.id, v)}
+                    aria-label="Show my username on this market"
+                  />
+                </li>
+              ))}
+            </ul>
+          </div>
+        )}
       </DialogContent>
     </Dialog>
   );
