@@ -71,10 +71,10 @@ export function MarketCard({ m, mine }: { m: MarketCardData; mine?: boolean }) {
             {m.volume.toFixed(0)} vol
           </span>
         </div>
-        <div className="h-1.5 rounded-full bg-secondary overflow-hidden mb-3 mt-auto">
+        <div className="h-1.5 rounded-full bg-secondary overflow-hidden mb-3">
           <div className="h-full bg-yes transition-all" style={{ width: `${p * 100}%` }} />
         </div>
-        <div className="flex items-center justify-between gap-2 text-xs text-muted-foreground">
+        <div className="mt-auto flex items-center justify-between gap-2 text-xs text-muted-foreground">
           <span className="text-[10px] uppercase tracking-wide text-muted-foreground/50 truncate">
             {m.source === "polymarket" ? "via Polymarket" : m.source === "community" ? "community" : ""}
           </span>
