@@ -342,6 +342,9 @@ export async function runSync() {
   const upstreamClosed = await sweepUpstreamClosures(supabaseAdmin);
   closed += upstreamClosed;
 
+  // Mirrored volume for every open import that has never been traded here.
+  const volumeRefreshed = await refreshUpstreamVolume(supabaseAdmin);
+
   // Mirror upstream settlements: any closed Predikt import whose Polymarket
   // twin has settled is resolved to the SAME outcome. Polymarket is the ground
   // truth here, so no AI guess and no review window are involved.
