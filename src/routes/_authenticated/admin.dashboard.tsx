@@ -1130,7 +1130,7 @@ function SuggestionsTab() {
     queryFn: async () => {
       const { data, error } = await (supabase as any)
         .from("market_suggestions")
-        .select("*, suggester:profiles!market_suggestions_suggested_by_fkey(username)")
+        .select("*, suggester:public_profiles!market_suggestions_suggested_by_fkey(username)")
         .eq("status", "pending")
         .order("created_at", { ascending: false });
       if (error) throw error;
