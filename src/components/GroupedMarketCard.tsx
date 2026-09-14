@@ -84,7 +84,10 @@ export function GroupedMarketCard({
   const eventKey = markets[0]?.polymarket_event_id ?? eventTitle;
   const volume = markets.reduce((s, m) => s + Number(m.volume ?? 0), 0);
   const wide = useWideViewport();
-  const autoExpanded = wide && volume >= AUTO_EXPAND_VOLUME;
+  // Either signal of significance is enough: heavy trading, or a field wide
+  // enough that nobody would have built it for an obscure event.
+  const autoExpanded =
+    wide && (volume >= AUTO_EXPAND_VOLUME || markets.length >= AUTO_EXPAND_OUTCOMES);
 
   const [override, setOverride] = useState<boolean | undefined>(() => overrides.get(eventKey));
   const expanded = override ?? autoExpanded;
