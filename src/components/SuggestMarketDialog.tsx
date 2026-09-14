@@ -137,6 +137,20 @@ export function SuggestMarketDialog() {
           }}
         />
 
+        <label className="flex items-start gap-2.5 text-sm cursor-pointer">
+          <Checkbox
+            checked={attribute}
+            onCheckedChange={(v) => setAttribute(v === true)}
+            className="mt-0.5"
+          />
+          <span>
+            Show my username publicly if this is approved
+            <span className="block text-xs text-muted-foreground">
+              Applies to this suggestion only. You can change it later.
+            </span>
+          </span>
+        </label>
+
         <div className="flex items-center gap-2 flex-wrap">
           <select
             value={categoryId}
