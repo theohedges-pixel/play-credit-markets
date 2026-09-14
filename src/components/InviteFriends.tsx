@@ -69,7 +69,7 @@ export function InviteFriends() {
           <h2 className="font-display text-lg font-semibold">Invite friends</h2>
           <p className="text-sm text-muted-foreground mt-1">
             They start with 1,250 credits. You earn {REFERRAL_REWARD} credits once they confirm
-            their email.
+            their email — plus {REFERRAL_BONUS} bonus credits for every {REFERRAL_BONUS_EVERY} friends who join.
           </p>
         </div>
         <Button onClick={share} disabled={!link} className="gap-2">
