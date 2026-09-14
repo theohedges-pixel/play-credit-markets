@@ -108,7 +108,7 @@ function MarketsPage() {
       let query = supabase
         .from("markets")
         .select(
-          "id, title, closes_at, created_at, yes_pool, no_pool, volume, status, resolution, source, created_via, suggested_by, polymarket_event_id, polymarket_event_title, group_item_title, category:categories(name)",
+          "id, title, closes_at, created_at, yes_pool, no_pool, volume, status, resolution, source, created_via, suggested_by, polymarket_event_id, polymarket_event_title, group_item_title, upstream_outcome_count, event_mutually_exclusive, category:categories(name)",
         )
         .eq("status", "open")
         .gt("closes_at", new Date().toISOString());
@@ -139,7 +139,7 @@ function MarketsPage() {
       const { data } = await supabase
         .from("markets")
         .select(
-          "id, title, closes_at, created_at, yes_pool, no_pool, volume, status, resolution, source, created_via, category_id, suggested_by, polymarket_event_id, polymarket_event_title, group_item_title, category:categories(name)",
+          "id, title, closes_at, created_at, yes_pool, no_pool, volume, status, resolution, source, created_via, category_id, suggested_by, polymarket_event_id, polymarket_event_title, group_item_title, upstream_outcome_count, event_mutually_exclusive, category:categories(name)",
         )
         .eq("status", "open")
         .gt("closes_at", new Date().toISOString())
@@ -157,7 +157,7 @@ function MarketsPage() {
       const { data } = await supabase
         .from("markets")
         .select(
-          "id, title, closes_at, created_at, yes_pool, no_pool, volume, status, resolution, source, created_via, category_id, suggested_by, polymarket_event_id, polymarket_event_title, group_item_title, category:categories(name)",
+          "id, title, closes_at, created_at, yes_pool, no_pool, volume, status, resolution, source, created_via, category_id, suggested_by, polymarket_event_id, polymarket_event_title, group_item_title, upstream_outcome_count, event_mutually_exclusive, category:categories(name)",
         )
         .eq("status", "open")
         .eq("suggested_by", user!.id)
@@ -203,7 +203,12 @@ function MarketsPage() {
   const entries: Entry[] = [];
   const seenEvents = new Set<string>();
   for (const m of visible) {
-    const eid = m.polymarket_event_id;
+    // Prop collections (moneyline + spreads + totals on one fixture) are not
+    // outcomes of a single question, so they never group.
+    const eid =
+      (m as { event_mutually_exclusive?: boolean | null }).event_mutually_exclusive === false
+        ? null
+        : m.polymarket_event_id;
     if (!eid) {
       entries.push({ kind: "single", key: m.id, market: m });
       continue;
