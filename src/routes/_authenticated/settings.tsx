@@ -235,6 +235,26 @@ function Settings() {
               onCheckedChange={toggleHistory}
             />
           </div>
+
+          <div className="flex items-start justify-between gap-5 mt-6 pt-6 border-t border-border">
+            <div>
+              <label htmlFor="attribute-suggestions" className="text-sm font-medium">
+                Show my username on markets I suggest
+              </label>
+              <p className="text-xs text-muted-foreground mt-1.5 max-w-md">
+                When this is on, markets created from your suggestions show
+                "Suggested by @{profile?.username}". This sets the default for
+                suggestions you send from now on — it doesn't change markets that
+                are already live. You can change those one by one from your
+                suggestions list.
+              </p>
+            </div>
+            <Switch
+              id="attribute-suggestions"
+              checked={attributeSuggestions}
+              onCheckedChange={toggleAttribution}
+            />
+          </div>
         </section>
 
         <section className="rounded-lg border border-border bg-card p-5">
