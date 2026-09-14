@@ -1646,6 +1646,7 @@ export type Database = {
         }
         Returns: boolean
       }
+      is_blocked_with: { Args: { _other: string }; Returns: boolean }
       is_group_bet_member: {
         Args: { _bet_id: string; _user_id: string }
         Returns: boolean
@@ -1718,6 +1719,7 @@ export type Database = {
         Args: { _market_id: string; _public: boolean }
         Returns: undefined
       }
+      shared_open_group_bets: { Args: { _user_id: string }; Returns: number }
       start_learn_attempt: { Args: { _article_id: string }; Returns: Json }
       submit_learn_attempt: {
         Args: { _answers: Json; _article_id: string }
