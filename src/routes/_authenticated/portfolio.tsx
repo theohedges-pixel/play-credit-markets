@@ -12,6 +12,7 @@ import { Coins, Gift, TrendingUp, WalletCards } from "lucide-react";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { TradeLedger, type LedgerTrade } from "@/components/TradeRow";
 import { fireCelebration } from "@/components/MilestoneCelebration";
+import { PortfolioExplainerDialog } from "@/components/PortfolioExplainerDialog";
 
 
 export const Route = createFileRoute("/_authenticated/portfolio")({
