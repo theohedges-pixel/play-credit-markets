@@ -29,16 +29,25 @@ import { toast } from "sonner";
  * question, because an admin-reviewed AI step turns it into one.
  */
 export function SuggestMarketDialog() {
-  const { user } = useAuth();
+  const { user, profile } = useAuth();
   const qc = useQueryClient();
   const [open, setOpen] = useState(false);
   const [text, setText] = useState("");
   const [categoryId, setCategoryId] = useState("");
   const [submitting, setSubmitting] = useState(false);
   const [blocked, setBlocked] = useState<string | null>(null);
+  const accountDefault = (profile as any)?.attribute_suggestions_publicly ?? true;
+  const [attribute, setAttribute] = useState<boolean>(accountDefault);
 
   const submit = useServerFn(submitMarketSuggestion);
   const loadMine = useServerFn(mySuggestions);
+  const loadMyMarkets = useServerFn(mySuggestedMarkets);
+  const setAttribution = useServerFn(setMarketAttribution);
+
+  useEffect(() => {
+    if (open) setAttribute(accountDefault);
+  }, [open, accountDefault]);
+
 
   const { data: categories } = useQuery({
     queryKey: ["categories"],
