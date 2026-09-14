@@ -6,6 +6,7 @@ import { Header } from "@/components/Header";
 import { Button } from "@/components/ui/button";
 import { UserAvatar } from "@/components/UserAvatar";
 import { InviteFriends } from "@/components/InviteFriends";
+import { FriendSearch } from "@/components/FriendSearch";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { toast } from "sonner";
 
