@@ -3,6 +3,7 @@ import { formatDistanceToNowStrict } from "date-fns";
 import { Link } from "@tanstack/react-router";
 import { History } from "lucide-react";
 import { yesPrice } from "@/lib/format";
+import { CARD_MIN_HEIGHT } from "@/components/GroupedMarketCard";
 
 export interface MarketCardData {
   id: string;
@@ -31,7 +32,9 @@ export function MarketCard({ m, mine }: { m: MarketCardData; mine?: boolean }) {
 
   return (
     <Link to="/markets/$id" params={{ id: m.id }} className="group">
-      <Card className="h-full p-5 hover:border-primary/50 transition-colors bg-card">
+      <Card
+        className={`h-full ${CARD_MIN_HEIGHT} p-5 flex flex-col hover:border-primary/50 transition-colors bg-card`}
+      >
         <div className="flex items-center justify-between gap-2 mb-3">
           <span className="text-xs font-mono uppercase tracking-wider text-muted-foreground">
             {m.category?.name ?? "General"}
@@ -47,7 +50,7 @@ export function MarketCard({ m, mine }: { m: MarketCardData; mine?: boolean }) {
             </span>
           )}
         </div>
-        <h3 className="font-semibold text-base leading-snug mb-5 line-clamp-2 group-hover:text-primary transition-colors">
+        <h3 className="font-semibold text-base leading-snug mb-5 min-h-[3rem] line-clamp-2 group-hover:text-primary transition-colors">
           {m.title}
         </h3>
         <div className="flex items-baseline justify-between mb-2">
@@ -71,7 +74,7 @@ export function MarketCard({ m, mine }: { m: MarketCardData; mine?: boolean }) {
         <div className="h-1.5 rounded-full bg-secondary overflow-hidden mb-3">
           <div className="h-full bg-yes transition-all" style={{ width: `${p * 100}%` }} />
         </div>
-        <div className="flex items-center justify-between gap-2 text-xs text-muted-foreground">
+        <div className="mt-auto flex items-center justify-between gap-2 text-xs text-muted-foreground">
           <span className="text-[10px] uppercase tracking-wide text-muted-foreground/50 truncate">
             {m.source === "polymarket" ? "via Polymarket" : m.source === "community" ? "community" : ""}
           </span>
