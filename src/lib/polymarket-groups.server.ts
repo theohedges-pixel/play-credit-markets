@@ -215,7 +215,7 @@ export async function completeMarketGroups(
     }
 
     const have = new Set(members.map((m) => String(m.polymarket_id)));
-    const ranked = [...upstreamOpen].sort((a, b) => vol(b) - vol(a));
+    const ranked = [...upstreamOpen].sort((a, b) => price(b) - price(a) || vol(b) - vol(a));
     const target = ranked.slice(0, MAX_PER_GROUP);
     const missing = target.filter((m) => m.id != null && !have.has(String(m.id)));
 
