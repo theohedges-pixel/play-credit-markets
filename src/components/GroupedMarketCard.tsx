@@ -22,6 +22,13 @@ const PREVIEW = 4;
  */
 export const AUTO_EXPAND_VOLUME = 10_000_000;
 
+/**
+ * Fallback rule: a wide field is itself a signal of significance — nobody
+ * builds a 12-way market for an obscure event. Catches the big championship
+ * and price-ladder events whose volume sits below the threshold.
+ */
+export const AUTO_EXPAND_OUTCOMES = 12;
+
 /** Auto-expansion is desktop-only; a 20-outcome card is unscannable on a phone. */
 const AUTO_EXPAND_MIN_WIDTH = 640;
 
@@ -84,7 +91,10 @@ export function GroupedMarketCard({
   const eventKey = markets[0]?.polymarket_event_id ?? eventTitle;
   const volume = markets.reduce((s, m) => s + Number(m.volume ?? 0), 0);
   const wide = useWideViewport();
-  const autoExpanded = wide && volume >= AUTO_EXPAND_VOLUME;
+  // Either signal of significance is enough: heavy trading, or a field wide
+  // enough that nobody would have built it for an obscure event.
+  const autoExpanded =
+    wide && (volume >= AUTO_EXPAND_VOLUME || markets.length >= AUTO_EXPAND_OUTCOMES);
 
   const [override, setOverride] = useState<boolean | undefined>(() => overrides.get(eventKey));
   const expanded = override ?? autoExpanded;
