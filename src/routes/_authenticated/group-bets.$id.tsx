@@ -238,9 +238,11 @@ function GroupBetDetail() {
         : `${Math.max(1, Math.floor(msLeft / 60_000))}m`;
   const methodNote =
     bet.resolution_method === "majority_fallback"
-      ? "Settled by majority fallback, not unanimous agreement"
-      : bet.resolution_method === "no_consensus_refund"
-        ? "No consensus reached — everyone was refunded"
+      ? "Settled by the majority of those who voted, not unanimous agreement"
+      : bet.resolution_method === "no_votes_refund"
+        ? "Nobody said what the outcome was — everyone was refunded"
+        : bet.resolution_method === "no_consensus_refund"
+          ? "The vote was tied — everyone was refunded"
         : bet.auto_resolved
           ? "Settled by automatic check"
           : "Settled by unanimous agreement";
