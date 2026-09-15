@@ -24,6 +24,7 @@ import { UserAvatar } from "@/components/UserAvatar";
 import { NotificationsBell } from "@/components/NotificationsBell";
 import { TierBadge } from "@/components/TierBadge";
 import { useNetWorth } from "@/lib/use-net-worth";
+import { PendingResolutionsDialog } from "@/components/PendingResolutionsDialog";
 
 export function Header() {
   const { user, profile, signOut } = useAuth();
