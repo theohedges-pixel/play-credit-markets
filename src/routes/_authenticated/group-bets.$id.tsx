@@ -149,7 +149,8 @@ function GroupBetDetail() {
     sideTotal > 0 ? `${(totals.total / sideTotal).toFixed(2)}×` : "—";
 
   // Live impact preview for the join panel (post-wager numbers).
-  const wagerAmt = Number(amount) > 0 ? Number(amount) : 0;
+  const stake = bet.stake != null ? Number(bet.stake) : null;
+  const wagerAmt = stake ?? (Number(amount) > 0 ? Number(amount) : 0);
   const after = {
     total: totals.total + wagerAmt,
     yes: totals.yes + (side === "yes" ? wagerAmt : 0),
