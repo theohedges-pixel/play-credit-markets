@@ -267,6 +267,7 @@ function GroupBetDetail() {
               @{bet.creator?.username}
             </Link>{" "}
             · Closes {format(new Date(bet.closes_at), "MMM d, yyyy HH:mm")}
+            {stake != null && <> · {fmtCredits(stake)}c each</>}
             {bet.status === "resolved" && bet.resolution && (
               <span className="ml-2 text-foreground">· Resolved {String(bet.resolution).toUpperCase()}</span>
             )}
