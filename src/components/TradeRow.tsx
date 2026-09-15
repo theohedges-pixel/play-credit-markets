@@ -256,7 +256,7 @@ export function TradeRow({
             <dd
               className={`font-mono tabular-nums ${
                 l.tone === "gain"
-                  ? gainClass(g.amount ?? 0)
+                  ? gainClass(l.gain ?? g.amount ?? 0)
                   : l.tone === "muted"
                     ? "text-muted-foreground"
                     : "text-foreground"
