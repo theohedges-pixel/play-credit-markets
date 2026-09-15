@@ -149,10 +149,13 @@ export function TradeRow({
   trade,
   showMarket = true,
   showUser = false,
+  onSell,
 }: {
   trade: LedgerTrade;
   showMarket?: boolean;
   showUser?: boolean;
+  /** When provided, open buys on still-open markets get a "Sell now" button. */
+  onSell?: (trade: LedgerTrade) => void;
 }) {
   const g = tradeGain(trade);
   const sideClass = trade.side === "yes" ? "bg-yes/15 text-yes" : "bg-no/15 text-no";
@@ -217,6 +220,18 @@ export function TradeRow({
           </div>
         ))}
       </dl>
+
+      {onSell && g.kind === "live" && (
+        <div className="mt-2.5">
+          <button
+            type="button"
+            onClick={() => onSell(trade)}
+            className="rounded-md border border-primary/40 bg-primary/10 px-3 py-1 text-xs font-medium text-primary transition-colors hover:bg-primary/20"
+          >
+            Sell now
+          </button>
+        </div>
+      )}
     </div>
   );
 }
@@ -226,11 +241,13 @@ export function TradeLedger({
   showMarket = true,
   showUser = false,
   empty = "No trades yet.",
+  onSell,
 }: {
   trades: LedgerTrade[];
   showMarket?: boolean;
   showUser?: boolean;
   empty?: string;
+  onSell?: (trade: LedgerTrade) => void;
 }) {
   if (!trades.length) {
     return (
@@ -242,7 +259,7 @@ export function TradeLedger({
   return (
     <div className="rounded-lg border border-border bg-card divide-y divide-border">
       {trades.map((t) => (
-        <TradeRow key={t.id} trade={t} showMarket={showMarket} showUser={showUser} />
+        <TradeRow key={t.id} trade={t} showMarket={showMarket} showUser={showUser} onSell={onSell} />
       ))}
     </div>
   );

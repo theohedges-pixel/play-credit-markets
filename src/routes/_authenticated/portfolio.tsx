@@ -14,6 +14,7 @@ import { TradeLedger, type LedgerTrade } from "@/components/TradeRow";
 import { fireCelebration } from "@/components/MilestoneCelebration";
 import { PortfolioExplainerDialog } from "@/components/PortfolioExplainerDialog";
 import { PortfolioGroupBets } from "@/components/PortfolioGroupBets";
+import { SellTradeDialog } from "@/components/SellTradeDialog";
 
 
 export const Route = createFileRoute("/_authenticated/portfolio")({
@@ -34,6 +35,7 @@ function Portfolio() {
   const { user, profile, refreshProfile } = useAuth();
   const [bio, setBio] = useState(profile?.bio ?? "");
   const [savingBio, setSavingBio] = useState(false);
+  const [sellTrade, setSellTrade] = useState<LedgerTrade | null>(null);
 
   useEffect(() => { setBio(profile?.bio ?? ""); }, [profile?.bio]);
 
@@ -233,8 +235,15 @@ function Portfolio() {
           <TradeLedger
             trades={ledgerTrades}
             empty="No trades yet — browse markets to place your first."
+            onSell={(t) => setSellTrade(t)}
           />
         )}
+
+        <SellTradeDialog
+          trade={sellTrade}
+          open={!!sellTrade}
+          onOpenChange={(o) => { if (!o) setSellTrade(null); }}
+        />
 
 
         <div className="my-8 rounded-lg border border-border bg-card p-5 flex items-center justify-between gap-5 flex-wrap">
