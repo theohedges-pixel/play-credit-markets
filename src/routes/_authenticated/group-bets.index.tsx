@@ -5,6 +5,10 @@ import { useAuth } from "@/lib/auth";
 import { Header } from "@/components/Header";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
+import {
+  GroupBetsExplainerCard,
+  GroupBetsExplainerDialog,
+} from "@/components/GroupBetsExplainer";
 import { format } from "date-fns";
 import { Plus } from "lucide-react";
 
@@ -109,13 +113,22 @@ function GroupBetsList() {
       <Header />
       <div className="max-w-4xl mx-auto px-6 py-10">
         <div className="flex items-center justify-between mb-6">
-          <h1 className="font-display text-3xl font-bold">Group bets</h1>
+          <div className="flex items-center gap-2">
+            <h1 className="font-display text-3xl font-bold">Group bets</h1>
+            <GroupBetsExplainerDialog />
+          </div>
           <Button size="sm" asChild>
             <Link to="/group-bets/create">
               <Plus size={14} /> New bet
             </Link>
           </Button>
         </div>
+
+        {allBets.length === 0 && (
+          <div className="mb-6">
+            <GroupBetsExplainerCard />
+          </div>
+        )}
 
         <Tabs defaultValue="participating">
           <TabsList>
