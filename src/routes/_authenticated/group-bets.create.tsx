@@ -58,9 +58,25 @@ function CreateGroupBet() {
     setPicked(s);
   };
 
+  const farOut = (() => {
+    if (!closesAt) return null;
+    const d = new Date(closesAt);
+    if (Number.isNaN(d.getTime())) return null;
+    const limit = new Date();
+    limit.setMonth(limit.getMonth() + 3);
+    return d > limit ? d : null;
+  })();
+
   const submit = async () => {
     if (!title.trim()) return toast.error("Title is required");
     if (!closesAt) return toast.error("Close date is required");
+    if (farOut && !confirmedFarOut) {
+      setConfirmedFarOut(true);
+      return toast.warning(
+        `That close date is ${format(farOut, "d MMM yyyy")} — more than 3 months away. If that's right, tap Create again.`,
+        { duration: 8000 },
+      );
+    }
     setSubmitting(true);
     const { data, error } = await supabase.rpc("create_group_bet" as any, {
       _title: title.trim(),
