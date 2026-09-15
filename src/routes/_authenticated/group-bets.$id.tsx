@@ -362,17 +362,29 @@ function GroupBetDetail() {
                 NO
               </Button>
             </div>
-            <div className="flex gap-2">
-              <Input
-                type="number"
-                placeholder="Credits to wager"
-                value={amount}
-                onChange={(e) => setAmount(e.target.value)}
-              />
-              <Button onClick={join} disabled={submitting}>
-                {submitting ? "Joining…" : "Join"}
-              </Button>
-            </div>
+            {stake != null ? (
+              <div className="flex items-center justify-between gap-3">
+                <p className="text-sm">
+                  Everyone stakes the same:{" "}
+                  <span className="font-mono text-foreground">{fmtCredits(stake)}c</span>
+                </p>
+                <Button onClick={join} disabled={submitting}>
+                  {submitting ? "Joining…" : `Stake ${fmtCredits(stake)}c`}
+                </Button>
+              </div>
+            ) : (
+              <div className="flex gap-2">
+                <Input
+                  type="number"
+                  placeholder="Credits to wager"
+                  value={amount}
+                  onChange={(e) => setAmount(e.target.value)}
+                />
+                <Button onClick={join} disabled={submitting}>
+                  {submitting ? "Joining…" : "Join"}
+                </Button>
+              </div>
+            )}
             {wagerAmt > 0 && (
               <p className="text-xs text-muted-foreground mt-3">
                 After your wager: <span className="font-mono text-foreground">{afterYesPct}% YES / {afterNoPct}% NO</span>
