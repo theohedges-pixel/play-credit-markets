@@ -127,9 +127,18 @@ function CreateGroupBet() {
           <Input
             type="datetime-local"
             value={closesAt}
-            onChange={(e) => setClosesAt(e.target.value)}
+            onChange={(e) => {
+              setClosesAt(e.target.value);
+              setConfirmedFarOut(false);
+            }}
             className="mt-1"
           />
+          {farOut && (
+            <p className="text-xs text-no mt-1">
+              That's {format(farOut, "d MMM yyyy")} — more than 3 months away. Did you mean that
+              date? Check the year before creating.
+            </p>
+          )}
         </div>
         <div>
           <label className="text-xs uppercase tracking-wider text-muted-foreground">
