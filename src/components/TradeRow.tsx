@@ -128,7 +128,7 @@ export function tradeBreakdown(t: LedgerTrade): Line[] {
         value: `${tokens} @ ${fmtPct(price)} = ${fmtCredits(credits)}c received`,
       },
       g.amount != null
-        ? { label: "Realized", value: `${signed(g.amount)} ${gainWord(g.amount)}`, tone: "gain" }
+        ? { label: "Realized", value: `${signed(g.amount)} ${gainWord(g.amount)}`, tone: "gain", gain: g.amount }
         : { label: "Realized", value: "—", tone: "muted" },
     ];
   }
