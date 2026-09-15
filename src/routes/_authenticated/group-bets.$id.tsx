@@ -227,7 +227,7 @@ function GroupBetDetail() {
   const canFlag = pendingAuto && (isCreator || !!myPart);
 
   const fallbackAt = bet.voting_started_at
-    ? new Date(new Date(bet.voting_started_at).getTime() + 24 * 3600 * 1000)
+    ? new Date(new Date(bet.voting_started_at).getTime() + 48 * 3600 * 1000)
     : null;
   const msLeft = fallbackAt ? fallbackAt.getTime() - Date.now() : 0;
   const timeLeft =
