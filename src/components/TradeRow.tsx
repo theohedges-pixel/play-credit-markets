@@ -149,10 +149,13 @@ export function TradeRow({
   trade,
   showMarket = true,
   showUser = false,
+  onSell,
 }: {
   trade: LedgerTrade;
   showMarket?: boolean;
   showUser?: boolean;
+  /** When provided, open buys on still-open markets get a "Sell now" button. */
+  onSell?: (trade: LedgerTrade) => void;
 }) {
   const g = tradeGain(trade);
   const sideClass = trade.side === "yes" ? "bg-yes/15 text-yes" : "bg-no/15 text-no";
