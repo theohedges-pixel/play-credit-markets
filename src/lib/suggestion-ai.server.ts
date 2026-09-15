@@ -85,6 +85,8 @@ export interface ConvertedMarket {
   category_slug: string;
   closes_at: string;
   probability_yes: number;
+  /** Set when the date looks guessed rather than searched; advisory only — the admin reviews the draft. */
+  date_warning?: string;
 }
 
 const CATEGORY_SLUGS = ["politics", "crypto", "sports", "pop-culture", "tech", "science"] as const;
@@ -149,13 +151,14 @@ Category hint from the submitter: ${categoryHint || "none"}`,
     throw new Error("The AI's close date is outside the allowed 1-180 day window.");
   }
   const d = new Date(ts);
-  if (isSuspiciouslyRound(slug, d)) {
-    // Same hard rejection the generator applies: a first/last-of-month date in a
-    // dated category almost always means the date was guessed, not searched.
-    throw new Error(
-      `The AI returned a suspiciously round close date (${d.toISOString().slice(0, 10)}) — set the real event date by hand before approving.`,
-    );
-  }
+  // A first/last-of-month date in a dated category often means the AI guessed
+  // rather than searched — but it can also be the genuinely correct date
+  // (funding deadlines, month-end expiries). Unlike the fully automated
+  // generator, this pipeline has an admin reviewing the draft, so flag it
+  // instead of blocking the conversion.
+  const date_warning = isSuspiciouslyRound(slug, d)
+    ? `The close date (${d.toISOString().slice(0, 10)}) falls on a month boundary — double-check it's the real event date before approving.`
+    : undefined;
 
   return {
     title: title.slice(0, 200),
@@ -163,6 +166,7 @@ Category hint from the submitter: ${categoryHint || "none"}`,
     category_slug: (CATEGORY_SLUGS as readonly string[]).includes(slug) ? slug : "",
     closes_at: d.toISOString(),
     probability_yes: Number.isFinite(probability) && probability > 0 && probability < 1 ? probability : 0.5,
+    ...(date_warning ? { date_warning } : {}),
   };
 }
 
