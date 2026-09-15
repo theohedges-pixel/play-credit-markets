@@ -132,7 +132,7 @@ export function PortfolioGroupBets({ userId }: { userId?: string }) {
               <div
                 className={`mt-1 font-display text-2xl font-semibold tabular-nums ${gainClass(data!.settled)}`}
               >
-                {signed(data!.settled)}c
+                {signed(data!.settled)}
               </div>
               <div className="mt-1 text-[11px] text-muted-foreground">From resolved bets</div>
             </div>
