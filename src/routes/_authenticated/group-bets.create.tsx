@@ -32,6 +32,7 @@ function CreateGroupBet() {
   const [resolutionSource, setResolutionSource] = useState("");
   const [picked, setPicked] = useState<Set<string>>(new Set());
   const [submitting, setSubmitting] = useState(false);
+  const [confirmedFarOut, setConfirmedFarOut] = useState(false);
 
   const { data: friends } = useQuery({
     queryKey: ["gb-friend-picker", user?.id],
