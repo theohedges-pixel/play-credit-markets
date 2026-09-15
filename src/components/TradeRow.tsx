@@ -172,6 +172,7 @@ export function tradeBreakdown(t: LedgerTrade): Line[] {
       label: "Paid out",
       value: `${fmtCredits(shares * settlement)}c = ${signed(g.amount ?? 0)} ${gainWord(g.amount ?? 0)}`,
       tone: "gain",
+      gain: g.amount ?? 0,
     });
   } else {
     lines.push({ label: "Status", value: "Awaiting resolution", tone: "muted" });
