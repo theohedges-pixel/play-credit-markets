@@ -89,7 +89,26 @@ const gainClass = (v: number) =>
   Math.round(v) > 0 ? "text-yes" : Math.round(v) < 0 ? "text-no" : "text-muted-foreground";
 const gainWord = (v: number) => (Math.round(v) > 0 ? "GAIN" : Math.round(v) < 0 ? "LOSS" : "EVEN");
 
-type Line = { label: string; value: string; tone?: "muted" | "gain" };
+type Line = { label: string; value: string; tone?: "muted" | "gain"; gain?: number };
+
+/**
+ * Realistic exit quote for selling `s` tokens of one side, mirroring the
+ * sell_shares RPC / market-page CPMM math. Returns null when pools are
+ * missing (older callers) so the UI can fall back to the mark price.
+ */
+export function exitQuote(t: LedgerTrade): { proceeds: number; gain: number } | null {
+  if (t.market_status !== "open" || t.yes_pool == null || t.no_pool == null) return null;
+  const s = Number(t.shares);
+  if (!Number.isFinite(s) || s <= 0) return null;
+  const ownPool = Number(t.side === "yes" ? t.yes_pool : t.no_pool);
+  const otherPool = Number(t.side === "yes" ? t.no_pool : t.yes_pool);
+  const b = ownPool + s + otherPool;
+  const disc = b * b - 4 * s * otherPool;
+  if (disc < 0) return null;
+  const proceeds = Math.round(((b - Math.sqrt(disc)) / 2) * 100) / 100;
+  if (!Number.isFinite(proceeds) || proceeds < 0) return null;
+  return { proceeds, gain: proceeds - Number(t.credits) };
+}
 
 /**
  * The plain-English breakdown of a single trade:
