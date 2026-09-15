@@ -391,6 +391,7 @@ export type Database = {
           resolution_reason: string | null
           resolution_source: string | null
           resolved_at: string | null
+          stake: number | null
           status: Database["public"]["Enums"]["group_bet_status"]
           title: string
           voting_started_at: string | null
@@ -414,6 +415,7 @@ export type Database = {
           resolution_reason?: string | null
           resolution_source?: string | null
           resolved_at?: string | null
+          stake?: number | null
           status?: Database["public"]["Enums"]["group_bet_status"]
           title: string
           voting_started_at?: string | null
@@ -437,6 +439,7 @@ export type Database = {
           resolution_reason?: string | null
           resolution_source?: string | null
           resolved_at?: string | null
+          stake?: number | null
           status?: Database["public"]["Enums"]["group_bet_status"]
           title?: string
           voting_started_at?: string | null
@@ -1565,16 +1568,28 @@ export type Database = {
       check_learn_achievements: { Args: { _user_id: string }; Returns: Json }
       claim_daily_credits: { Args: never; Returns: Json }
       claim_referral_reward: { Args: never; Returns: Json }
-      create_group_bet: {
-        Args: {
-          _closes_at: string
-          _description: string
-          _friend_ids: string[]
-          _resolution_source?: string
-          _title: string
-        }
-        Returns: string
-      }
+      create_group_bet:
+        | {
+            Args: {
+              _closes_at: string
+              _description: string
+              _friend_ids: string[]
+              _resolution_source?: string
+              _title: string
+            }
+            Returns: string
+          }
+        | {
+            Args: {
+              _closes_at: string
+              _description: string
+              _friend_ids: string[]
+              _resolution_source?: string
+              _stake?: number
+              _title: string
+            }
+            Returns: string
+          }
       current_net_worth: { Args: { _user_id: string }; Returns: number }
       finalize_group_bet: {
         Args: {
