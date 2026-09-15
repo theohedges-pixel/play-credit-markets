@@ -216,6 +216,8 @@ function Portfolio() {
           </div>
         </section>
 
+        <PortfolioGroupBets userId={user?.id} />
+
         <h2 className="font-display text-xl font-semibold mb-1">Trade ledger</h2>
         <p className="text-xs text-muted-foreground mb-4">Every trade, newest first.</p>
         {ledgerLoading ? (
