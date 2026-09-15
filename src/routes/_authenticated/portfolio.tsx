@@ -13,6 +13,7 @@ import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/comp
 import { TradeLedger, type LedgerTrade } from "@/components/TradeRow";
 import { fireCelebration } from "@/components/MilestoneCelebration";
 import { PortfolioExplainerDialog } from "@/components/PortfolioExplainerDialog";
+import { PortfolioGroupBets } from "@/components/PortfolioGroupBets";
 
 
 export const Route = createFileRoute("/_authenticated/portfolio")({
