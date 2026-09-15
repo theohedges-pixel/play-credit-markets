@@ -34,6 +34,7 @@ function CreateGroupBet() {
   const [picked, setPicked] = useState<Set<string>>(new Set());
   const [submitting, setSubmitting] = useState(false);
   const [confirmedFarOut, setConfirmedFarOut] = useState(false);
+  const [stake, setStake] = useState("100");
 
   const { data: friends } = useQuery({
     queryKey: ["gb-friend-picker", user?.id],
@@ -72,6 +73,7 @@ function CreateGroupBet() {
   const submit = async () => {
     if (!title.trim()) return toast.error("Title is required");
     if (!closesAt) return toast.error("Close date is required");
+    if (!(Number(stake) > 0)) return toast.error("Set a stake — everyone wagers this amount");
     if (farOut && !confirmedFarOut) {
       setConfirmedFarOut(true);
       return toast.warning(
@@ -86,6 +88,7 @@ function CreateGroupBet() {
       _closes_at: new Date(closesAt).toISOString(),
       _friend_ids: Array.from(picked),
       _resolution_source: resolutionSource.trim() || null,
+      _stake: Number(stake),
     });
     setSubmitting(false);
     if (error) return toast.error(error.message);
@@ -139,6 +142,21 @@ function CreateGroupBet() {
               date? Check the year before creating.
             </p>
           )}
+        </div>
+        <div>
+          <label className="text-xs uppercase tracking-wider text-muted-foreground">
+            Stake per person
+          </label>
+          <Input
+            type="number"
+            min={1}
+            value={stake}
+            onChange={(e) => setStake(e.target.value)}
+            className="mt-1"
+          />
+          <p className="text-xs text-muted-foreground mt-1">
+            Everyone who joins wagers exactly this many credits — you included.
+          </p>
         </div>
         <div>
           <label className="text-xs uppercase tracking-wider text-muted-foreground">

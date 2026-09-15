@@ -149,7 +149,8 @@ function GroupBetDetail() {
     sideTotal > 0 ? `${(totals.total / sideTotal).toFixed(2)}×` : "—";
 
   // Live impact preview for the join panel (post-wager numbers).
-  const wagerAmt = Number(amount) > 0 ? Number(amount) : 0;
+  const stake = bet.stake != null ? Number(bet.stake) : null;
+  const wagerAmt = stake ?? (Number(amount) > 0 ? Number(amount) : 0);
   const after = {
     total: totals.total + wagerAmt,
     yes: totals.yes + (side === "yes" ? wagerAmt : 0),
@@ -161,7 +162,7 @@ function GroupBetDetail() {
   const myMultiple = wagerAmt > 0 && mySideTotal > 0 ? after.total / mySideTotal : null;
 
   const join = async () => {
-    const n = Number(amount);
+    const n = stake ?? Number(amount);
     if (!n || n <= 0) return toast.error("Enter a positive amount");
     setSubmitting(true);
     const { error } = await supabase.rpc("join_group_bet" as any, {
@@ -266,6 +267,7 @@ function GroupBetDetail() {
               @{bet.creator?.username}
             </Link>{" "}
             · Closes {format(new Date(bet.closes_at), "MMM d, yyyy HH:mm")}
+            {stake != null && <> · {fmtCredits(stake)}c each</>}
             {bet.status === "resolved" && bet.resolution && (
               <span className="ml-2 text-foreground">· Resolved {String(bet.resolution).toUpperCase()}</span>
             )}
@@ -361,17 +363,29 @@ function GroupBetDetail() {
                 NO
               </Button>
             </div>
-            <div className="flex gap-2">
-              <Input
-                type="number"
-                placeholder="Credits to wager"
-                value={amount}
-                onChange={(e) => setAmount(e.target.value)}
-              />
-              <Button onClick={join} disabled={submitting}>
-                {submitting ? "Joining…" : "Join"}
-              </Button>
-            </div>
+            {stake != null ? (
+              <div className="flex items-center justify-between gap-3">
+                <p className="text-sm">
+                  Everyone stakes the same:{" "}
+                  <span className="font-mono text-foreground">{fmtCredits(stake)}c</span>
+                </p>
+                <Button onClick={join} disabled={submitting}>
+                  {submitting ? "Joining…" : `Stake ${fmtCredits(stake)}c`}
+                </Button>
+              </div>
+            ) : (
+              <div className="flex gap-2">
+                <Input
+                  type="number"
+                  placeholder="Credits to wager"
+                  value={amount}
+                  onChange={(e) => setAmount(e.target.value)}
+                />
+                <Button onClick={join} disabled={submitting}>
+                  {submitting ? "Joining…" : "Join"}
+                </Button>
+              </div>
+            )}
             {wagerAmt > 0 && (
               <p className="text-xs text-muted-foreground mt-3">
                 After your wager: <span className="font-mono text-foreground">{afterYesPct}% YES / {afterNoPct}% NO</span>
