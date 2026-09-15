@@ -1666,6 +1666,18 @@ export type Database = {
       mark_all_notifications_read: { Args: never; Returns: undefined }
       mark_notification_read: { Args: { _id: string }; Returns: undefined }
       milestone_tiers: { Args: never; Returns: number[] }
+      my_pending_group_bet_votes: {
+        Args: never
+        Returns: {
+          closes_at: string
+          description: string
+          eligible: number
+          id: string
+          title: string
+          votes_cast: number
+          voting_started_at: string
+        }[]
+      }
       notify_admins: {
         Args: { _actor: string; _kind: string; _payload: Json }
         Returns: undefined

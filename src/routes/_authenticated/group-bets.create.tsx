@@ -11,6 +11,7 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { UserAvatar } from "@/components/UserAvatar";
 import { toast } from "sonner";
 import { Users } from "lucide-react";
+import { format } from "date-fns";
 
 export const Route = createFileRoute("/_authenticated/group-bets/create")({
   head: () => ({ meta: [{ title: "New group bet — Predikt" }] }),
@@ -32,6 +33,7 @@ function CreateGroupBet() {
   const [resolutionSource, setResolutionSource] = useState("");
   const [picked, setPicked] = useState<Set<string>>(new Set());
   const [submitting, setSubmitting] = useState(false);
+  const [confirmedFarOut, setConfirmedFarOut] = useState(false);
 
   const { data: friends } = useQuery({
     queryKey: ["gb-friend-picker", user?.id],
@@ -58,9 +60,25 @@ function CreateGroupBet() {
     setPicked(s);
   };
 
+  const farOut = (() => {
+    if (!closesAt) return null;
+    const d = new Date(closesAt);
+    if (Number.isNaN(d.getTime())) return null;
+    const limit = new Date();
+    limit.setMonth(limit.getMonth() + 3);
+    return d > limit ? d : null;
+  })();
+
   const submit = async () => {
     if (!title.trim()) return toast.error("Title is required");
     if (!closesAt) return toast.error("Close date is required");
+    if (farOut && !confirmedFarOut) {
+      setConfirmedFarOut(true);
+      return toast.warning(
+        `That close date is ${format(farOut, "d MMM yyyy")} — more than 3 months away. If that's right, tap Create again.`,
+        { duration: 8000 },
+      );
+    }
     setSubmitting(true);
     const { data, error } = await supabase.rpc("create_group_bet" as any, {
       _title: title.trim(),
@@ -109,9 +127,18 @@ function CreateGroupBet() {
           <Input
             type="datetime-local"
             value={closesAt}
-            onChange={(e) => setClosesAt(e.target.value)}
+            onChange={(e) => {
+              setClosesAt(e.target.value);
+              setConfirmedFarOut(false);
+            }}
             className="mt-1"
           />
+          {farOut && (
+            <p className="text-xs text-no mt-1">
+              That's {format(farOut, "d MMM yyyy")} — more than 3 months away. Did you mean that
+              date? Check the year before creating.
+            </p>
+          )}
         </div>
         <div>
           <label className="text-xs uppercase tracking-wider text-muted-foreground">
@@ -127,8 +154,8 @@ function CreateGroupBet() {
           <p className="text-xs text-muted-foreground mt-1">
             If you add this, we'll try to work out the outcome automatically when the bet closes —
             everyone gets 24 hours to flag it before credits move. If we can't verify it (or you skip
-            this), everyone who bet will need to agree on the outcome; if you can't agree within 24
-            hours, it settles by majority vote instead.
+            this), everyone in the bet says what happened; after 48 hours the majority of those who
+            voted decides, and if nobody votes everyone gets their credits back.
           </p>
         </div>
 
