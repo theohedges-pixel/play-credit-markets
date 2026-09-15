@@ -1176,7 +1176,11 @@ function SuggestionsTab() {
         suggested_closes_at: r.closes_at,
         probability: r.probability_yes,
       });
-      toast.success("Converted — review it before approving");
+      if (r.date_warning) {
+        toast.warning(r.date_warning, { duration: 8000 });
+      } else {
+        toast.success("Converted — review it before approving");
+      }
     } catch (e) {
       toast.error(e instanceof Error ? e.message : "Conversion failed", { duration: 10000 });
     } finally {
