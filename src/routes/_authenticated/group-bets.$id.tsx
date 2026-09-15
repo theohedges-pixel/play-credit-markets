@@ -433,7 +433,8 @@ function GroupBetDetail() {
             <h2 className="font-display font-semibold mb-1">What was the outcome?</h2>
             <p className="text-xs text-muted-foreground mb-3">
               Everyone in this bet gets one vote. It settles straight away only if everyone votes
-              the same way — otherwise majority rule kicks in after 24 hours.
+              the same way — after 48 hours the majority of those who voted decides, and if nobody
+              votes everyone gets their credits back.
             </p>
             <div className="flex gap-2 mb-3">
               {(["yes", "no", "invalid"] as const).map((s) => (
