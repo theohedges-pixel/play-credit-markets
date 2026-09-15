@@ -419,8 +419,8 @@ function GroupBetDetail() {
         {bet.status === "voting" && fallbackAt && (
           <div className="rounded-lg border border-border bg-secondary/30 p-4">
             <p className="text-sm">
-              Unanimous agreement needed to settle immediately — falls back to majority vote in{" "}
-              <span className="font-mono">{timeLeft}</span>.
+              Unanimous agreement settles this immediately — otherwise the majority of those who
+              voted decides in <span className="font-mono">{timeLeft}</span>.
             </p>
             <p className="text-xs text-muted-foreground mt-1">
               {(votes ?? []).length} of {eligibleCount} votes in.
