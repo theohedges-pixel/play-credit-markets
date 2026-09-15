@@ -5,6 +5,10 @@ import { useAuth } from "@/lib/auth";
 import { Header } from "@/components/Header";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
+import {
+  GroupBetsExplainerCard,
+  GroupBetsExplainerDialog,
+} from "@/components/GroupBetsExplainer";
 import { format } from "date-fns";
 import { Plus } from "lucide-react";
 
