@@ -29,6 +29,9 @@ export type LedgerTrade = {
   realized_gain: number | string | null;
   created_at: string;
   username?: string | null;
+  /** Pools for open markets — used to quote a realistic exit (slippage-aware). */
+  yes_pool?: number | string | null;
+  no_pool?: number | string | null;
 };
 
 type GainKind = "live" | "final" | "realized" | "pending";
