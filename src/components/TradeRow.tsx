@@ -84,6 +84,66 @@ export function tradeGain(t: LedgerTrade): {
 const signed = (v: number) => `${Math.round(v) > 0 ? "+" : ""}${fmtCredits(Math.round(v))}c`;
 const gainClass = (v: number) =>
   Math.round(v) > 0 ? "text-yes" : Math.round(v) < 0 ? "text-no" : "text-muted-foreground";
+const gainWord = (v: number) => (Math.round(v) > 0 ? "GAIN" : Math.round(v) < 0 ? "LOSS" : "EVEN");
+
+type Line = { label: string; value: string; tone?: "muted" | "gain" };
+
+/**
+ * The plain-English breakdown of a single trade:
+ *   what you put in, what a token is worth now, what you'd walk away with.
+ */
+export function tradeBreakdown(t: LedgerTrade): Line[] {
+  const shares = Number(t.shares);
+  const price = Number(t.price);
+  const credits = Number(t.credits);
+  const g = tradeGain(t);
+  const tokens = `${shares.toFixed(2)} ${t.side.toUpperCase()} token${shares === 1 ? "" : "s"}`;
+
+  if (t.action === "sell") {
+    return [
+      {
+        label: "Sold",
+        value: `${tokens} @ ${fmtPct(price)} = ${fmtCredits(credits)}c received`,
+      },
+      g.amount != null
+        ? { label: "Realized", value: `${signed(g.amount)} ${gainWord(g.amount)}`, tone: "gain" }
+        : { label: "Realized", value: "—", tone: "muted" },
+    ];
+  }
+
+  const lines: Line[] = [
+    {
+      label: "Total bid value",
+      value: `${fmtCredits(credits)}c @ ${fmtPct(price)} per token × ${tokens}`,
+    },
+  ];
+
+  if (g.kind === "live") {
+    const current = price + (g.amount ?? 0) / (shares || 1);
+    lines.push({ label: "Current price", value: `${fmtPct(current)} per token` });
+    lines.push({
+      label: "If sold now",
+      value: `${fmtCredits(shares * current)}c = ${signed(g.amount ?? 0)} ${gainWord(g.amount ?? 0)}`,
+      tone: "gain",
+    });
+  } else if (g.kind === "final") {
+    const settlement =
+      t.market_resolution === "invalid" ? 0.5 : t.market_resolution === t.side ? 1 : 0;
+    lines.push({
+      label: "Settled at",
+      value: `${fmtPct(settlement)} per token · ${g.detail}`,
+    });
+    lines.push({
+      label: "Paid out",
+      value: `${fmtCredits(shares * settlement)}c = ${signed(g.amount ?? 0)} ${gainWord(g.amount ?? 0)}`,
+      tone: "gain",
+    });
+  } else {
+    lines.push({ label: "Status", value: "Awaiting resolution", tone: "muted" });
+  }
+
+  return lines;
+}
 
 export function TradeRow({
   trade,
@@ -96,10 +156,11 @@ export function TradeRow({
 }) {
   const g = tradeGain(trade);
   const sideClass = trade.side === "yes" ? "bg-yes/15 text-yes" : "bg-no/15 text-no";
+  const lines = tradeBreakdown(trade);
 
   return (
     <div className="px-4 py-3">
-      <div className="flex items-start gap-3 flex-wrap">
+      <div className="flex items-start gap-2 flex-wrap">
         <span className={`text-[10px] font-mono px-1.5 py-0.5 rounded shrink-0 ${sideClass}`}>
           {trade.action.toUpperCase()} {trade.side.toUpperCase()}
         </span>
@@ -133,24 +194,29 @@ export function TradeRow({
           </Link>
         )}
 
-        <div className="ml-auto text-right shrink-0">
-          <div className="text-xs font-mono tabular-nums text-muted-foreground">
-            {Number(trade.shares).toFixed(2)} sh @ {fmtPct(Number(trade.price))} ·{" "}
-            {fmtCredits(trade.credits)}c
+        <span className="ml-auto shrink-0 text-[10px] text-muted-foreground tabular-nums">
+          {format(new Date(trade.created_at), "d MMM yyyy, HH:mm")}
+        </span>
+      </div>
+
+      <dl className="mt-2 space-y-0.5">
+        {lines.map((l) => (
+          <div key={l.label} className="flex flex-wrap items-baseline gap-x-2 text-xs">
+            <dt className="w-32 shrink-0 text-muted-foreground">{l.label}</dt>
+            <dd
+              className={`font-mono tabular-nums ${
+                l.tone === "gain"
+                  ? gainClass(g.amount ?? 0)
+                  : l.tone === "muted"
+                    ? "text-muted-foreground"
+                    : "text-foreground"
+              }`}
+            >
+              {l.value}
+            </dd>
           </div>
-          {g.amount != null ? (
-            <div className={`text-xs font-mono tabular-nums ${gainClass(g.amount)}`}>
-              {g.label} {signed(g.amount)}
-              <span className="text-muted-foreground"> · {g.detail}</span>
-            </div>
-          ) : (
-            <div className="text-xs font-mono text-muted-foreground">{g.detail}</div>
-          )}
-        </div>
-      </div>
-      <div className="mt-1 text-[10px] text-muted-foreground">
-        {format(new Date(trade.created_at), "d MMM yyyy, HH:mm")}
-      </div>
+        ))}
+      </dl>
     </div>
   );
 }
