@@ -145,6 +145,21 @@ function CreateGroupBet() {
         </div>
         <div>
           <label className="text-xs uppercase tracking-wider text-muted-foreground">
+            Stake per person
+          </label>
+          <Input
+            type="number"
+            min={1}
+            value={stake}
+            onChange={(e) => setStake(e.target.value)}
+            className="mt-1"
+          />
+          <p className="text-xs text-muted-foreground mt-1">
+            Everyone who joins wagers exactly this many credits — you included.
+          </p>
+        </div>
+        <div>
+          <label className="text-xs uppercase tracking-wider text-muted-foreground">
             How can this be verified? (optional)
           </label>
           <Textarea
