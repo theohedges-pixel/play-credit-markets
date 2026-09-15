@@ -13,6 +13,7 @@ import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/comp
 import { TradeLedger, type LedgerTrade } from "@/components/TradeRow";
 import { fireCelebration } from "@/components/MilestoneCelebration";
 import { PortfolioExplainerDialog } from "@/components/PortfolioExplainerDialog";
+import { PortfolioGroupBets } from "@/components/PortfolioGroupBets";
 
 
 export const Route = createFileRoute("/_authenticated/portfolio")({
@@ -214,6 +215,8 @@ function Portfolio() {
             </div>
           </div>
         </section>
+
+        <PortfolioGroupBets userId={user?.id} />
 
         <h2 className="font-display text-xl font-semibold mb-1">Trade ledger</h2>
         <p className="text-xs text-muted-foreground mb-4">Every trade, newest first.</p>
