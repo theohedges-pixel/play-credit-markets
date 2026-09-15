@@ -197,9 +197,20 @@ export function TradeRow({
           </Link>
         )}
 
-        <span className="ml-auto shrink-0 text-[10px] text-muted-foreground tabular-nums">
-          {format(new Date(trade.created_at), "d MMM yyyy, HH:mm")}
-        </span>
+        <div className="ml-auto shrink-0 flex items-center gap-2">
+          {onSell && g.kind === "live" && (
+            <button
+              type="button"
+              onClick={() => onSell(trade)}
+              className="rounded-md border border-primary/40 bg-primary/10 px-3 py-1 text-xs font-medium text-primary transition-colors hover:bg-primary/20"
+            >
+              Sell now
+            </button>
+          )}
+          <span className="text-[10px] text-muted-foreground tabular-nums">
+            {format(new Date(trade.created_at), "d MMM yyyy, HH:mm")}
+          </span>
+        </div>
       </div>
 
       <dl className="mt-2 space-y-0.5">
@@ -220,18 +231,6 @@ export function TradeRow({
           </div>
         ))}
       </dl>
-
-      {onSell && g.kind === "live" && (
-        <div className="mt-2.5">
-          <button
-            type="button"
-            onClick={() => onSell(trade)}
-            className="rounded-md border border-primary/40 bg-primary/10 px-3 py-1 text-xs font-medium text-primary transition-colors hover:bg-primary/20"
-          >
-            Sell now
-          </button>
-        </div>
-      )}
     </div>
   );
 }
