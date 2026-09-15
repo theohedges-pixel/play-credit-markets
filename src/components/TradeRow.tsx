@@ -29,6 +29,9 @@ export type LedgerTrade = {
   realized_gain: number | string | null;
   created_at: string;
   username?: string | null;
+  /** Pools for open markets — used to quote a realistic exit (slippage-aware). */
+  yes_pool?: number | string | null;
+  no_pool?: number | string | null;
 };
 
 type GainKind = "live" | "final" | "realized" | "pending";
@@ -86,7 +89,26 @@ const gainClass = (v: number) =>
   Math.round(v) > 0 ? "text-yes" : Math.round(v) < 0 ? "text-no" : "text-muted-foreground";
 const gainWord = (v: number) => (Math.round(v) > 0 ? "GAIN" : Math.round(v) < 0 ? "LOSS" : "EVEN");
 
-type Line = { label: string; value: string; tone?: "muted" | "gain" };
+type Line = { label: string; value: string; tone?: "muted" | "gain"; gain?: number };
+
+/**
+ * Realistic exit quote for selling `s` tokens of one side, mirroring the
+ * sell_shares RPC / market-page CPMM math. Returns null when pools are
+ * missing (older callers) so the UI can fall back to the mark price.
+ */
+export function exitQuote(t: LedgerTrade): { proceeds: number; gain: number } | null {
+  if (t.market_status !== "open" || t.yes_pool == null || t.no_pool == null) return null;
+  const s = Number(t.shares);
+  if (!Number.isFinite(s) || s <= 0) return null;
+  const ownPool = Number(t.side === "yes" ? t.yes_pool : t.no_pool);
+  const otherPool = Number(t.side === "yes" ? t.no_pool : t.yes_pool);
+  const b = ownPool + s + otherPool;
+  const disc = b * b - 4 * s * otherPool;
+  if (disc < 0) return null;
+  const proceeds = Math.round(((b - Math.sqrt(disc)) / 2) * 100) / 100;
+  if (!Number.isFinite(proceeds) || proceeds < 0) return null;
+  return { proceeds, gain: proceeds - Number(t.credits) };
+}
 
 /**
  * The plain-English breakdown of a single trade:
@@ -106,7 +128,7 @@ export function tradeBreakdown(t: LedgerTrade): Line[] {
         value: `${tokens} @ ${fmtPct(price)} = ${fmtCredits(credits)}c received`,
       },
       g.amount != null
-        ? { label: "Realized", value: `${signed(g.amount)} ${gainWord(g.amount)}`, tone: "gain" }
+        ? { label: "Realized", value: `${signed(g.amount)} ${gainWord(g.amount)}`, tone: "gain", gain: g.amount }
         : { label: "Realized", value: "—", tone: "muted" },
     ];
   }
@@ -121,11 +143,24 @@ export function tradeBreakdown(t: LedgerTrade): Line[] {
   if (g.kind === "live") {
     const current = price + (g.amount ?? 0) / (shares || 1);
     lines.push({ label: "Current price", value: `${fmtPct(current)} per token` });
-    lines.push({
-      label: "If sold now",
-      value: `${fmtCredits(shares * current)}c = ${signed(g.amount ?? 0)} ${gainWord(g.amount ?? 0)}`,
-      tone: "gain",
-    });
+    const exit = exitQuote(t);
+    if (exit) {
+      // Realistic quote: selling a large position moves the price, so the
+      // proceeds — and the gain — can differ a lot from the mark value.
+      lines.push({
+        label: "If sold now",
+        value: `${fmtCredits(exit.proceeds)}c = ${signed(exit.gain)} ${gainWord(exit.gain)}`,
+        tone: "gain",
+        gain: exit.gain,
+      });
+    } else {
+      lines.push({
+        label: "If sold now",
+        value: `${fmtCredits(shares * current)}c = ${signed(g.amount ?? 0)} ${gainWord(g.amount ?? 0)}`,
+        tone: "gain",
+        gain: g.amount ?? 0,
+      });
+    }
   } else if (g.kind === "final") {
     const settlement =
       t.market_resolution === "invalid" ? 0.5 : t.market_resolution === t.side ? 1 : 0;
@@ -137,6 +172,7 @@ export function tradeBreakdown(t: LedgerTrade): Line[] {
       label: "Paid out",
       value: `${fmtCredits(shares * settlement)}c = ${signed(g.amount ?? 0)} ${gainWord(g.amount ?? 0)}`,
       tone: "gain",
+      gain: g.amount ?? 0,
     });
   } else {
     lines.push({ label: "Status", value: "Awaiting resolution", tone: "muted" });
@@ -220,7 +256,7 @@ export function TradeRow({
             <dd
               className={`font-mono tabular-nums ${
                 l.tone === "gain"
-                  ? gainClass(g.amount ?? 0)
+                  ? gainClass(l.gain ?? g.amount ?? 0)
                   : l.tone === "muted"
                     ? "text-muted-foreground"
                     : "text-foreground"

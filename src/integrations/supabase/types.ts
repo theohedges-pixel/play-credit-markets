@@ -1635,12 +1635,14 @@ export type Database = {
           market_resolution: Database["public"]["Enums"]["market_resolution"]
           market_status: Database["public"]["Enums"]["market_status"]
           market_title: string
+          no_pool: number
           price: number
           realized_gain: number
           shares: number
           side: Database["public"]["Enums"]["trade_side"]
           user_id: string
           username: string
+          yes_pool: number
         }[]
       }
       get_public_group_bet_preview: {
