@@ -162,7 +162,7 @@ function GroupBetDetail() {
   const myMultiple = wagerAmt > 0 && mySideTotal > 0 ? after.total / mySideTotal : null;
 
   const join = async () => {
-    const n = Number(amount);
+    const n = stake ?? Number(amount);
     if (!n || n <= 0) return toast.error("Enter a positive amount");
     setSubmitting(true);
     const { error } = await supabase.rpc("join_group_bet" as any, {
