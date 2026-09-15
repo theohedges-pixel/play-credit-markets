@@ -143,11 +143,24 @@ export function tradeBreakdown(t: LedgerTrade): Line[] {
   if (g.kind === "live") {
     const current = price + (g.amount ?? 0) / (shares || 1);
     lines.push({ label: "Current price", value: `${fmtPct(current)} per token` });
-    lines.push({
-      label: "If sold now",
-      value: `${fmtCredits(shares * current)}c = ${signed(g.amount ?? 0)} ${gainWord(g.amount ?? 0)}`,
-      tone: "gain",
-    });
+    const exit = exitQuote(t);
+    if (exit) {
+      // Realistic quote: selling a large position moves the price, so the
+      // proceeds — and the gain — can differ a lot from the mark value.
+      lines.push({
+        label: "If sold now",
+        value: `${fmtCredits(exit.proceeds)}c = ${signed(exit.gain)} ${gainWord(exit.gain)}`,
+        tone: "gain",
+        gain: exit.gain,
+      });
+    } else {
+      lines.push({
+        label: "If sold now",
+        value: `${fmtCredits(shares * current)}c = ${signed(g.amount ?? 0)} ${gainWord(g.amount ?? 0)}`,
+        tone: "gain",
+        gain: g.amount ?? 0,
+      });
+    }
   } else if (g.kind === "final") {
     const settlement =
       t.market_resolution === "invalid" ? 0.5 : t.market_resolution === t.side ? 1 : 0;
