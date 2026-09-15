@@ -233,8 +233,15 @@ function Portfolio() {
           <TradeLedger
             trades={ledgerTrades}
             empty="No trades yet — browse markets to place your first."
+            onSell={(t) => setSellTrade(t)}
           />
         )}
+
+        <SellTradeDialog
+          trade={sellTrade}
+          open={!!sellTrade}
+          onOpenChange={(o) => { if (!o) setSellTrade(null); }}
+        />
 
 
         <div className="my-8 rounded-lg border border-border bg-card p-5 flex items-center justify-between gap-5 flex-wrap">
