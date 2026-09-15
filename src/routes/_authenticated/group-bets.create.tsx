@@ -73,6 +73,7 @@ function CreateGroupBet() {
   const submit = async () => {
     if (!title.trim()) return toast.error("Title is required");
     if (!closesAt) return toast.error("Close date is required");
+    if (!(Number(stake) > 0)) return toast.error("Set a stake — everyone wagers this amount");
     if (farOut && !confirmedFarOut) {
       setConfirmedFarOut(true);
       return toast.warning(
